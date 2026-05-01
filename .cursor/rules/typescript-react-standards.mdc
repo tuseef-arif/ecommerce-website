@@ -1,0 +1,19 @@
+---
+description: TypeScript, React, and naming conventions for maintainable code
+alwaysApply: true
+---
+
+# TypeScript and React Standards
+
+- Use TypeScript everywhere; avoid `any` unless unavoidable and documented.
+- Prefer strict, explicit types at boundaries (function params/returns, API payloads, action inputs, DB outputs).
+- Use functional/declarative patterns and early returns; avoid unnecessary class-based designs.
+- Prefer `const` arrow functions for new helpers/components when consistent with nearby code style.
+- Naming rules:
+  - booleans use auxiliary verbs (`isLoading`, `hasAccess`, `canRetry`),
+  - event handlers start with `handle`,
+  - Server Actions use descriptive verbs and/or `action` prefix when clarity improves.
+- Keep `'use client'` scopes minimal; colocate interactive logic in the smallest possible client component.
+- Use `useActionState` for form actions and `useOptimistic` for latency-sensitive optimistic updates when beneficial.
+- Fetch data close to usage and use caching/revalidation APIs intentionally (`cache`, tags, revalidate flows).
+- Prefer Tailwind utility composition with existing `cn()` helper patterns in the repo.

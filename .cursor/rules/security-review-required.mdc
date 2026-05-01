@@ -1,0 +1,17 @@
+---
+description: Mandatory security checks for auth, writes, and user input
+alwaysApply: true
+---
+
+# Security Review Required
+
+- For authentication logic, database writes, and any user-controlled input, include a `<SECURITY_REVIEW>` section in proposals and implementations.
+- `<SECURITY_REVIEW>` must include:
+  - Vulnerability audit (XSS, CSRF, SQL injection, auth bypass, sensitive data exposure),
+  - Mitigations applied,
+  - Verification test case.
+- Enforce runtime input validation with Zod (or existing project equivalent) at trust boundaries (actions, handlers, middleware, webhooks).
+- Use parameterized queries/ORM protections; never build SQL strings from raw user input.
+- Keep auth/session checks on the server side; validate cookies/headers defensively and fail closed on invalid state.
+- Sanitize or safely render user-supplied content; avoid `dangerouslySetInnerHTML` unless strongly justified and sanitized.
+- Align recommendations with OWASP and official Next.js security guidance.

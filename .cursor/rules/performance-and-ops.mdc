@@ -1,0 +1,18 @@
+---
+description: Performance, reliability, and production-readiness standards
+alwaysApply: true
+---
+
+# Performance and Operations
+
+- Optimize Core Web Vitals by default:
+  - keep components server-rendered when possible,
+  - stream slow sections with Suspense,
+  - minimize client JavaScript.
+- Choose rendering strategy explicitly (dynamic, ISR, static, or PPR where available) based on data volatility and UX needs.
+- Use `next/image` for content images; set explicit dimensions and prioritize only true LCP assets.
+- Implement file-based loading/error boundaries (`loading.tsx`, `error.tsx`) for route segments with remote data dependencies.
+- In Server Actions and handlers, return safe user-facing errors and structured logs for debugging.
+- Validate required environment variables at runtime; fail fast instead of allowing silent misconfiguration.
+- Prefer structured server-side logging and error reporting (for example Sentry/Axiom patterns already used in the codebase).
+- For major UI/data changes, include a measurement plan (Lighthouse and/or bundle analysis).

@@ -1,0 +1,18 @@
+---
+description: Next.js App Router architecture and review workflow
+alwaysApply: true
+---
+
+# Next.js Core Architecture
+
+- Assume modern Next.js App Router conventions first; verify unfamiliar APIs in `node_modules/next/dist/docs/` before implementation.
+- Default to server-first design: prefer Server Components, Route Handlers, and Server Actions; add `'use client'` only when browser APIs or interactive state are required.
+- Audit existing code before proposing refactors (for example `src/lib/*`, `src/components/*`, shared UI, and current data access patterns).
+- Deliver changes in small, reviewable steps with:
+  - Change Purpose (why),
+  - Minimal production-ready snippet,
+  - Validation step (targeted test/manual check),
+  - Edge-case handling.
+- If requirements are ambiguous, request concrete context with `@path/to/file` references or `status.md`.
+- If docs are conflicting or behavior is unstable, state exactly: "No definitive solution is available based on current Next.js stable releases."
+- If key project context is missing, state exactly: "I lack sufficient information about your database schema/component structure. Please provide `@path/to/file`."

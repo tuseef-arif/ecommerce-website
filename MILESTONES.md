@@ -8,39 +8,79 @@ This file is our daily execution tracker for building the Mobile Shop E-commerce
 
 - [x] Choose primary DB engine (`PostgreSQL` recommended, `MySQL` acceptable).
 - [x] Install and run database service on the same server.
-- [ ] Create database and application user.
+- [x] Create database and application user.
 - [x] Add `.env` entries (`DATABASE_URL`, auth secrets placeholders).
-- [ ] Exit criteria: app can connect to DB host and credentials are valid.
+- [x] Exit criteria: app can connect to DB host and credentials are valid.
 
 Day 1 progress (2026-05-01):
 
 - Added `.env.example` with `DATABASE_URL` and `AUTH_SECRET` placeholders.
 - Added local `.env.local` defaults for a local PostgreSQL instance.
 - Added `npm run db:check` (`scripts/check-db.mjs`) to validate DB connectivity quickly.
+- Verified successful DB connectivity with `ecommerce_app` user.
 
 ### Day 2: Prisma Bootstrap
 
-- Install Prisma + Prisma Client.
-- Initialize `prisma/schema.prisma`.
-- Configure datasource/provider to match chosen DB.
-- Create first migration baseline.
-- Exit criteria: `prisma migrate` succeeds and tables are created.
+- [x] Install Prisma + Prisma Client.
+- [x] Initialize `prisma/schema.prisma`.
+- [x] Configure datasource/provider to match chosen DB.
+- [x] Create first migration baseline.
+- [x] Exit criteria: `prisma migrate` succeeds and tables are created.
+
+Day 2 plan (Completed):
+
+- Install `prisma` and `@prisma/client`.
+- Run `npx prisma init` and point datasource to PostgreSQL (`DATABASE_URL`).
+- Create baseline schema with first `User` model (minimal scaffold for migration check).
+- Run `npx prisma migrate dev --name init` to create and apply first migration.
+- Validate generated client and run quick sanity query script.
+- Update this file with completed checklist + blockers + next step for Day 3.
+
+Day 2 progress (2026-05-01):
+
+- Installed `prisma` and `@prisma/client`.
+- Initialized Prisma (`prisma/schema.prisma`, `prisma.config.ts`, `.env`).
+- Added baseline `User` model and `UserRole` enum.
+- Ran `npx prisma db push` successfully and generated client to `src/generated/prisma`.
+- Added reusable client singleton at `src/lib/prisma.ts`.
+- Resolved migration blocker by enabling required DB permission and resetting local dev schema.
+- Ran `npx prisma migrate dev --name init` successfully.
+- Verified with `npx prisma migrate status`: 1 migration found and schema is up to date.
 
 ### Day 3: Core Schema + Seed Data
 
-- Add models: `User`, `Category`, `Product`, `CartItem`, `Order`, `OrderItem`, `GlobalSetting`, `CategorySaleOverride`.
-- Add indexes and unique constraints.
-- Create `seed.ts` for admin user, default categories, and sample products.
-- Exit criteria: seeded data is queryable in app.
+- [x] Add models: `User`, `Category`, `Product`, `CartItem`, `Order`, `OrderItem`, `GlobalSetting`, `CategorySaleOverride`.
+- [x] Add indexes and unique constraints.
+- [x] Create `seed.ts` for admin user, default categories, and sample products.
+- [x] Exit criteria: seeded data is queryable in app.
+
+Day 3 progress (2026-05-01):
+
+- Expanded `prisma/schema.prisma` with all core e-commerce models, relations, enums, and indexes.
+- Applied migration: `20260501173742_day3_core_schema`.
+- Added `prisma/seed.ts` with idempotent upserts for admin user, categories, products, and global settings.
+- Configured Prisma 7 seeding in `prisma.config.ts` and added `npm run prisma:seed`.
+- Seed command now executes successfully against local PostgreSQL.
 
 ## Milestone 2 - Auth and RBAC (Days 4-5)
 
 ### Day 4: Auth.js Integration
 
-- Add Auth.js with credentials provider.
-- Implement registration + login pages.
-- Hash passwords securely.
-- Exit criteria: user can register and log in.
+- [x] Add Auth.js with credentials provider.
+- [x] Implement registration + login pages.
+- [x] Hash passwords securely.
+- [ ] Exit criteria: user can register and log in.
+
+Day 4 progress (2026-05-02):
+
+- Installed `next-auth`, `zod`, and `bcryptjs`.
+- Added Auth.js credentials setup in `src/auth.ts` and API handlers at `src/app/api/auth/[...nextauth]/route.ts`.
+- Added secure password utilities in `src/lib/password.ts` with bcrypt hashing and legacy scrypt verification fallback.
+- Implemented validated registration flow in `src/app/(auth)/register/actions.ts` + `src/app/(auth)/register/page.tsx`.
+- Implemented validated login flow in `src/app/(auth)/login/actions.ts` + `src/app/(auth)/login/page.tsx`.
+- Updated home page to reflect authenticated state and added server-side logout action.
+- Seed now hashes admin password with bcrypt for consistency with login verification.
+- Reorganized routes into App Router route groups: `src/app/(shop)`, `src/app/(auth)`, and `src/app/(admin)`.
 
 ### Day 5: Role-Based Access Control
 

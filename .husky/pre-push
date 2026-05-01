@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+
+npm run type-check || {
+  echo "type-check failed"
+  exit 1
+}
+
+npm run format:check || {
+  echo "format check failed"
+  exit 1
+}
+
+npm run build || {
+  echo "build failed"
+  exit 1
+}

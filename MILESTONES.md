@@ -69,7 +69,7 @@ Day 3 progress (2026-05-01):
 - [x] Add Auth.js with credentials provider.
 - [x] Implement registration + login pages.
 - [x] Hash passwords securely.
-- [ ] Exit criteria: user can register and log in.
+- [x] Exit criteria: user can register and log in.
 
 Day 4 progress (2026-05-02):
 
@@ -77,17 +77,23 @@ Day 4 progress (2026-05-02):
 - Added Auth.js credentials setup in `src/auth.ts` and API handlers at `src/app/api/auth/[...nextauth]/route.ts`.
 - Added secure password utilities in `src/lib/password.ts` with bcrypt hashing and legacy scrypt verification fallback.
 - Implemented validated registration flow in `src/app/(auth)/register/actions.ts` + `src/app/(auth)/register/page.tsx`.
-- Implemented validated login flow in `src/app/(auth)/login/actions.ts` + `src/app/(auth)/login/page.tsx`.
-- Updated home page to reflect authenticated state and added server-side logout action.
+- Implemented validated login flow in `src/app/(auth)/login/login-form.tsx` + `src/app/(auth)/login/page.tsx`.
+- Updated home page (`src/app/(shop)/page.tsx`) to reflect authenticated state and added server-side logout action in `src/app/(shop)/actions.ts`.
 - Seed now hashes admin password with bcrypt for consistency with login verification.
 - Reorganized routes into App Router route groups: `src/app/(shop)`, `src/app/(auth)`, and `src/app/(admin)`.
 
 ### Day 5: Role-Based Access Control
 
-- Add `ADMIN` and `USER` roles.
-- Implement server-side guards (`requireUser`, `requireAdmin`).
-- Protect admin routes and actions.
+- [x] Add `ADMIN` and `USER` roles.
+- [x] Implement server-side guards (`requireUser`, `requireAdmin`).
+- [x] Protect admin routes and actions.
 - Exit criteria: non-admin cannot access admin actions/routes.
+
+Day 5 progress (2026-05-02):
+
+- Added server-side guard utilities in `src/lib/auth-guards.ts`.
+- Added admin route protection via `src/app/(admin)/admin/layout.tsx` and `src/app/(admin)/admin/page.tsx`.
+- Added admin-only server action in `src/app/(admin)/admin/actions.ts` protected by `requireAdmin` and validated with Zod.
 
 ## Milestone 3 - Admin Operations (Days 6-8)
 

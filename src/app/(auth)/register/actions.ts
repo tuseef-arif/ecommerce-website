@@ -1,27 +1,16 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { z } from "zod";
-import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/lib/password";
-
-const registerSchema = z
-  .object({
-    email: z.string().email("Please enter a valid email."),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters long.")
-      .max(72, "Password is too long."),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+import { registerAccountSchema } from "@/lib/validation/register-account-schema";
+import { createRegisteredUser } from "./register-user";
+import type { RegisterPopoverState } from "./register-popover-state";
 
 export const registerAction = async (formData: FormData) => {
-  const parsedData = registerSchema.safeParse({
+  const parsedData = registerAccountSchema.safeParse({
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
     email: formData.get("email"),
+    phone: formData.get("phone"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
   });
@@ -33,24 +22,66 @@ export const registerAction = async (formData: FormData) => {
     redirect(`/register?error=${message}`);
   }
 
-  const email = parsedData.data.email.toLowerCase();
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true },
-  });
+  const result = await createRegisteredUser(parsedData.data);
 
-  if (existingUser) {
-    redirect("/register?error=Email%20is%20already%20registered.");
+  if (!result.ok) {
+    if (result.error === "EMAIL_TAKEN") {
+      redirect("/register?error=Email%20is%20already%20registered.");
+    }
+    redirect(
+      "/register?error=Something%20went%20wrong.%20Please%20try%20again.",
+    );
   }
 
-  const hashedPassword = await hashPassword(parsedData.data.password);
+  redirect("/login?success=Account%20created%20successfully.");
+};
 
-  await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-    },
+/**
+ * Registration for the header account popover — returns state instead of redirecting.
+ */
+export const registerAccountInlineAction = async (
+  _prev: RegisterPopoverState,
+  formData: FormData,
+): Promise<RegisterPopoverState> => {
+  const parsedData = registerAccountSchema.safeParse({
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
   });
 
-  redirect("/login?success=Account%20created%20successfully.");
+  if (!parsedData.success) {
+    return {
+      errorMessage:
+        parsedData.error.issues[0]?.message ??
+        "Please check the form and try again.",
+      success: false,
+      emailForLogin: undefined,
+    };
+  }
+
+  const result = await createRegisteredUser(parsedData.data);
+
+  if (!result.ok) {
+    if (result.error === "EMAIL_TAKEN") {
+      return {
+        errorMessage: "That email is already registered.",
+        success: false,
+        emailForLogin: undefined,
+      };
+    }
+    return {
+      errorMessage: "Something went wrong. Please try again.",
+      success: false,
+      emailForLogin: undefined,
+    };
+  }
+
+  return {
+    errorMessage: null,
+    success: true,
+    emailForLogin: parsedData.data.email.toLowerCase(),
+  };
 };

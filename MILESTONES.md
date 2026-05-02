@@ -82,18 +82,28 @@ Day 4 progress (2026-05-02):
 - Seed now hashes admin password with bcrypt for consistency with login verification.
 - Reorganized routes into App Router route groups: `src/app/(shop)`, `src/app/(auth)`, and `src/app/(admin)`.
 
-### Day 5: Role-Based Access Control
+### Day 5: Role-Based Access Control and Storefront Shell
 
 - [x] Add `ADMIN` and `USER` roles.
 - [x] Implement server-side guards (`requireUser`, `requireAdmin`).
 - [x] Protect admin routes and actions.
-- Exit criteria: non-admin cannot access admin actions/routes.
+- [x] Store header and navigation (logo, links, search, account/cart entry points, responsive behavior).
+- [x] Store footer (gradient bar, contact and payment blocks, embedded map, copyright strip).
+- [x] Hero banner (carousel, swipe/touch, reduced-motion handling, product slides from config).
+- [x] Category slider (horizontal strip, arrow-controlled scroll, snap/scroll behavior).
+- [x] Full-width responsive shop layout (shared `STORE_SHELL` padding, no narrow `max-w-*` gutters on main shop chrome).
+- [x] Application design and color scheme for the public shop (consistent blues/oranges, cards, typography, and component polish).
+- Exit criteria: non-admin cannot access admin actions/routes; shop pages use the shared shell and look coherent from header through footer on common viewport sizes.
 
 Day 5 progress (2026-05-02):
 
 - Added server-side guard utilities in `src/lib/auth-guards.ts`.
 - Added admin route protection via `src/app/(admin)/admin/layout.tsx` and `src/app/(admin)/admin/page.tsx`.
 - Added admin-only server action in `src/app/(admin)/admin/actions.ts` protected by `requireAdmin` and validated with Zod.
+- Implemented store chrome in `src/components/store/store-header.tsx` and `src/components/store/store-footer.tsx` (including map, social, and payment areas); adjusted footer bar spacing in `src/app/globals.css` where needed.
+- Built hero experience in `src/components/store/hero-banner.tsx` with phone data in `src/lib/hero-phones.ts` and related copy in `src/lib/site-config.ts`.
+- Built category navigation in `src/components/store/category-slider.tsx` with shared slider arrow styling in `src/components/store/store-slider-arrows.tsx`.
+- Centralized full-width shop horizontal padding via `STORE_SHELL` in `src/lib/site-config.ts` and applied it across header, footer, hero, category strip, and shop `main` routes under `src/app/(shop)/`.
 
 ## Milestone 3 - Admin Operations (Days 6-8)
 

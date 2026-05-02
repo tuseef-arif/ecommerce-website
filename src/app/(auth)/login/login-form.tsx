@@ -2,9 +2,19 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { FormInputField } from "@/components/ui/form-input-field";
+import {
+  SITE_HEADER,
+  SITE_LOGIN_PAGE,
+  SITE_ROUTES,
+} from "@/lib/config/site-config";
 
 export const LoginForm = () => {
   const [error, setError] = useState<string | null>(null);
+
+  const dismissError = () => {
+    setError(null);
+  };
 
   const handleSubmit = async (formData: FormData) => {
     setError(null);
@@ -15,56 +25,49 @@ export const LoginForm = () => {
       email,
       password,
       redirect: false,
-      callbackUrl: "/",
+      callbackUrl: SITE_ROUTES.home,
     });
 
     if (!response || response.error) {
-      setError("Invalid email or password.");
+      setError(SITE_HEADER.loginPageInvalidCredentials);
       return;
     }
 
-    window.location.href = "/";
+    window.location.href = SITE_ROUTES.home;
   };
 
   return (
     <form
-      action={async (formData) => {
-        await handleSubmit(formData);
-      }}
       className="space-y-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void handleSubmit(new FormData(e.currentTarget));
+      }}
     >
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="auth-page-alert auth-page-alert--error" role="alert">
           {error}
         </p>
       ) : null}
 
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">Email</span>
-        <input
-          name="email"
-          type="email"
-          required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
-        />
-      </label>
+      <FormInputField
+        label={SITE_LOGIN_PAGE.fieldEmailLabel}
+        name="email"
+        type="email"
+        required
+        onChange={dismissError}
+      />
+      <FormInputField
+        label={SITE_LOGIN_PAGE.fieldPasswordLabel}
+        name="password"
+        type="password"
+        minLength={8}
+        required
+        onChange={dismissError}
+      />
 
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">Password</span>
-        <input
-          name="password"
-          type="password"
-          minLength={8}
-          required
-          className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm"
-        />
-      </label>
-
-      <button
-        type="submit"
-        className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-      >
-        Login
+      <button type="submit" className="auth-page-primary-btn">
+        {SITE_HEADER.loginCta}
       </button>
     </form>
   );

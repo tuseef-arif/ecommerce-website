@@ -79,7 +79,7 @@ export const requestPasswordResetInlineAction = async (
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, email: true },
+    select: { id: true, email: true, firstName: true, lastName: true },
   });
 
   if (!user) {
@@ -104,7 +104,12 @@ export const requestPasswordResetInlineAction = async (
   const origin = getPasswordResetOrigin();
   const resetUrl = `${origin}/?authView=reset-password&token=${encodeURIComponent(rawToken)}`;
 
-  const sendResult = await sendPasswordResetEmail({ to: user.email, resetUrl });
+  const sendResult = await sendPasswordResetEmail({
+    to: user.email,
+    resetUrl,
+    firstName: user.firstName,
+    lastName: user.lastName,
+  });
   if (!sendResult.ok) {
     return {
       errorMessage: passwordResetEmailSendUserMessage(sendResult.kind),

@@ -104,6 +104,14 @@ Day 5 progress (2026-05-02):
 - Built hero experience in `src/components/store/hero-banner.tsx` with phone data in `src/lib/hero-phones.ts` and related copy in `src/lib/site-config.ts`.
 - Built category navigation in `src/components/store/category-slider.tsx` with shared slider arrow styling in `src/components/store/store-slider-arrows.tsx`.
 - Centralized full-width shop horizontal padding via `STORE_SHELL` in `src/lib/site-config.ts` and applied it across header, footer, hero, category strip, and shop `main` routes under `src/app/(shop)/`.
+- Expanded account flows in the header popover: login + sign-up UX hardening, forgot-password request, and reset-password completion flow.
+- Added password reset server actions and DB-backed reset token lifecycle (issue, verify, expire, consume) in `src/app/(auth)/password-reset-actions.ts`.
+- Added account profile CRUD capabilities (view/update profile fields and profile image path handling) integrated into store account popover interactions.
+- Added profile photo upload support with persisted file paths and storefront account avatar/menu updates.
+- Refined account popover architecture by splitting constants, styles, helpers, dialog, and form components for maintainability.
+- Updated auth email delivery and templates for sign-up OTP and password reset mails (`src/lib/auth/signup-otp-email.ts`, `src/lib/auth/password-reset-email.ts`, and mail transport refinements).
+- Added and wired supporting auth modules for sign-up OTP and password reset flows (`src/lib/auth/signup-otp-service.ts`, `src/lib/auth/password-reset-email.ts`, `src/lib/auth/signup-otp-email.ts`).
+- Added global styling updates in `src/app/globals.css` to support the expanded auth/account and profile UI states.
 
 ## Milestone 3 - Admin Operations (Days 6-8)
 

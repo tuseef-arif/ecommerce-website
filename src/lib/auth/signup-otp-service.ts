@@ -119,7 +119,12 @@ export const startSignupEmailVerification = async (
     return { ok: false, error: "DATABASE", dbHint: hint };
   }
 
-  const sent = await sendSignupOtpEmail({ to: email, code: plainOtp });
+  const sent = await sendSignupOtpEmail({
+    to: email,
+    code: plainOtp,
+    firstName: data.firstName,
+    lastName: data.lastName,
+  });
   if (!sent.ok) {
     await prisma.signupOtpChallenge
       .deleteMany({ where: { email } })
@@ -145,11 +150,13 @@ export const resendSignupEmailVerification = async (
   const plainOtp = generateSignupOtpCode();
   const codeHash = hashSignupOtpCode(plainOtp);
   const expiresAt = new Date(Date.now() + SIGNUP_OTP_TTL_MS);
+  let challengeFirstName: string | null = null;
+  let challengeLastName: string | null = null;
 
   try {
     const row = await prisma.signupOtpChallenge.findUnique({
       where: { email },
-      select: { id: true, expiresAt: true },
+      select: { id: true, expiresAt: true, firstName: true, lastName: true },
     });
 
     if (!row) {
@@ -169,6 +176,8 @@ export const resendSignupEmailVerification = async (
         attemptCount: 0,
       },
     });
+    challengeFirstName = row.firstName;
+    challengeLastName = row.lastName;
   } catch (err) {
     const hint = classifySignupDbError(err);
     console.error(
@@ -179,7 +188,12 @@ export const resendSignupEmailVerification = async (
     return { ok: false, error: "DATABASE", dbHint: hint };
   }
 
-  const sent = await sendSignupOtpEmail({ to: email, code: plainOtp });
+  const sent = await sendSignupOtpEmail({
+    to: email,
+    code: plainOtp,
+    firstName: challengeFirstName,
+    lastName: challengeLastName,
+  });
   if (!sent.ok) {
     return {
       ok: false,

@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
     "db:check": "node --env-file=.env.local ./scripts/check-db.mjs",
+    "create-test-users": "node --env-file=.env.local --import tsx scripts/create-test-users.ts",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
@@ -20,6 +21,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@vercel/blob": "^2.3.3",
     "bcryptjs": "^3.0.3",
     "next": "16.2.4",
     "next-auth": "^4.24.14",

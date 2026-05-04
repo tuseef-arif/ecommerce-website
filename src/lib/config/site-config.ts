@@ -47,6 +47,8 @@ const SITE_DEFAULTS = {
     cart: "/cart",
     contact: "/contact",
     admin: "/admin",
+    /** Staff dashboard (route implemented separately) */
+    dashboard: "/dashboard",
     accountOrders: "/account/orders",
   },
   /**
@@ -104,7 +106,7 @@ const SITE_DEFAULTS = {
     loginPageInvalidCredentials: "Invalid email or password.",
     cartAria: "Cart",
     admin: "Admin",
-    /** Shown under phone in account popover for admin users */
+    /** Shown beside display name in account popover for admin users */
     accountPopoverAdminBadge: "Admin",
     logout: "Logout",
     shopNavAriaLabel: "Shop by category",
@@ -125,6 +127,8 @@ const SITE_DEFAULTS = {
     accountPopoverEditProfileCta: "Edit Profile",
     accountPopoverUpdatePasswordCta: "Update Password",
     accountPopoverViewOrdersCta: "View Orders",
+    /** Account popover — replaces View Orders for admin users */
+    accountPopoverViewDashboardCta: "View Dashboard",
     accountPopoverPhoneEmpty: "No phone on file",
     accountPopoverSaveProfileCta: "Update",
     accountPopoverCancelEditCta: "Cancel",
@@ -141,6 +145,9 @@ const SITE_DEFAULTS = {
       "Please upload a JPEG, PNG, or WebP image.",
     accountPopoverProfileImageUploadFailed:
       "Could not save your photo. Try again.",
+    /** Vercel serverless has no persistent disk — set `BLOB_READ_WRITE_TOKEN` (Vercel Blob). */
+    accountPopoverProfileImageBlobRequiredOnVercel:
+      "Photo upload requires file storage on this host. Ask the site admin to enable Vercel Blob (BLOB_READ_WRITE_TOKEN).",
     accountPopoverProfileImageUploadNetworkError:
       "Upload failed. Check your connection and try again.",
     accountPopoverFirstNameLabel: "First name",

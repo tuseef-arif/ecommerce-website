@@ -11,6 +11,28 @@ import type { RequestPasswordResetPopoverState } from "./password-reset-popover-
 
 const requestEmailSchema = z.string().email("Please enter a valid email.");
 
+const passwordResetEmailSendUserMessage = (
+  hint?: Extract<
+    Awaited<ReturnType<typeof sendPasswordResetEmail>>,
+    { ok: false }
+  >["kind"],
+): string => {
+  switch (hint) {
+    case "MISSING_RESEND_API_KEY":
+      return "Add RESEND_API_KEY to .env.local, or switch to SMTP with EMAIL_PROVIDER=smtp and set SMTP_* variables. Restart npm run dev after saving.";
+    case "MISSING_SMTP_CONFIG":
+      return "EMAIL_PROVIDER is smtp but SMTP is incomplete. Set SMTP_HOST, SMTP_USER, and SMTP_PASS (and usually SMTP_PORT). Restart npm run dev.";
+    case "MISSING_FROM":
+      return "Set PASSWORD_RESET_EMAIL_FROM (or SMTP_FROM), then restart npm run dev.";
+    case "PROVIDER_REJECTED":
+      return "The mail provider rejected the reset email. Check server logs for [sendPasswordResetEmail].";
+    case "NETWORK_ERROR":
+      return "Could not reach the email provider. Check your internet connection and try again.";
+    default:
+      return "We could not send the reset email right now. Please try again in a moment.";
+  }
+};
+
 const completeResetSchema = z
   .object({
     token: z.string().min(16, "Invalid reset link."),
@@ -36,6 +58,10 @@ const getPasswordResetOrigin = (): string => {
 
 const hashResetToken = (raw: string): string =>
   createHash("sha256").update(raw, "utf8").digest("hex");
+
+export type CompletePasswordResetState = {
+  errorMessage: string | null;
+};
 
 export const requestPasswordResetInlineAction = async (
   _prev: RequestPasswordResetPopoverState,
@@ -76,14 +102,23 @@ export const requestPasswordResetInlineAction = async (
   });
 
   const origin = getPasswordResetOrigin();
-  const resetUrl = `${origin}/reset-password?token=${encodeURIComponent(rawToken)}`;
+  const resetUrl = `${origin}/?authView=reset-password&token=${encodeURIComponent(rawToken)}`;
 
-  await sendPasswordResetEmail({ to: user.email, resetUrl });
+  const sendResult = await sendPasswordResetEmail({ to: user.email, resetUrl });
+  if (!sendResult.ok) {
+    return {
+      errorMessage: passwordResetEmailSendUserMessage(sendResult.kind),
+      success: false,
+    };
+  }
 
   return { errorMessage: null, success: true };
 };
 
-export const completePasswordResetAction = async (formData: FormData) => {
+export const completePasswordResetAction = async (
+  _prev: CompletePasswordResetState,
+  formData: FormData,
+): Promise<CompletePasswordResetState> => {
   const tokenRaw = String(formData.get("token") ?? "");
 
   const parsed = completeResetSchema.safeParse({
@@ -93,14 +128,9 @@ export const completePasswordResetAction = async (formData: FormData) => {
   });
 
   if (!parsed.success) {
-    const msg = encodeURIComponent(
-      parsed.error.issues[0]?.message ?? "Invalid input.",
-    );
-    const tokenQuery =
-      tokenRaw.length > 0
-        ? `token=${encodeURIComponent(tokenRaw)}&error=${msg}`
-        : `error=${msg}`;
-    redirect(`/reset-password?${tokenQuery}`);
+    return {
+      errorMessage: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
   }
 
   const tokenHash = hashResetToken(parsed.data.token);
@@ -111,9 +141,9 @@ export const completePasswordResetAction = async (formData: FormData) => {
   });
 
   if (!row || row.expiresAt.getTime() < Date.now()) {
-    redirect(
-      "/reset-password?error=This reset link is invalid or has expired.",
-    );
+    return {
+      errorMessage: "This reset link is invalid or has expired.",
+    };
   }
 
   const newPassword = await hashPassword(parsed.data.password);
@@ -127,7 +157,5 @@ export const completePasswordResetAction = async (formData: FormData) => {
     await tx.passwordResetToken.deleteMany({ where: { userId: row.userId } });
   });
 
-  redirect(
-    "/login?success=Your%20password%20was%20updated.%20Sign%20in%20below.",
-  );
+  redirect("/?authView=login&authNotice=password_reset_success");
 };

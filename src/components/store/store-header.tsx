@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   startTransition,
   useCallback,
@@ -30,7 +30,7 @@ import {
   StoreHeaderMobileShopNav,
 } from "@/components/store/store-header-shop-nav";
 import { mobileSignedInGreetingFromUser } from "@/components/store/account-popover-utils";
-import type { AccountPopoverUser } from "@/lib/type/account-popover";
+import type { AccountPopoverUser, GuestView } from "@/lib/type/account-popover";
 import {
   SITE_ARIA_LOGO_HOME,
   SITE_HEADER,
@@ -92,6 +92,7 @@ const HeaderSearchForm = ({
 
 export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openDesktopShopMenuId, setOpenDesktopShopMenuId] = useState<
@@ -102,6 +103,20 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
   >(null);
   const [accountPopoverOpen, setAccountPopoverOpen] = useState(false);
   const [mobileLogoutSuccessOpen, setMobileLogoutSuccessOpen] = useState(false);
+  const [routeAuthSuccessKind, setRouteAuthSuccessKind] = useState<
+    "login" | "register" | null
+  >(null);
+  const [loginNoticeMessage, setLoginNoticeMessage] = useState<string | null>(
+    null,
+  );
+  const [signupUrlError, setSignupUrlError] = useState<string | null>(null);
+  const [initialGuestView, setInitialGuestView] = useState<GuestView>("login");
+  const [resetPasswordToken, setResetPasswordToken] = useState<string | null>(
+    null,
+  );
+  const [resetPasswordUrlError, setResetPasswordUrlError] = useState<
+    string | null
+  >(null);
   const [isMobileLogoutPending, startMobileLogoutTransition] = useTransition();
   const [accountPopoverTriggerOrigin, setAccountPopoverTriggerOrigin] =
     useState<"mobile" | "desktop">("desktop");
@@ -115,12 +130,32 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
 
   const closeAccountPopover = useCallback(() => {
     setAccountPopoverOpen(false);
+    setLoginNoticeMessage(null);
+    setSignupUrlError(null);
+    setInitialGuestView("login");
+    setResetPasswordToken(null);
+    setResetPasswordUrlError(null);
   }, []);
 
   const finalizeMobileLogoutSuccess = useCallback(() => {
     setMobileLogoutSuccessOpen(false);
     router.refresh();
   }, [router]);
+
+  const handleAccountPopoverLogoutSuccess = useCallback(() => {
+    setAccountPopoverOpen(false);
+    setMobileLogoutSuccessOpen(true);
+  }, []);
+
+  const finalizeRouteAuthSuccess = useCallback(() => {
+    setRouteAuthSuccessKind(null);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("authSuccess");
+    const nextUrl =
+      params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(nextUrl, { scroll: false });
+    router.refresh();
+  }, [pathname, router, searchParams]);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -140,8 +175,102 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
   }, [isMenuOpen, closeMenu]);
 
   useEffect(() => {
+    const authSuccess = searchParams.get("authSuccess");
+    if (authSuccess === "login" || authSuccess === "register") {
+      startTransition(() => {
+        setRouteAuthSuccessKind(authSuccess);
+      });
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const authView = searchParams.get("authView");
+    if (authView === "login") {
+      const authNotice = searchParams.get("authNotice");
+      startTransition(() => {
+        setInitialGuestView("login");
+        setSignupUrlError(null);
+        if (!user && authNotice === "password_reset_success") {
+          setLoginNoticeMessage(
+            "Password updated successfully. You can login.",
+          );
+        } else {
+          setLoginNoticeMessage(null);
+        }
+        setResetPasswordToken(null);
+        setResetPasswordUrlError(null);
+        setAccountPopoverTriggerOrigin("desktop");
+        setAccountPopoverOpen(true);
+      });
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("authView");
+      params.delete("authNotice");
+      const nextUrl =
+        params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(nextUrl, { scroll: false });
+      return;
+    }
+
+    if (authView === "signup") {
+      startTransition(() => {
+        setInitialGuestView("signup");
+        setLoginNoticeMessage(null);
+        setSignupUrlError(searchParams.get("error")?.trim() || null);
+        setResetPasswordToken(null);
+        setResetPasswordUrlError(null);
+        setAccountPopoverTriggerOrigin("desktop");
+        setAccountPopoverOpen(true);
+      });
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("authView");
+      params.delete("error");
+      const nextUrl =
+        params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(nextUrl, { scroll: false });
+      return;
+    }
+
+    if (authView === "reset-password") {
+      const tokenFromUrl = searchParams.get("token")?.trim() || null;
+      startTransition(() => {
+        setInitialGuestView(tokenFromUrl ? "reset" : "forgot");
+        setLoginNoticeMessage(null);
+        setSignupUrlError(null);
+        if (!user) {
+          setResetPasswordToken(tokenFromUrl);
+          setResetPasswordUrlError(searchParams.get("error")?.trim() || null);
+        } else {
+          setResetPasswordToken(null);
+          setResetPasswordUrlError(null);
+        }
+        setAccountPopoverTriggerOrigin("desktop");
+        setAccountPopoverOpen(true);
+      });
+
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("authView");
+      params.delete("token");
+      params.delete("error");
+      const nextUrl =
+        params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [pathname, router, searchParams, user]);
+
+  /** Route changes only — do not depend on `user`. After profile/password update,
+   * `router.refresh()` updates `user` and must not close the account dialog. */
+  useEffect(() => {
     startTransition(() => {
-      setAccountPopoverOpen(false);
+      const shouldKeepAuthPopoverOpen =
+        typeof window !== "undefined" &&
+        ["login", "signup", "reset-password"].includes(
+          new URLSearchParams(window.location.search).get("authView") ?? "",
+        );
+      if (!shouldKeepAuthPopoverOpen) {
+        setAccountPopoverOpen(false);
+      }
       setIsMenuOpen(false);
       setOpenDesktopShopMenuId(null);
       setMobileShopExpandedId(null);
@@ -392,6 +521,12 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
               isLoggedIn={!!user}
               user={user}
               isAdmin={isAdmin}
+              initialGuestView={initialGuestView}
+              loginNoticeMessage={loginNoticeMessage}
+              signupUrlError={signupUrlError}
+              resetPasswordToken={resetPasswordToken}
+              resetPasswordUrlError={resetPasswordUrlError}
+              onLogoutSuccess={handleAccountPopoverLogoutSuccess}
               onClose={closeAccountPopover}
               onNavigate={closeAccountPopover}
               triggerRef={
@@ -504,6 +639,15 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
         title={SITE_HEADER.accountLogoutSuccessTitle}
         message={SITE_HEADER.accountLogoutSuccessMessage}
         titleAccent="wave"
+      />
+      <StoreAuthSuccessDialog
+        isOpen={routeAuthSuccessKind !== null}
+        onDismiss={finalizeRouteAuthSuccess}
+        message={
+          routeAuthSuccessKind === "register"
+            ? SITE_HEADER.accountAuthSuccessMessageAfterRegister
+            : SITE_HEADER.accountAuthSuccessMessage
+        }
       />
     </>
   );

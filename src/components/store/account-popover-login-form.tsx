@@ -14,7 +14,7 @@ import {
   googleLoginBtnClass,
   submitClass,
 } from "@/components/store/account-popover-styles";
-import { FormInputField } from "@/components/ui/form-input-field";
+import { LoginCredentialsFields } from "@/components/auth/login-credentials-fields";
 import { StoreBrandTextLink } from "@/components/ui/store-brand-text-link";
 import { SITE_HEADER, SITE_ROUTES } from "@/lib/config/site-config";
 
@@ -22,6 +22,7 @@ export type AccountPopoverLoginFormProps = {
   titleId: string;
   onSignedIn: () => void;
   defaultEmail?: string;
+  initialSuccessMessage?: string | null;
   onForgotPassword: () => void;
   onGoSignup: () => void;
 };
@@ -30,15 +31,17 @@ export const AccountPopoverLoginForm = ({
   titleId,
   onSignedIn,
   defaultEmail = "",
+  initialSuccessMessage = null,
   onForgotPassword,
   onGoSignup,
 }: AccountPopoverLoginFormProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(true);
 
   const dismissError = () => {
     setError(null);
+    setShowSuccess(false);
   };
 
   const handleSubmit = async (formData: FormData) => {
@@ -96,6 +99,15 @@ export const AccountPopoverLoginForm = ({
         {SITE_HEADER.accountPopoverWelcomeTitle}
       </p>
 
+      {initialSuccessMessage && showSuccess ? (
+        <p
+          className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-700"
+          role="status"
+        >
+          {initialSuccessMessage}
+        </p>
+      ) : null}
+
       {error ? (
         <p
           className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700"
@@ -109,42 +121,20 @@ export const AccountPopoverLoginForm = ({
         className={guestAuthFormClass}
         onSubmit={async (e) => {
           e.preventDefault();
+          setShowSuccess(false);
           const fd = new FormData(e.currentTarget);
           await handleSubmit(fd);
         }}
       >
-        <FormInputField
-          label="Email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          defaultValue={defaultEmail}
-          onChange={dismissError}
+        <LoginCredentialsFields
+          defaultEmail={defaultEmail}
+          onAnyFieldChange={dismissError}
+          forgotPasswordControl={
+            <StoreBrandTextLink type="button" onClick={onForgotPassword}>
+              {SITE_HEADER.accountPopoverForgotPasswordCta}
+            </StoreBrandTextLink>
+          }
         />
-        <FormInputField
-          label="Password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          minLength={8}
-          required
-          onChange={dismissError}
-        />
-        <div className="flex items-center justify-between gap-2">
-          <label className="inline-flex items-center gap-2 text-sm text-neutral-700">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-neutral-300 text-[var(--store-brand-primary)] focus:ring-[var(--store-brand-primary)]"
-            />
-            Remember me
-          </label>
-          <StoreBrandTextLink type="button" onClick={onForgotPassword}>
-            {SITE_HEADER.accountPopoverForgotPasswordCta}
-          </StoreBrandTextLink>
-        </div>
         <button type="submit" className={submitClass} disabled={isPending}>
           {isPending ? "Signing in…" : SITE_HEADER.loginCta}
         </button>

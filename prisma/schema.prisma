@@ -51,6 +51,22 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+/** Pending registration: OTP sent to email; user row is created only after successful verify. */
+model SignupOtpChallenge {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  codeHash     String
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String
+  expiresAt    DateTime
+  attemptCount Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
 model Category {
   id            String                 @id @default(cuid())
   name          String

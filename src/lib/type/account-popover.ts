@@ -15,9 +15,15 @@ export type AccountPopoverProps = {
   isLoggedIn: boolean;
   user: AccountPopoverUser | null;
   isAdmin: boolean;
+  initialGuestView?: GuestView;
+  loginNoticeMessage?: string | null;
+  signupUrlError?: string | null;
+  resetPasswordToken?: string | null;
+  resetPasswordUrlError?: string | null;
+  onLogoutSuccess?: () => void;
   onClose: () => void;
   onNavigate?: () => void;
   triggerRef: RefObject<HTMLElement | null>;
 };
 
-export type GuestView = "login" | "signup" | "forgot";
+export type GuestView = "login" | "signup" | "forgot" | "reset";

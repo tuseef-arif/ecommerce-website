@@ -42,14 +42,12 @@ const SITE_DEFAULTS = {
     home: "/",
     login: "/login",
     register: "/register",
+    registerVerifyEmail: "/register/verify-email",
     resetPassword: "/reset-password",
     cart: "/cart",
     contact: "/contact",
     admin: "/admin",
-    /** Account menu — wire pages when available */
-    accountProfile: "/account/profile",
     accountOrders: "/account/orders",
-    accountSettings: "/account/settings",
   },
   /**
    * Public marketing/auth pages — edit per white-label client (no copy in TSX).
@@ -61,8 +59,8 @@ const SITE_DEFAULTS = {
     },
     login: {
       intro: "Sign in with your email and password.",
-      noAccountPrefix: "No account yet?",
-      registerCta: "Create one",
+      noAccountPrefix: "Don't have an account?",
+      registerCta: "Sign Up",
       /** `{business}` is replaced with `STORE_BUSINESS_NAME` for metadata. */
       metaDescription: "Sign in to {business}.",
       fieldEmailLabel: "Email",
@@ -70,13 +68,25 @@ const SITE_DEFAULTS = {
     },
     register: {
       heading: "Create account",
-      intro: "Register to start shopping.",
+      intro:
+        "Register to start shopping. We will email you a 6-digit code to confirm your address.",
       phonePlaceholder: "e.g. +92 300 1234567",
       confirmPasswordLabel: "Confirm password",
       submitCta: "Register",
       hasAccountPrefix: "Already have an account?",
       loginLinkCta: "Log In",
       metaDescription: "Create an account at {business}.",
+    },
+    registerVerifyEmail: {
+      heading: "Check your email",
+      intro:
+        "We sent a 6-digit verification code to your inbox. Enter it below to finish creating your account. Check your inbox/spam folders.",
+      codeLabel: "Verification code",
+      codeHint: "6 digits, no spaces.",
+      submitCta: "Verify and create account",
+      backToRegisterCta: "Start over",
+      metaDescription:
+        "Confirm your email to finish registering at {business}.",
     },
   },
   header: {
@@ -89,7 +99,6 @@ const SITE_DEFAULTS = {
     mobileNavDialogAria: "Main navigation",
     mobileNavSecondaryAria: "Mobile",
     accountAriaSignedIn: "Account",
-    accountAriaSignedOut: "Sign in",
     accountMenuButtonSignedOutAria: "Open account menu",
     loginCta: "Login",
     loginPageInvalidCredentials: "Invalid email or password.",
@@ -112,18 +121,22 @@ const SITE_DEFAULTS = {
     accountPopoverSignupHeading: "Create Account",
     accountPopoverSignupPasswordHelp: "Enter your details",
     accountSheetCloseAria: "Close account menu",
-    accountNavProfile: "My Profile",
-    accountNavOrders: "Orders",
-    accountNavSettings: "Settings",
-    accountNavMenuAria: "Account links",
     accountPopoverSignedInEditHeading: "Edit Profile",
     accountPopoverEditProfileCta: "Edit Profile",
+    accountPopoverUpdatePasswordCta: "Update Password",
     accountPopoverViewOrdersCta: "View Orders",
     accountPopoverPhoneEmpty: "No phone on file",
-    accountPopoverSaveProfileCta: "Save",
+    accountPopoverSaveProfileCta: "Update",
     accountPopoverCancelEditCta: "Cancel",
+    accountPopoverPasswordUpdateHeading: "Update Password",
+    accountPopoverOldPasswordLabel: "Current Password",
+    accountPopoverNewPasswordLabel: "New Password",
+    accountPopoverConfirmNewPasswordLabel: "Confirm New Password",
+    accountPopoverSavePasswordCta: "Update",
+    accountPopoverDetailsUpdatedMessage: "Details have been updated.",
     accountPopoverFirstNameLabel: "First name",
     accountPopoverLastNameLabel: "Last name",
+    accountPopoverManageSettingsLine: "Manage your account settings.",
     accountPopoverPhoneLabel: "Phone number",
     accountPopoverProfileUpdateError: "Could not save your profile. Try again.",
     accountPopoverForgotPasswordCta: "Forgot password?",
@@ -137,7 +150,7 @@ const SITE_DEFAULTS = {
     accountPopoverLoginLinkCta: "Log In",
     accountPopoverGoogleLoginCta: "Log in with Google",
     accountPopoverResetEmailSent:
-      "If an account exists for that email, we've sent password reset instructions. Check your inbox.",
+      "If an account exists for that email, we've sent password reset instructions. Check your inbox/spam folders.",
     accountPopoverBackToLogin: "Back to log in",
     /** Post-login / post-register confirmation sheet */
     accountAuthSuccessTitle: "Oh Yeah!",
@@ -160,16 +173,6 @@ const SITE_DEFAULTS = {
       "Visa, Mastercard, and other accepted payment methods",
     phoneFallbackLink: "Phone & directions — Contact",
     emailFallbackLink: "Email us via Contact",
-  },
-  contactPage: {
-    title: "Contact",
-    intro: "Visit us in store or reach us by phone or email.",
-    dtHours: "Hours",
-    dtAddress: "Address",
-    dtPhone: "Phone",
-    dtEmail: "Email",
-    openInMaps: "Open location in Google Maps",
-    backHome: "Back to home",
   },
   socialLabels: {
     whatsapp: "WhatsApp",
@@ -240,7 +243,6 @@ const SITE_DEFAULTS = {
     },
   ],
   social: {
-    facebook: "",
     instagram: "https://www.instagram.com/five_star_mobile",
     youtube: "https://www.youtube.com/@five_star_mobile",
     tiktok: "https://www.tiktok.com/@five_star_mobile",
@@ -301,11 +303,12 @@ export const SITE_LOGIN_PAGE = SITE_DEFAULTS.publicPages.login;
 
 export const SITE_REGISTER_PAGE = SITE_DEFAULTS.publicPages.register;
 
+export const SITE_REGISTER_VERIFY_PAGE =
+  SITE_DEFAULTS.publicPages.registerVerifyEmail;
+
 export const SITE_HEADER = SITE_DEFAULTS.header;
 
 export const SITE_FOOTER = SITE_DEFAULTS.footer;
-
-export const SITE_CONTACT_PAGE = SITE_DEFAULTS.contactPage;
 
 export const SITE_SOCIAL_LABELS = SITE_DEFAULTS.socialLabels;
 
@@ -320,8 +323,6 @@ export const SITE_ARIA_LOGO_HOME = `${STORE_BUSINESS_NAME} home`;
 export const SITE_MAP_IFRAME_TITLE = `${STORE_BUSINESS_NAME} on Google Maps`;
 
 // --- Social URLs ---
-
-export const STORE_SOCIAL_FACEBOOK = SITE_DEFAULTS.social.facebook;
 
 export const STORE_SOCIAL_INSTAGRAM = SITE_DEFAULTS.social.instagram;
 

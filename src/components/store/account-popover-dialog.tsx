@@ -13,6 +13,7 @@ import {
 import { ACCOUNT_POPOVER_ELEMENT_ID } from "@/components/store/account-popover-constants";
 import { AccountPopoverForgotPasswordForm } from "@/components/store/account-popover-forgot-password-form";
 import { AccountPopoverLoginForm } from "@/components/store/account-popover-login-form";
+import { AccountPopoverResetPasswordForm } from "@/components/store/account-popover-reset-password-form";
 import { AccountPopoverSignupForm } from "@/components/store/account-popover-signup-form";
 import { AccountPopoverSignedInMenu } from "@/components/store/account-popover-signed-in-menu";
 import { StoreAuthSuccessDialog } from "@/components/store/store-auth-success-dialog";
@@ -33,6 +34,12 @@ export const AccountPopover = ({
   isLoggedIn,
   user,
   isAdmin,
+  initialGuestView = "login",
+  loginNoticeMessage = null,
+  signupUrlError = null,
+  resetPasswordToken = null,
+  resetPasswordUrlError = null,
+  onLogoutSuccess,
   onClose,
   onNavigate,
   triggerRef,
@@ -45,7 +52,6 @@ export const AccountPopover = ({
   const [loginEmailHint, setLoginEmailHint] = useState("");
   const [forgotFormKey, setForgotFormKey] = useState(0);
   const [authSuccessOpen, setAuthSuccessOpen] = useState(false);
-  const [logoutSuccessOpen, setLogoutSuccessOpen] = useState(false);
 
   const handleNavigate = useCallback(() => {
     onNavigate?.();
@@ -59,33 +65,30 @@ export const AccountPopover = ({
     router.refresh();
   }, [onClose, onNavigate, router]);
 
-  const finalizeLogoutSuccess = useCallback(() => {
-    setLogoutSuccessOpen(false);
-    onNavigate?.();
-    onClose();
-    router.refresh();
-  }, [onClose, onNavigate, router]);
-
   const handleSignedIn = useCallback(() => {
     setAuthSuccessOpen(true);
   }, []);
 
   const handleLogoutSuccess = useCallback(() => {
-    setLogoutSuccessOpen(true);
-  }, []);
+    onClose();
+    onLogoutSuccess?.();
+  }, [onClose, onLogoutSuccess]);
 
   useEffect(() => {
     if (!isOpen) return;
     queueMicrotask(() => {
-      setGuestView("login");
+      if (resetPasswordToken) {
+        setGuestView("reset");
+        return;
+      }
+      setGuestView(initialGuestView);
       setLoginEmailHint("");
       setForgotFormKey(0);
       setAuthSuccessOpen(false);
-      setLogoutSuccessOpen(false);
     });
-  }, [isOpen]);
+  }, [isOpen, resetPasswordToken, initialGuestView]);
 
-  const successSheetOpen = authSuccessOpen || logoutSuccessOpen;
+  const successSheetOpen = authSuccessOpen;
 
   useLayoutEffect(() => {
     if (!isOpen || successSheetOpen || !panelRef.current) return;
@@ -138,11 +141,11 @@ export const AccountPopover = ({
   if (!isOpen) return null;
 
   const cardSurfaceClass =
-    "rounded-2xl border border-neutral-200 bg-white p-5 text-neutral-900 shadow-lg ring-1 ring-black/5 md:p-6";
+    "flex max-h-[calc(100dvh-2rem)] min-h-[30rem] flex-col overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-5 text-neutral-900 shadow-lg ring-1 ring-black/5 md:min-h-[34rem] md:p-6";
 
   const guestBody = !isLoggedIn ? (
-    <div className="flex w-full flex-col">
-      <div className="flex flex-1 flex-col items-center pt-2">
+    <div className="flex min-h-full w-full flex-1 flex-col justify-center py-4">
+      <div className="flex flex-1 flex-col items-center justify-center">
         <div className="w-full max-w-sm">
           {guestView === "login" ? (
             <AccountPopoverLoginForm
@@ -150,6 +153,7 @@ export const AccountPopover = ({
               key={loginEmailHint || "login-default"}
               onSignedIn={handleSignedIn}
               defaultEmail={loginEmailHint}
+              initialSuccessMessage={loginNoticeMessage}
               onForgotPassword={() => {
                 setForgotFormKey((k) => k + 1);
                 setGuestView("forgot");
@@ -160,6 +164,7 @@ export const AccountPopover = ({
           {guestView === "signup" ? (
             <AccountPopoverSignupForm
               titleId={titleId}
+              initialUrlError={signupUrlError}
               onSignedIn={handleSignedIn}
               onNeedManualLogin={(email) => {
                 setLoginEmailHint(email);
@@ -175,6 +180,14 @@ export const AccountPopover = ({
               onGoLogin={() => setGuestView("login")}
             />
           ) : null}
+          {guestView === "reset" ? (
+            <AccountPopoverResetPasswordForm
+              titleId={titleId}
+              token={resetPasswordToken}
+              initialUrlError={resetPasswordUrlError}
+              onGoLogin={() => setGuestView("login")}
+            />
+          ) : null}
         </div>
       </div>
     </div>
@@ -182,13 +195,15 @@ export const AccountPopover = ({
 
   const signedInBody =
     isLoggedIn && user ? (
-      <AccountPopoverSignedInMenu
-        user={user}
-        titleId={titleId}
-        isAdmin={isAdmin}
-        onNavigate={handleNavigate}
-        onLogoutSuccess={handleLogoutSuccess}
-      />
+      <div className="flex min-h-full w-full flex-1 flex-col justify-center py-4">
+        <AccountPopoverSignedInMenu
+          user={user}
+          titleId={titleId}
+          isAdmin={isAdmin}
+          onNavigate={handleNavigate}
+          onLogoutSuccess={handleLogoutSuccess}
+        />
+      </div>
     ) : null;
 
   const inner = (
@@ -226,13 +241,6 @@ export const AccountPopover = ({
             : undefined
         }
       />
-      <StoreAuthSuccessDialog
-        isOpen={logoutSuccessOpen}
-        onDismiss={finalizeLogoutSuccess}
-        title={SITE_HEADER.accountLogoutSuccessTitle}
-        message={SITE_HEADER.accountLogoutSuccessMessage}
-        titleAccent="wave"
-      />
       {!successSheetOpen ? (
         <div className="fixed inset-0 z-[70]" role="presentation">
           <button
@@ -241,7 +249,7 @@ export const AccountPopover = ({
             aria-label={SITE_HEADER.accountSheetCloseAria}
             onClick={onClose}
           />
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4 py-[max(1rem,env(safe-area-inset-top))]">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
             <div className="pointer-events-auto w-full max-w-md md:max-w-lg">
               {inner}
             </div>

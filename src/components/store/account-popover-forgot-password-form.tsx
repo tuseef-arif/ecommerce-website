@@ -11,7 +11,6 @@ import {
 import { requestPasswordResetInlineAction } from "@/app/(auth)/password-reset-actions";
 import { requestPasswordResetPopoverInitialState } from "@/app/(auth)/password-reset-popover-state";
 import { FormInputField } from "@/components/ui/form-input-field";
-import { StoreBrandTextLink } from "@/components/ui/store-brand-text-link";
 import { SITE_HEADER } from "@/lib/config/site-config";
 
 export type AccountPopoverForgotPasswordFormProps = {
@@ -51,9 +50,9 @@ export const AccountPopoverForgotPasswordForm = ({
           <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
             {SITE_HEADER.accountPopoverResetEmailSent}
           </p>
-          <StoreBrandTextLink type="button" onClick={onGoLogin}>
+          <button type="button" className={submitClass} onClick={onGoLogin}>
             {SITE_HEADER.accountPopoverBackToLogin}
-          </StoreBrandTextLink>
+          </button>
         </div>
       ) : (
         <>

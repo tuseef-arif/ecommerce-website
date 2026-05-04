@@ -1,38 +1,28 @@
-type SendResult = { ok: boolean };
+import {
+  sendTransactionalHtmlEmail,
+  type MailSendResult,
+} from "@/lib/auth/mail-transport";
 
 /**
- * Sends a password reset email via [Resend](https://resend.com) when
- * `RESEND_API_KEY` and `PASSWORD_RESET_EMAIL_FROM` are set.
- * Fails closed (returns ok: false) without throwing.
+ * Sends a password reset email via Resend or SMTP (see `EMAIL_PROVIDER` in `mail-transport.ts`).
  */
 export const sendPasswordResetEmail = async (opts: {
   to: string;
   resetUrl: string;
-}): Promise<SendResult> => {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.PASSWORD_RESET_EMAIL_FROM?.trim();
+}): Promise<MailSendResult> => {
+  const from =
+    process.env.PASSWORD_RESET_EMAIL_FROM?.trim() ||
+    process.env.SMTP_FROM?.trim() ||
+    "";
 
-  if (!apiKey || !from) {
-    return { ok: false };
-  }
+  const href = opts.resetUrl.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  const html = `<p>We received a request to reset your password.</p><p><a href="${href}">Choose a new password</a></p><p>This link expires in one hour.</p>`;
 
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from,
-        to: [opts.to],
-        subject: "Reset Password",
-        html: `<p>We received a request to reset your password.</p><p><a href="${opts.resetUrl.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}">Choose a new password</a></p><p>This link expires in one hour.</p>`,
-      }),
-    });
-
-    return { ok: res.ok };
-  } catch {
-    return { ok: false };
-  }
+  return sendTransactionalHtmlEmail({
+    to: opts.to,
+    from,
+    subject: "Reset Password",
+    html,
+    logTag: "sendPasswordResetEmail",
+  });
 };

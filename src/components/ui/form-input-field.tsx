@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from "react";
+import type { InputHTMLAttributes, RefObject } from "react";
 
 type FormInputFieldProps = {
   label: string;
@@ -6,6 +6,7 @@ type FormInputFieldProps = {
   wrapperClassName?: string;
   labelClassName?: string;
   inputClassName?: string;
+  inputRef?: RefObject<HTMLInputElement | null>;
 } & InputHTMLAttributes<HTMLInputElement>;
 
 const defaultInputClassName =
@@ -18,6 +19,7 @@ export const FormInputField = ({
   wrapperClassName = "",
   labelClassName = "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 bg-white px-1 text-sm text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:text-neutral-600",
   inputClassName = defaultInputClassName,
+  inputRef,
   className,
   id,
   ...inputProps
@@ -25,6 +27,7 @@ export const FormInputField = ({
   <label className={`relative block ${wrapperClassName}`.trim()}>
     <input
       {...inputProps}
+      ref={inputRef}
       id={id ?? name}
       name={name}
       type={type}

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { signupPasswordSchema } from "@/lib/validation/signup-password-schema";
 
 /** Single given/family name — typical form cap; blocks oversized input. */
 const NAME_FIELD_MAX_LENGTH = 50;
@@ -36,10 +37,7 @@ export const registerAccountSchema = z
           .min(10, "Enter a valid phone number (at least 10 digits).")
           .max(15, "Phone number is too long."),
       ),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters long.")
-      .max(72, "Password is too long."),
+    password: signupPasswordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

@@ -1,5 +1,5 @@
 ---
-description: Performance, reliability, and production-readiness standards
+description: Performance, reliability, production-readiness, and reusable UI/data patterns
 alwaysApply: true
 ---
 
@@ -16,3 +16,12 @@ alwaysApply: true
 - Validate required environment variables at runtime; fail fast instead of allowing silent misconfiguration.
 - Prefer structured server-side logging and error reporting (for example Sentry/Axiom patterns already used in the codebase).
 - For major UI/data changes, include a measurement plan (Lighthouse and/or bundle analysis).
+
+# Reusability and composition
+
+- Prefer reusable components and shared helpers over copy-paste: parameterize with props, `children`, and composition (slots/wrappers) instead of near-duplicate files.
+- Before adding a new component, search the codebase for existing primitives, layouts, and patterns (`src/components/ui`, shared store chrome, `cn()`, tokens) and extend them when they fit.
+- Extract repeated UI or logic into small, focused units with clear props and stable boundaries; avoid mega-components that mix unrelated concerns.
+- Place shared UI in obvious shared locations; keep route- or feature-specific pieces colocated until a second real use case justifies promotion.
+- Reuse data-access and formatting utilities across routes and actions; centralize constants and Zod schemas at trust boundaries rather than redefining shapes inline.
+- Balance DRY with clarity: do not abstract one-off or unstable patterns prematurely; refactor to reuse once the shape of the API is proven in two or more call sites.

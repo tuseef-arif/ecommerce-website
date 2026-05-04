@@ -31,7 +31,7 @@ const main = async () => {
   });
 
   const categories = [
-    { name: "Smartphones", slug: "smartphones" },
+    { name: "Mobiles", slug: "smartphones" },
     { name: "Accessories", slug: "accessories" },
     { name: "Wearables", slug: "wearables" },
   ];

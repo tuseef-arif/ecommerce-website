@@ -69,7 +69,7 @@ Day 3 progress (2026-05-01):
 - [x] Add Auth.js with credentials provider.
 - [x] Implement registration + login pages.
 - [x] Hash passwords securely.
-- [ ] Exit criteria: user can register and log in.
+- [x] Exit criteria: user can register and log in.
 
 Day 4 progress (2026-05-02):
 
@@ -77,17 +77,41 @@ Day 4 progress (2026-05-02):
 - Added Auth.js credentials setup in `src/auth.ts` and API handlers at `src/app/api/auth/[...nextauth]/route.ts`.
 - Added secure password utilities in `src/lib/password.ts` with bcrypt hashing and legacy scrypt verification fallback.
 - Implemented validated registration flow in `src/app/(auth)/register/actions.ts` + `src/app/(auth)/register/page.tsx`.
-- Implemented validated login flow in `src/app/(auth)/login/actions.ts` + `src/app/(auth)/login/page.tsx`.
-- Updated home page to reflect authenticated state and added server-side logout action.
+- Implemented validated login flow in `src/app/(auth)/login/login-form.tsx` + `src/app/(auth)/login/page.tsx`.
+- Updated home page (`src/app/(shop)/page.tsx`) to reflect authenticated state and added server-side logout action in `src/app/(shop)/actions.ts`.
 - Seed now hashes admin password with bcrypt for consistency with login verification.
 - Reorganized routes into App Router route groups: `src/app/(shop)`, `src/app/(auth)`, and `src/app/(admin)`.
 
-### Day 5: Role-Based Access Control
+### Day 5: Role-Based Access Control and Storefront Shell
 
-- Add `ADMIN` and `USER` roles.
-- Implement server-side guards (`requireUser`, `requireAdmin`).
-- Protect admin routes and actions.
-- Exit criteria: non-admin cannot access admin actions/routes.
+- [x] Add `ADMIN` and `USER` roles.
+- [x] Implement server-side guards (`requireUser`, `requireAdmin`).
+- [x] Protect admin routes and actions.
+- [x] Store header and navigation (logo, links, search, account/cart entry points, responsive behavior).
+- [x] Store footer (gradient bar, contact and payment blocks, embedded map, copyright strip).
+- [x] Hero banner (carousel, swipe/touch, reduced-motion handling, product slides from config).
+- [x] Category slider (horizontal strip, arrow-controlled scroll, snap/scroll behavior).
+- [x] Full-width responsive shop layout (shared `STORE_SHELL` padding, no narrow `max-w-*` gutters on main shop chrome).
+- [x] Application design and color scheme for the public shop (consistent blues/oranges, cards, typography, and component polish).
+- Exit criteria: non-admin cannot access admin actions/routes; shop pages use the shared shell and look coherent from header through footer on common viewport sizes.
+
+Day 5 progress (2026-05-02):
+
+- Added server-side guard utilities in `src/lib/auth-guards.ts`.
+- Added admin route protection via `src/app/(admin)/admin/layout.tsx` and `src/app/(admin)/admin/page.tsx`.
+- Added admin-only server action in `src/app/(admin)/admin/actions.ts` protected by `requireAdmin` and validated with Zod.
+- Implemented store chrome in `src/components/store/store-header.tsx` and `src/components/store/store-footer.tsx` (including map, social, and payment areas); adjusted footer bar spacing in `src/app/globals.css` where needed.
+- Built hero experience in `src/components/store/hero-banner.tsx` with phone data in `src/lib/hero-phones.ts` and related copy in `src/lib/site-config.ts`.
+- Built category navigation in `src/components/store/category-slider.tsx` with shared slider arrow styling in `src/components/store/store-slider-arrows.tsx`.
+- Centralized full-width shop horizontal padding via `STORE_SHELL` in `src/lib/site-config.ts` and applied it across header, footer, hero, category strip, and shop `main` routes under `src/app/(shop)/`.
+- Expanded account flows in the header popover: login + sign-up UX hardening, forgot-password request, and reset-password completion flow.
+- Added password reset server actions and DB-backed reset token lifecycle (issue, verify, expire, consume) in `src/app/(auth)/password-reset-actions.ts`.
+- Added account profile CRUD capabilities (view/update profile fields and profile image path handling) integrated into store account popover interactions.
+- Added profile photo upload support with persisted file paths and storefront account avatar/menu updates.
+- Refined account popover architecture by splitting constants, styles, helpers, dialog, and form components for maintainability.
+- Updated auth email delivery and templates for sign-up OTP and password reset mails (`src/lib/auth/signup-otp-email.ts`, `src/lib/auth/password-reset-email.ts`, and mail transport refinements).
+- Added and wired supporting auth modules for sign-up OTP and password reset flows (`src/lib/auth/signup-otp-service.ts`, `src/lib/auth/password-reset-email.ts`, `src/lib/auth/signup-otp-email.ts`).
+- Added global styling updates in `src/app/globals.css` to support the expanded auth/account and profile UI states.
 
 ## Milestone 3 - Admin Operations (Days 6-8)
 

@@ -14,12 +14,14 @@ const applyProfileFieldsToToken = (
     lastName: string | null;
     phone: string | null;
     role: UserRole;
+    profileImagePath: string | null;
   },
 ) => {
   token.role = row.role;
   token.firstName = row.firstName;
   token.lastName = row.lastName;
   token.phone = row.phone;
+  token.profileImagePath = row.profileImagePath;
   const full = [row.firstName, row.lastName]
     .map((s) => s?.trim())
     .filter((s): s is string => Boolean(s && s.length > 0))
@@ -87,6 +89,7 @@ export const authOptions: NextAuthOptions = {
           firstName: user.firstName,
           lastName: user.lastName,
           phone: user.phone,
+          profileImagePath: user.profileImagePath,
         };
       },
     }),
@@ -102,6 +105,7 @@ export const authOptions: NextAuthOptions = {
             lastName: true,
             phone: true,
             role: true,
+            profileImagePath: true,
           },
         });
 
@@ -131,6 +135,7 @@ export const authOptions: NextAuthOptions = {
             lastName: true,
             phone: true,
             role: true,
+            profileImagePath: true,
           },
         });
         if (dbUser) {
@@ -157,6 +162,7 @@ export const authOptions: NextAuthOptions = {
         session.user.firstName = token.firstName ?? null;
         session.user.lastName = token.lastName ?? null;
         session.user.phone = token.phone ?? null;
+        session.user.profileImagePath = token.profileImagePath ?? null;
       }
 
       return session;

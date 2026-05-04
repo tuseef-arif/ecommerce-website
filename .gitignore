@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Runtime user profile uploads (keep folder via .gitkeep)
+/public/uploads/profile-images/*
+!/public/uploads/profile-images/.gitkeep

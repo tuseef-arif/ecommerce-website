@@ -1,12 +1,22 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import {
   clearSessionCookiesAction,
   updateAccountProfileAction,
   updateAccountPasswordAction,
+  uploadAccountProfileImageAction,
+  type UploadAccountProfileImageResult,
 } from "@/app/(shop)/actions";
 import {
   googleLoginBtnFullWidthClass,
@@ -20,6 +30,7 @@ import {
 import { FormInputField } from "@/components/ui/form-input-field";
 import { PasswordInputField } from "@/components/ui/password-input-field";
 import { SITE_HEADER, SITE_ROUTES } from "@/lib/config/site-config";
+import { PROFILE_IMAGE_MAX_BYTES } from "@/lib/validate-profile-image";
 import { IconMail, IconPhone } from "@/components/icons";
 import {
   SIGNUP_PASSWORD_FIELD_TITLE,
@@ -43,6 +54,9 @@ export const AccountPopoverSignedInMenu = ({
   onLogoutSuccess,
 }: AccountPopoverSignedInMenuProps) => {
   const router = useRouter();
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const imageUploadLockRef = useRef(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isPasswordEditing, setIsPasswordEditing] = useState(false);
   const [firstName, setFirstName] = useState(user.firstName?.trim() ?? "");
@@ -54,6 +68,7 @@ export const AccountPopoverSignedInMenu = ({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showDetailsUpdatedFlash, setShowDetailsUpdatedFlash] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isImageUploadPending, startImageUploadTransition] = useTransition();
 
   useEffect(() => {
     if (!showDetailsUpdatedFlash) return;
@@ -94,6 +109,7 @@ export const AccountPopoverSignedInMenu = ({
     setLastName(user.lastName?.trim() ?? "");
     setPhone(user.phone?.trim() ?? "");
     setSaveError(null);
+    setImageUploadError(null);
     setIsPasswordEditing(false);
     setIsEditing(true);
   };
@@ -103,6 +119,7 @@ export const AccountPopoverSignedInMenu = ({
     setLastName(user.lastName?.trim() ?? "");
     setPhone(user.phone?.trim() ?? "");
     setSaveError(null);
+    setImageUploadError(null);
     setIsEditing(false);
   };
 
@@ -111,6 +128,7 @@ export const AccountPopoverSignedInMenu = ({
     setNewPassword("");
     setConfirmNewPassword("");
     setSaveError(null);
+    setImageUploadError(null);
     setIsEditing(false);
     setIsPasswordEditing(true);
   };
@@ -120,6 +138,7 @@ export const AccountPopoverSignedInMenu = ({
     setNewPassword("");
     setConfirmNewPassword("");
     setSaveError(null);
+    setImageUploadError(null);
     setIsPasswordEditing(false);
   };
 
@@ -128,6 +147,56 @@ export const AccountPopoverSignedInMenu = ({
       const result = await clearSessionCookiesAction();
       if (result.ok) {
         onLogoutSuccess();
+      }
+    });
+  };
+
+  const handleProfileImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    if (!file) {
+      input.value = "";
+      return;
+    }
+
+    if (imageUploadLockRef.current) {
+      input.value = "";
+      return;
+    }
+
+    if (file.size > PROFILE_IMAGE_MAX_BYTES) {
+      setImageUploadError(SITE_HEADER.accountPopoverProfileImageTooLarge);
+      input.value = "";
+      return;
+    }
+
+    input.value = "";
+    setImageUploadError(null);
+    imageUploadLockRef.current = true;
+
+    startImageUploadTransition(async () => {
+      try {
+        const fd = new FormData();
+        fd.append("profileImage", file);
+        let result: UploadAccountProfileImageResult;
+        try {
+          result = await uploadAccountProfileImageAction(fd);
+        } catch {
+          setImageUploadError(
+            SITE_HEADER.accountPopoverProfileImageUploadNetworkError,
+          );
+          return;
+        }
+        if (!result.ok) {
+          setImageUploadError(result.error);
+          return;
+        }
+        setShowDetailsUpdatedFlash(true);
+        queueMicrotask(() => {
+          router.refresh();
+        });
+      } finally {
+        imageUploadLockRef.current = false;
       }
     });
   };
@@ -343,13 +412,66 @@ export const AccountPopoverSignedInMenu = ({
               </p>
             ) : null}
 
-            <div className="relative mx-auto w-fit">
-              <div
-                className="flex h-28 w-28 items-center justify-center rounded-full bg-[var(--store-brand-primary)] text-2xl font-bold text-white"
-                aria-hidden
+            {imageUploadError ? (
+              <p
+                className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700"
+                role="alert"
               >
-                {avatarInitials}
-              </div>
+                {imageUploadError}
+              </p>
+            ) : null}
+
+            <div className="relative mx-auto h-28 w-28 shrink-0">
+              <input
+                ref={profileImageInputRef}
+                type="file"
+                name="profileImage"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                tabIndex={-1}
+                disabled={isImageUploadPending}
+                onChange={handleProfileImageChange}
+              />
+              {user.profileImagePath ? (
+                <Image
+                  key={user.profileImagePath}
+                  src={user.profileImagePath}
+                  alt={`${displayLine} profile photo`}
+                  width={112}
+                  height={112}
+                  className="h-full w-full rounded-full object-cover ring-2 ring-white shadow-sm"
+                  unoptimized
+                />
+              ) : (
+                <div
+                  className="flex h-full w-full items-center justify-center rounded-full bg-[var(--store-brand-primary)] text-2xl font-bold text-white ring-2 ring-white shadow-sm"
+                  aria-hidden
+                >
+                  {avatarInitials}
+                </div>
+              )}
+              <button
+                type="button"
+                className="absolute -bottom-0.5 -right-0.5 flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-md transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isPending || isImageUploadPending}
+                aria-label={SITE_HEADER.accountPopoverChangeProfilePhotoAria}
+                onClick={() => profileImageInputRef.current?.click()}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={1.8}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-2h4l2 2h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="3.5" />
+                </svg>
+              </button>
             </div>
 
             <p className="mt-4 truncate text-2xl font-semibold text-neutral-900">

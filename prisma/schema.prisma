@@ -30,6 +30,8 @@ model User {
   firstName            String?
   lastName             String?
   phone                String?
+  /** Public URL path, e.g. `/uploads/profile-images/<id>.jpg` — stored under `public/`. */
+  profileImagePath     String?
   role                 UserRole             @default(USER)
   cartItems            CartItem[]
   orders               Order[]

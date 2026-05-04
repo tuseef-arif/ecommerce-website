@@ -134,6 +134,15 @@ const SITE_DEFAULTS = {
     accountPopoverConfirmNewPasswordLabel: "Confirm New Password",
     accountPopoverSavePasswordCta: "Update",
     accountPopoverDetailsUpdatedMessage: "Details have been updated.",
+    accountPopoverChangeProfilePhotoAria: "Change profile photo",
+    accountPopoverProfileImageTooLarge:
+      "Image is too large. Maximum size is 2 MB.",
+    accountPopoverProfileImageInvalid:
+      "Please upload a JPEG, PNG, or WebP image.",
+    accountPopoverProfileImageUploadFailed:
+      "Could not save your photo. Try again.",
+    accountPopoverProfileImageUploadNetworkError:
+      "Upload failed. Check your connection and try again.",
     accountPopoverFirstNameLabel: "First name",
     accountPopoverLastNameLabel: "Last name",
     accountPopoverManageSettingsLine: "Manage your account settings.",

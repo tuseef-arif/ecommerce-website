@@ -1,3 +1,9 @@
+/**
+ * Uses generated output under `src/generated/prisma`. After editing
+ * `prisma/schema.prisma`, run `npx prisma generate` and **restart** `npm run dev`
+ * so Next.js drops its cached Prisma bundle (otherwise `select` on new fields can
+ * throw “Unknown field” at runtime).
+ */
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 

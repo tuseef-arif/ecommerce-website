@@ -482,7 +482,7 @@ export const AccountPopoverSignedInMenu = ({
               </p>
               {isAdmin ? (
                 <Link
-                  href={SITE_ROUTES.admin}
+                  href={SITE_ROUTES.dashboard}
                   onClick={onNavigate}
                   className="account-admin-badge-neon shrink-0 text-sm font-bold tracking-wide"
                 >

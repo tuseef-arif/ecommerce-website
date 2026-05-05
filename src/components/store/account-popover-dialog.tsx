@@ -52,6 +52,7 @@ export const AccountPopover = ({
   const [loginEmailHint, setLoginEmailHint] = useState("");
   const [forgotFormKey, setForgotFormKey] = useState(0);
   const [authSuccessOpen, setAuthSuccessOpen] = useState(false);
+  const [authRedirectUrl, setAuthRedirectUrl] = useState<string | null>(null);
 
   const handleNavigate = useCallback(() => {
     onNavigate?.();
@@ -62,12 +63,24 @@ export const AccountPopover = ({
     setAuthSuccessOpen(false);
     onNavigate?.();
     onClose();
+    if (authRedirectUrl) {
+      router.replace(authRedirectUrl);
+      router.refresh();
+      return;
+    }
     router.refresh();
-  }, [onClose, onNavigate, router]);
+  }, [authRedirectUrl, onClose, onNavigate, router]);
 
-  const handleSignedIn = useCallback(() => {
-    setAuthSuccessOpen(true);
-  }, []);
+  const handleSignedIn = useCallback(
+    (redirectUrl?: string | null) => {
+      setAuthRedirectUrl(redirectUrl ?? null);
+      setAuthSuccessOpen(true);
+      // Ensure header/session-driven UI updates immediately after auth success,
+      // so clicking account again does not show stale signed-out content.
+      router.refresh();
+    },
+    [router],
+  );
 
   const handleLogoutSuccess = useCallback(() => {
     onClose();
@@ -85,6 +98,7 @@ export const AccountPopover = ({
       setLoginEmailHint("");
       setForgotFormKey(0);
       setAuthSuccessOpen(false);
+      setAuthRedirectUrl(null);
     });
   }, [isOpen, resetPasswordToken, initialGuestView]);
 

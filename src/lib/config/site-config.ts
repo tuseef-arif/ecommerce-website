@@ -46,9 +46,10 @@ const SITE_DEFAULTS = {
     resetPassword: "/reset-password",
     cart: "/cart",
     contact: "/contact",
-    admin: "/admin",
     /** Staff dashboard (route implemented separately) */
     dashboard: "/dashboard",
+    /** Internal landing after sign-in; redirects to dashboard or home by role. */
+    postLogin: "/post-login",
     accountOrders: "/account/orders",
   },
   /**
@@ -105,7 +106,7 @@ const SITE_DEFAULTS = {
     loginCta: "Login",
     loginPageInvalidCredentials: "Invalid email or password.",
     cartAria: "Cart",
-    admin: "Admin",
+    admin: "Dashboard",
     /** Shown beside display name in account popover for admin users */
     accountPopoverAdminBadge: "Admin",
     logout: "Logout",
@@ -210,7 +211,7 @@ const SITE_DEFAULTS = {
     {
       label: "Mobiles",
       imageSrc: "/assets/category/Mobile.webp",
-      href: "/categories?category=smartphones",
+      href: "/categories?category=mobiles",
     },
     {
       label: "Earbuds",

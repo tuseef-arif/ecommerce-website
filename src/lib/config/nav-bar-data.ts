@@ -39,52 +39,52 @@ export const STORE_NAV_BAR_DROPDOWNS: NavBarDropdownGroup[] = [
   {
     id: "mobiles",
     label: "Mobiles",
-    categoryHref: "/categories?category=smartphones",
+    categoryHref: "/categories?category=mobiles",
     children: [
       {
         id: "samsung",
         label: "Samsung",
-        href: "/categories?category=smartphones&brand=samsung",
+        href: "/categories?category=mobiles&brand=samsung",
       },
       {
         id: "oppo",
         label: "Oppo",
-        href: "/categories?category=smartphones&brand=oppo",
+        href: "/categories?category=mobiles&brand=oppo",
       },
       {
         id: "infinix",
         label: "Infinix",
-        href: "/categories?category=smartphones&brand=infinix",
+        href: "/categories?category=mobiles&brand=infinix",
       },
       {
         id: "xiaomi",
         label: "Xiaomi",
-        href: "/categories?category=smartphones&brand=xiaomi",
+        href: "/categories?category=mobiles&brand=xiaomi",
       },
       {
         id: "vivo",
         label: "Vivo",
-        href: "/categories?category=smartphones&brand=vivo",
+        href: "/categories?category=mobiles&brand=vivo",
       },
       {
         id: "tecno",
         label: "Tecno",
-        href: "/categories?category=smartphones&brand=tecno",
+        href: "/categories?category=mobiles&brand=tecno",
       },
       {
         id: "realme",
         label: "Realme",
-        href: "/categories?category=smartphones&brand=realme",
+        href: "/categories?category=mobiles&brand=realme",
       },
       {
         id: "honor",
         label: "Honor",
-        href: "/categories?category=smartphones&brand=honor",
+        href: "/categories?category=mobiles&brand=honor",
       },
       {
         id: "iphone",
         label: "iPhone",
-        href: "/categories?category=smartphones&brand=iphone",
+        href: "/categories?category=mobiles&brand=iphone",
       },
     ],
   },

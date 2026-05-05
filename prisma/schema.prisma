@@ -23,6 +23,12 @@ enum OrderStatus {
   DELIVERED
 }
 
+enum ProductDiscountType {
+  NONE
+  PERCENT
+  FIXED
+}
+
 model User {
   id                   String               @id @default(cuid())
   email                String               @unique
@@ -85,10 +91,16 @@ model Product {
   slug        String      @unique
   brand       String
   model       String
+  productType String      @default("general")
   description String?
   imagePath   String?
   specs       Json?
+  keyFeatures Json?
+  colorOptions Json?
   price       Decimal     @db.Decimal(10, 2)
+  discountType ProductDiscountType @default(NONE)
+  discountValue Decimal?   @db.Decimal(10, 2)
+  isDiscountActive Boolean @default(false)
   stock       Int
   isActive    Boolean     @default(true)
   categoryId  String

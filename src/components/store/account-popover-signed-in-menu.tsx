@@ -89,6 +89,8 @@ export const AccountPopoverSignedInMenu = ({
     "flex min-h-10 w-full items-center justify-center rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-[var(--store-brand-primary)] transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)] disabled:cursor-not-allowed disabled:opacity-60";
   const actionButtonNavyClass =
     "flex min-h-10 w-full items-center justify-center rounded-lg border border-[var(--store-brand-primary)] bg-[var(--store-brand-primary)] px-3 py-2 text-sm font-semibold text-white transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)] disabled:cursor-not-allowed disabled:opacity-60";
+  /** First grid row: keep two-word labels on one line in narrow popovers. */
+  const actionButtonNavyProfileRowClass = `${actionButtonNavyClass} whitespace-nowrap px-2 py-2 text-[0.8125rem] leading-tight sm:px-3 sm:text-sm`;
 
   const baselineFirst = user.firstName?.trim() ?? "";
   const baselineLast = user.lastName?.trim() ?? "";
@@ -474,9 +476,20 @@ export const AccountPopoverSignedInMenu = ({
               </button>
             </div>
 
-            <p className="mt-4 truncate text-2xl font-semibold text-neutral-900">
-              {displayLine}
-            </p>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+              <p className="min-w-0 max-w-full truncate text-2xl font-semibold text-neutral-900">
+                {displayLine}
+              </p>
+              {isAdmin ? (
+                <Link
+                  href={SITE_ROUTES.admin}
+                  onClick={onNavigate}
+                  className="account-admin-badge-neon shrink-0 text-sm font-bold tracking-wide"
+                >
+                  {SITE_HEADER.accountPopoverAdminBadge}
+                </Link>
+              ) : null}
+            </div>
 
             <div className="mx-auto mt-5 max-w-sm space-y-3 text-left">
               <div className="flex items-center gap-2.5 text-sm text-neutral-700">
@@ -489,16 +502,6 @@ export const AccountPopoverSignedInMenu = ({
               </div>
             </div>
 
-            {isAdmin ? (
-              <Link
-                href={SITE_ROUTES.admin}
-                onClick={onNavigate}
-                className="account-admin-badge-neon mt-2 inline-block truncate text-sm font-bold tracking-wide"
-              >
-                {SITE_HEADER.accountPopoverAdminBadge}
-              </Link>
-            ) : null}
-
             <p className="mt-5 border-t border-neutral-200 pt-4 text-sm text-neutral-500">
               {SITE_HEADER.accountPopoverManageSettingsLine}
             </p>
@@ -506,7 +509,7 @@ export const AccountPopoverSignedInMenu = ({
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                className={actionButtonNavyClass}
+                className={actionButtonNavyProfileRowClass}
                 onClick={openEdit}
                 aria-label={SITE_HEADER.accountPopoverEditProfileCta}
               >
@@ -514,18 +517,27 @@ export const AccountPopoverSignedInMenu = ({
               </button>
               <button
                 type="button"
-                className={actionButtonNavyClass}
+                className={actionButtonNavyProfileRowClass}
                 onClick={openPasswordEdit}
                 aria-label={SITE_HEADER.accountPopoverUpdatePasswordCta}
               >
                 {SITE_HEADER.accountPopoverUpdatePasswordCta}
               </button>
               <Link
-                href={SITE_ROUTES.accountOrders}
+                href={
+                  isAdmin ? SITE_ROUTES.dashboard : SITE_ROUTES.accountOrders
+                }
                 className={actionButtonNavyClass}
                 onClick={onNavigate}
+                aria-label={
+                  isAdmin
+                    ? SITE_HEADER.accountPopoverViewDashboardCta
+                    : SITE_HEADER.accountPopoverViewOrdersCta
+                }
               >
-                {SITE_HEADER.accountPopoverViewOrdersCta}
+                {isAdmin
+                  ? SITE_HEADER.accountPopoverViewDashboardCta
+                  : SITE_HEADER.accountPopoverViewOrdersCta}
               </Link>
               <button
                 type="button"

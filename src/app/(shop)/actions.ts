@@ -21,6 +21,8 @@ import {
 
 const blobReadWriteToken = (): string | undefined =>
   process.env.BLOB_READ_WRITE_TOKEN?.trim() || undefined;
+const isVercelRuntime = (): boolean =>
+  process.env.VERCEL === "1" || Boolean(process.env.VERCEL_ENV);
 
 const contentTypeForProfileImageKind = (kind: ProfileImageKind): string => {
   if (kind === "jpeg") return "image/jpeg";
@@ -243,7 +245,12 @@ export const uploadAccountProfileImageAction = async (
           contentType: contentTypeForProfileImageKind(validated.kind),
         });
         uploadedUrl = blob.url;
-      } catch {
+      } catch (error) {
+        console.error("profile-image blob upload failed", {
+          userId: session.user.id,
+          hasBlobToken: Boolean(blobToken),
+          error,
+        });
         return {
           ok: false,
           error: SITE_HEADER.accountPopoverProfileImageUploadFailed,
@@ -255,14 +262,19 @@ export const uploadAccountProfileImageAction = async (
           where: { id: session.user.id },
           data: { profileImagePath: webPath },
         });
-      } catch {
+      } catch (error) {
+        console.error("profile-image db update failed after blob upload", {
+          userId: session.user.id,
+          uploadedUrl,
+          error,
+        });
         await del(uploadedUrl, { token: blobToken }).catch(() => undefined);
         return {
           ok: false,
           error: SITE_HEADER.accountPopoverProfileImageUploadFailed,
         };
       }
-    } else if (process.env.VERCEL === "1") {
+    } else if (isVercelRuntime()) {
       return {
         ok: false,
         error: SITE_HEADER.accountPopoverProfileImageBlobRequiredOnVercel,
@@ -275,7 +287,12 @@ export const uploadAccountProfileImageAction = async (
 
       try {
         await writeFile(diskPath, buf);
-      } catch {
+      } catch (error) {
+        console.error("profile-image local write failed", {
+          userId: session.user.id,
+          diskPath,
+          error,
+        });
         return {
           ok: false,
           error: SITE_HEADER.accountPopoverProfileImageUploadFailed,
@@ -287,7 +304,12 @@ export const uploadAccountProfileImageAction = async (
           where: { id: session.user.id },
           data: { profileImagePath: webPath },
         });
-      } catch {
+      } catch (error) {
+        console.error("profile-image db update failed after local write", {
+          userId: session.user.id,
+          webPath,
+          error,
+        });
         await unlink(diskPath).catch(() => undefined);
         return {
           ok: false,
@@ -317,7 +339,8 @@ export const uploadAccountProfileImageAction = async (
     }
 
     return { ok: true };
-  } catch {
+  } catch (error) {
+    console.error("profile-image action failed", { error });
     return {
       ok: false,
       error: SITE_HEADER.accountPopoverProfileImageUploadFailed,

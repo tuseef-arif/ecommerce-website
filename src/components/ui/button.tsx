@@ -1,6 +1,11 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "accent"
+  | "danger"
+  | "ghost";
 export type ButtonSize = "sm" | "md";
 
 type ButtonProps = {
@@ -24,6 +29,8 @@ const variantClassMap: Record<ButtonVariant, string> = {
     "border border-transparent bg-[var(--store-brand-primary)] text-white shadow-sm hover:brightness-110 focus-visible:outline-[var(--store-brand-primary)]",
   secondary:
     "border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50 focus-visible:outline-[var(--store-brand-primary)]",
+  accent:
+    "border border-transparent bg-[var(--store-brand-accent)] text-white shadow-sm hover:brightness-110 focus-visible:outline-[var(--store-brand-accent)]",
   danger:
     "border border-transparent bg-red-600 text-white shadow-sm hover:brightness-110 focus-visible:outline-red-700",
   ghost:

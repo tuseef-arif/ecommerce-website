@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { CategorySlider } from "@/components/store/category-slider";
-import { HeroBanner } from "@/components/store/hero-banner";
 import { StoreFooter } from "@/components/store/store-footer";
 import { StoreHeader } from "@/components/store/store-header";
 
@@ -28,7 +27,6 @@ export default async function ShopLayout({
         }
       />
       <CategorySlider />
-      <HeroBanner />
       {children}
       <StoreFooter />
     </div>

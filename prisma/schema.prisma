@@ -83,6 +83,8 @@ model Category {
   saleOverrides CategorySaleOverride[]
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
+
+  @@index([name])
 }
 
 model Product {
@@ -94,9 +96,11 @@ model Product {
   productType String      @default("general")
   description String?
   imagePath   String?
-  specs       Json?
-  keyFeatures Json?
-  colorOptions Json?
+  specs          Json?
+  keyFeatures    Json?
+  colorOptions   Json?
+  /** Admin-managed list of available storage variants (e.g. ["64 GB", "128 GB"]). */
+  storageOptions Json?
   price       Decimal     @db.Decimal(10, 2)
   discountType ProductDiscountType @default(NONE)
   discountValue Decimal?   @db.Decimal(10, 2)
@@ -113,6 +117,7 @@ model Product {
   @@index([categoryId, isActive])
   @@index([name])
   @@index([brand])
+  @@index([model])
 }
 
 model CartItem {

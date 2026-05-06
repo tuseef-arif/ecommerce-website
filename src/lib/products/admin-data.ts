@@ -4,12 +4,16 @@ import { formatCategoryLabel } from "@/lib/categories/format-category-label";
 import { prisma } from "@/lib/prisma";
 import { finalProductPrice } from "@/lib/products/discount";
 import { ADMIN_PRODUCTS_PER_PAGE } from "@/lib/products/filters";
+import {
+  colorOptionsJsonToList,
+  specsJsonToEntries,
+  storageOptionsJsonToList,
+} from "@/lib/products/specs";
 import type {
   AdminProductCategoryOption,
   AdminProductDetail,
   AdminProductListItem,
   AdminProductListPage,
-  AdminProductSpecEntry,
   AdminProductsListFilters,
 } from "@/lib/products/admin-types";
 
@@ -129,12 +133,21 @@ export const listAdminProducts = async (
 export const listAdminProductCategories = async (): Promise<
   AdminProductCategoryOption[]
 > => {
-  await prisma.$transaction(
+  // Avoid transaction-start failures on constrained/pooled DB connections:
+  // 1) ensure rows exist (idempotent), 2) sync display names best-effort.
+  await prisma.category.createMany({
+    data: ADMIN_CATEGORY_CATALOG.map((category) => ({
+      slug: category.slug,
+      name: category.name,
+    })),
+    skipDuplicates: true,
+  });
+
+  await Promise.all(
     ADMIN_CATEGORY_CATALOG.map((category) =>
-      prisma.category.upsert({
+      prisma.category.updateMany({
         where: { slug: category.slug },
-        update: { name: category.name },
-        create: { slug: category.slug, name: category.name },
+        data: { name: category.name },
       }),
     ),
   );
@@ -170,21 +183,6 @@ export const listAdminProductDistinctBrands = async (): Promise<string[]> => {
   return rows.map((row) => row.brand).filter((brand) => brand.length > 0);
 };
 
-const specsJsonToEntries = (specs: unknown): AdminProductSpecEntry[] => {
-  if (!specs || typeof specs !== "object" || Array.isArray(specs)) return [];
-  return Object.entries(specs as Record<string, unknown>)
-    .filter(([key]) => typeof key === "string" && key.length > 0)
-    .map(([key, value]) => ({
-      key,
-      value:
-        typeof value === "string"
-          ? value
-          : typeof value === "number" || typeof value === "boolean"
-            ? String(value)
-            : JSON.stringify(value),
-    }));
-};
-
 export const getAdminProductById = async (
   productId: string,
 ): Promise<AdminProductDetail | null> => {
@@ -206,6 +204,8 @@ export const getAdminProductById = async (
       isActive: true,
       categoryId: true,
       specs: true,
+      colorOptions: true,
+      storageOptions: true,
     },
   });
   if (!row) return null;
@@ -227,5 +227,7 @@ export const getAdminProductById = async (
     isActive: row.isActive,
     categoryId: row.categoryId,
     specs: specsJsonToEntries(row.specs),
+    colorOptions: colorOptionsJsonToList(row.colorOptions),
+    storageOptions: storageOptionsJsonToList(row.storageOptions),
   };
 };

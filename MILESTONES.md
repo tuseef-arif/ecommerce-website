@@ -117,10 +117,23 @@ Day 5 progress (2026-05-02):
 
 ### Day 6: Product Management CRUD
 
-- Build admin product list/create/edit/delete.
-- Support brand, model, specs, price, stock, category, image path.
-- Use Zod validation in all admin write actions.
-- Exit criteria: admin can fully manage product catalog.
+- [x] Dashboard UI design scaffold completed (current focus: design and product management modules).
+- [x] Build admin product list/create/edit/delete.
+- [x] Support brand, model, specs, price, stock, category, image path (including product option variants and image handling).
+- [x] Use Zod validation in admin write actions.
+- [x] Add storefront product sections on the home page (product sliders/rails).
+- [x] Build products listing view with search and filters.
+- [x] Implement global search across products, brands, categories, and models.
+- [x] Exit criteria met: admin can fully manage product catalog.
+
+Day 6 progress (2026-05-06):
+
+- Completed admin products dashboard experience for catalog operations (list, create, edit, delete).
+- Added and wired product create/update flows with validated inputs and improved admin form UX.
+- Added homepage product slider/rail sections for storefront merchandising.
+- Delivered products listing page with filtering/search capabilities.
+- Implemented reusable global search (API + grouped results page) across products, brands, categories, and models.
+- Polished field-height consistency across admin and auth/account forms for a more uniform UI.
 
 ### Day 7: Global Sales Utility
 

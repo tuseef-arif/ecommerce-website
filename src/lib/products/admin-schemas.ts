@@ -81,6 +81,10 @@ export const adminProductFormSchema = z
       .transform((value) => value === "on" || value === "true"),
     /** JSON string from the specs editor (array of `{ key, value }` pairs). */
     specsJson: z.string().max(20_000).optional().default(""),
+    /** JSON string from the color options editor (array of strings). */
+    colorsJson: z.string().max(4_000).optional().default(""),
+    /** JSON string from the storage options editor (array of strings). */
+    storagesJson: z.string().max(4_000).optional().default(""),
   })
   .transform((data) => ({
     ...data,
@@ -193,4 +197,58 @@ export const parseSpecsJsonInput = (
   }
   if (entries.length === 0) return null;
   return Object.fromEntries(entries);
+};
+
+const STRING_LIST_MAX_ITEMS = 32;
+const STRING_LIST_MAX_ITEM_LEN = 64;
+
+/**
+ * Parses the JSON payload from the color/storage options editor. Drops empty
+ * rows, deduplicates (case-insensitive), bounds entry count + length, and
+ * returns `null` when the resulting list is empty so callers can clear the
+ * column rather than persist `[]`.
+ *
+ * `label` is interpolated into thrown errors so the action surface gets a
+ * field-specific message ("Color options …" / "Storage options …").
+ */
+export const parseStringListJsonInput = (
+  raw: string,
+  label: string,
+): string[] | null => {
+  if (!raw || raw.trim().length === 0) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(`${label} payload is invalid.`);
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error(`${label} payload is invalid.`);
+  }
+
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of parsed) {
+    if (typeof entry !== "string") {
+      throw new Error(`${label} must contain text values only.`);
+    }
+    const trimmed = entry.trim();
+    if (trimmed.length === 0) continue;
+    if (trimmed.length > STRING_LIST_MAX_ITEM_LEN) {
+      throw new Error(
+        `${label} values must be at most ${STRING_LIST_MAX_ITEM_LEN} characters.`,
+      );
+    }
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+    if (out.length >= STRING_LIST_MAX_ITEMS) {
+      throw new Error(
+        `${label} can include at most ${STRING_LIST_MAX_ITEMS} values.`,
+      );
+    }
+  }
+
+  return out.length === 0 ? null : out;
 };

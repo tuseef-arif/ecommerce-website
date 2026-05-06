@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import {
   adminProductFormSchema,
   parseSpecsJsonInput,
+  parseStringListJsonInput,
 } from "@/lib/products/admin-schemas";
 import { PRODUCT_IMAGE_MAX_BYTES } from "@/lib/products/image-constants";
 import {
@@ -132,7 +133,59 @@ const parseFormDataInput = (formData: FormData) => ({
     ? String(formData.get("isActive") ?? "")
     : undefined,
   specsJson: String(formData.get("specsJson") ?? ""),
+  colorsJson: String(formData.get("colorsJson") ?? ""),
+  storagesJson: String(formData.get("storagesJson") ?? ""),
 });
+
+/**
+ * Parses + validates the variant lists shared by create + update actions.
+ * Keeps both action paths in lockstep with the same error mapping.
+ */
+const parseVariantListsOrError = (input: {
+  colorsJson: string;
+  storagesJson: string;
+}):
+  | {
+      ok: true;
+      colorOptions: string[] | null;
+      storageOptions: string[] | null;
+    }
+  | { ok: false; state: ProductFormState } => {
+  let colorOptions: string[] | null;
+  try {
+    colorOptions = parseStringListJsonInput(input.colorsJson, "Color options");
+  } catch (error) {
+    return {
+      ok: false,
+      state: {
+        errorMessage: null,
+        fieldErrors: {
+          colors:
+            error instanceof Error ? error.message : "Invalid color options.",
+        },
+      },
+    };
+  }
+  let storageOptions: string[] | null;
+  try {
+    storageOptions = parseStringListJsonInput(
+      input.storagesJson,
+      "Storage options",
+    );
+  } catch (error) {
+    return {
+      ok: false,
+      state: {
+        errorMessage: null,
+        fieldErrors: {
+          storages:
+            error instanceof Error ? error.message : "Invalid storage options.",
+        },
+      },
+    };
+  }
+  return { ok: true, colorOptions, storageOptions };
+};
 
 const extractFormImage = (formData: FormData): File | null => {
   const value = formData.get("image");
@@ -185,6 +238,9 @@ export const createProductAction = async (
     };
   }
 
+  const variants = parseVariantListsOrError(input);
+  if (!variants.ok) return variants.state;
+
   const imageFile = extractFormImage(formData);
   let uploadedImagePath: string | null = null;
 
@@ -216,6 +272,8 @@ export const createProductAction = async (
           description: parsed.data.description,
           imagePath: uploadedImagePath,
           specs: specsValue ?? undefined,
+          colorOptions: variants.colorOptions ?? undefined,
+          storageOptions: variants.storageOptions ?? undefined,
           price: parsed.data.price.toFixed(2),
           discountType: parsed.data.discountType,
           discountValue:
@@ -316,6 +374,9 @@ export const updateProductAction = async (
     };
   }
 
+  const variants = parseVariantListsOrError(input);
+  if (!variants.ok) return variants.state;
+
   const removeImage = formData.get("removeImage") === "on";
   const imageFile = extractFormImage(formData);
 
@@ -359,6 +420,8 @@ export const updateProductAction = async (
         description: parsed.data.description,
         imagePath: nextImagePath,
         specs: specsValue ?? undefined,
+        colorOptions: variants.colorOptions ?? undefined,
+        storageOptions: variants.storageOptions ?? undefined,
         price: parsed.data.price.toFixed(2),
         discountType: parsed.data.discountType,
         discountValue:

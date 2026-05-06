@@ -7,12 +7,14 @@ import {
   type ProductFormState,
 } from "@/app/(admin)/dashboard/products/form-state";
 import { ProductImageUploader } from "@/components/admin/product-image-uploader";
+import { ProductOptionListEditor } from "@/components/admin/product-option-list-editor";
 import { ProductSpecsEditor } from "@/components/admin/product-specs-editor";
 import { Button } from "@/components/ui/button";
 import { CheckboxField } from "@/components/ui/checkbox-field";
 import { FormInputField } from "@/components/ui/form-input-field";
 import { SelectField } from "@/components/ui/select-field";
 import { TextareaField } from "@/components/ui/textarea-field";
+import { SITE_PRODUCT_FORM } from "@/lib/config/site-config";
 import {
   previewDiscountedPrice,
   type ProductDiscountTypeValue,
@@ -53,6 +55,8 @@ const fallbackInitialDetail = {
   isActive: true,
   categoryId: "",
   specs: [] as AdminProductSpecEntry[],
+  colorOptions: [] as string[],
+  storageOptions: [] as string[],
 };
 
 const cancelHref = "/dashboard/products";
@@ -61,6 +65,10 @@ const discountTypeOptions = [
   { value: "FIXED", label: "Fixed" },
   { value: "PERCENT", label: "Percentage" },
 ] as const;
+const COMPACT_INPUT_CLASS_NAME =
+  "peer h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 pb-1 pt-3 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors placeholder:text-transparent focus:border-[var(--store-brand-primary)] focus:ring-0";
+const COMPACT_LABEL_CLASS_NAME =
+  "pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 bg-white px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-neutral-600";
 
 export const ProductForm = ({
   mode,
@@ -95,7 +103,7 @@ export const ProductForm = ({
     });
   }
 
-  const submitLabel = mode === "create" ? "Create product" : "Save changes";
+  const submitLabel = mode === "create" ? "Create product" : "Save";
   const pendingLabel = mode === "create" ? "Creating…" : "Saving…";
 
   const [priceInput, setPriceInput] = useState(initial.price);
@@ -134,11 +142,31 @@ export const ProductForm = ({
         </p>
       ) : null}
 
-      <ProductImageUploader
-        existingImagePath={initial.imagePath}
-        errorMessage={state.fieldErrors.image ?? null}
-        maxBytes={PRODUCT_IMAGE_MAX_BYTES}
-      />
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 flex-1">
+          <ProductImageUploader
+            existingImagePath={initial.imagePath}
+            errorMessage={state.fieldErrors.image ?? null}
+            maxBytes={PRODUCT_IMAGE_MAX_BYTES}
+          />
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={isPending}
+            loadingLabel={pendingLabel}
+          >
+            {submitLabel}
+          </Button>
+          <Link
+            href={cancelHref}
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
+          >
+            Cancel
+          </Link>
+        </div>
+      </div>
 
       <FormInputField
         label="Name"
@@ -148,10 +176,33 @@ export const ProductForm = ({
         maxLength={200}
         defaultValue={initial.name}
         aria-invalid={state.fieldErrors.name ? true : undefined}
+        inputClassName={COMPACT_INPUT_CLASS_NAME}
+        labelClassName={COMPACT_LABEL_CLASS_NAME}
       />
       {state.fieldErrors.name ? (
         <FieldError message={state.fieldErrors.name} />
       ) : null}
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <ProductOptionListEditor
+          fieldName="colorsJson"
+          legend={SITE_PRODUCT_FORM.colorsLegend}
+          helperText={SITE_PRODUCT_FORM.colorsHelper}
+          rowPlaceholder={SITE_PRODUCT_FORM.colorsRowPlaceholder}
+          addCtaLabel={SITE_PRODUCT_FORM.colorsAddCta}
+          initialValues={initial.colorOptions}
+          errorMessage={state.fieldErrors.colors ?? null}
+        />
+        <ProductOptionListEditor
+          fieldName="storagesJson"
+          legend={SITE_PRODUCT_FORM.storagesLegend}
+          helperText={SITE_PRODUCT_FORM.storagesHelper}
+          rowPlaceholder={SITE_PRODUCT_FORM.storagesRowPlaceholder}
+          addCtaLabel={SITE_PRODUCT_FORM.storagesAddCta}
+          initialValues={initial.storageOptions}
+          errorMessage={state.fieldErrors.storages ?? null}
+        />
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <FormInputField
@@ -165,6 +216,8 @@ export const ProductForm = ({
           value={priceInput}
           onChange={(event) => setPriceInput(event.currentTarget.value)}
           aria-invalid={state.fieldErrors.price ? true : undefined}
+          inputClassName={COMPACT_INPUT_CLASS_NAME}
+          labelClassName={COMPACT_LABEL_CLASS_NAME}
         />
         <FormInputField
           label="Model"
@@ -173,6 +226,8 @@ export const ProductForm = ({
           maxLength={120}
           defaultValue={initial.model}
           aria-invalid={state.fieldErrors.model ? true : undefined}
+          inputClassName={COMPACT_INPUT_CLASS_NAME}
+          labelClassName={COMPACT_LABEL_CLASS_NAME}
         />
       </div>
       <FieldErrorPair
@@ -185,6 +240,7 @@ export const ProductForm = ({
           label="Discount Type"
           name="discountType"
           variant="floating"
+          size="sm"
           options={discountTypeOptions}
           value={discountTypeInput}
           onChange={(event) =>
@@ -198,6 +254,7 @@ export const ProductForm = ({
           label="Category"
           name="categoryId"
           variant="floating"
+          size="sm"
           options={categoryOptions}
           placeholder={
             categoryOptions.length === 0
@@ -229,6 +286,8 @@ export const ProductForm = ({
           value={discountValueInput}
           onChange={(event) => setDiscountValueInput(event.currentTarget.value)}
           aria-invalid={state.fieldErrors.discountValue ? true : undefined}
+          inputClassName={COMPACT_INPUT_CLASS_NAME}
+          labelClassName={COMPACT_LABEL_CLASS_NAME}
         />
         <FormInputField
           label="Brand"
@@ -237,6 +296,8 @@ export const ProductForm = ({
           maxLength={80}
           defaultValue={initial.brand}
           aria-invalid={state.fieldErrors.brand ? true : undefined}
+          inputClassName={COMPACT_INPUT_CLASS_NAME}
+          labelClassName={COMPACT_LABEL_CLASS_NAME}
         />
       </div>
       <FieldErrorPair
@@ -252,6 +313,8 @@ export const ProductForm = ({
           readOnly
           disabled
           value={discountedPricePreview}
+          inputClassName={COMPACT_INPUT_CLASS_NAME}
+          labelClassName={COMPACT_LABEL_CLASS_NAME}
         />
         <FormInputField
           label="Stock"
@@ -263,6 +326,8 @@ export const ProductForm = ({
           inputMode="numeric"
           defaultValue={initial.stock ? String(initial.stock) : ""}
           aria-invalid={state.fieldErrors.stock ? true : undefined}
+          inputClassName={COMPACT_INPUT_CLASS_NAME}
+          labelClassName={COMPACT_LABEL_CLASS_NAME}
         />
       </div>
       <FieldErrorPair rightMessage={state.fieldErrors.stock} />
@@ -290,12 +355,6 @@ export const ProductForm = ({
       />
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-neutral-200 pt-4">
-        <Link
-          href={cancelHref}
-          className="inline-flex h-10 items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
-        >
-          Cancel
-        </Link>
         <Button
           type="submit"
           variant="primary"
@@ -304,6 +363,12 @@ export const ProductForm = ({
         >
           {submitLabel}
         </Button>
+        <Link
+          href={cancelHref}
+          className="inline-flex h-10 items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
+        >
+          Cancel
+        </Link>
       </div>
     </form>
   );

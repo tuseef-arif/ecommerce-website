@@ -45,6 +45,10 @@ export type AdminProductDetail = {
   isActive: boolean;
   categoryId: string;
   specs: AdminProductSpecEntry[];
+  /** Admin-managed list of available color names. */
+  colorOptions: string[];
+  /** Admin-managed list of available storage variants (e.g. "128 GB"). */
+  storageOptions: string[];
 };
 
 export type AdminProductCategoryOption = {

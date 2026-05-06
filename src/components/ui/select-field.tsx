@@ -7,6 +7,7 @@ export type SelectFieldOption = {
 };
 
 type SelectFieldVariant = "labeled" | "floating";
+type SelectFieldSize = "sm" | "md";
 
 type SelectFieldProps = {
   label: string;
@@ -23,16 +24,31 @@ type SelectFieldProps = {
    *   empty state via `:invalid`.
    */
   variant?: SelectFieldVariant;
-} & SelectHTMLAttributes<HTMLSelectElement>;
+  /**
+   * Density for the floating variant. "md" (default) is form-sized; "sm" is a
+   * compact filter-bar size that fits comfortably on mobile. Overrides the
+   * native HTML `size` attribute, which is unused for our select markup.
+   */
+  size?: SelectFieldSize;
+} & Omit<SelectHTMLAttributes<HTMLSelectElement>, "size">;
 
 const labeledFieldClass =
   "h-11 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm leading-6 text-neutral-900 outline-none ring-0 transition-colors focus:border-[var(--store-brand-primary)] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60";
 
-const floatingFieldClass =
-  "peer min-h-[3.5rem] w-full appearance-none rounded-lg border border-neutral-300 bg-white px-3 pr-10 pt-5 pb-1.5 text-sm leading-6 text-neutral-900 outline-none ring-0 transition-colors focus:border-[var(--store-brand-primary)] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60";
+const floatingFieldClassBySize: Record<SelectFieldSize, string> = {
+  md: "peer min-h-[3.5rem] w-full appearance-none rounded-lg border border-neutral-300 bg-white px-3 pr-10 pt-5 pb-1.5 text-sm leading-6 text-neutral-900 outline-none ring-0 transition-colors focus:border-[var(--store-brand-primary)] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60",
+  sm: "peer h-10 w-full appearance-none rounded-lg border border-neutral-300 bg-white px-2.5 pr-8 pt-3 pb-1 text-xs leading-5 text-neutral-900 outline-none ring-0 transition-colors focus:border-[var(--store-brand-primary)] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 sm:px-3 sm:pr-9 sm:text-sm",
+};
 
-const floatingLabelClass =
-  "pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 bg-white px-1 text-sm text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[var(--store-brand-primary)] peer-[:not(:invalid)]:top-0 peer-[:not(:invalid)]:-translate-y-1/2 peer-[:not(:invalid)]:text-xs peer-[:not(:invalid)]:font-medium peer-[:not(:invalid)]:text-neutral-600";
+const floatingLabelClassBySize: Record<SelectFieldSize, string> = {
+  md: "pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 bg-white px-1 text-sm text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[var(--store-brand-primary)] peer-[:not(:invalid)]:top-0 peer-[:not(:invalid)]:-translate-y-1/2 peer-[:not(:invalid)]:text-xs peer-[:not(:invalid)]:font-medium peer-[:not(:invalid)]:text-neutral-600",
+  sm: "pointer-events-none absolute left-2.5 top-0 z-[1] -translate-y-1/2 bg-white px-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 transition-colors duration-150 peer-focus:text-[var(--store-brand-primary)] sm:left-3",
+};
+
+const floatingChevronClassBySize: Record<SelectFieldSize, string> = {
+  md: "pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500",
+  sm: "pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-500 sm:right-3 sm:h-4 sm:w-4",
+};
 
 export const SelectField = ({
   label,
@@ -45,6 +61,7 @@ export const SelectField = ({
   wrapperClassName = "",
   className,
   variant = "labeled",
+  size = "md",
   required,
   ...rest
 }: SelectFieldProps) => {
@@ -66,7 +83,7 @@ export const SelectField = ({
             required={required}
             aria-invalid={error ? true : undefined}
             aria-describedby={describedById}
-            className={`${floatingFieldClass} ${className ?? ""}`.trim()}
+            className={`${floatingFieldClassBySize[size]} ${className ?? ""}`.trim()}
           >
             {placeholder ? (
               <option value="" disabled={required}>
@@ -83,11 +100,11 @@ export const SelectField = ({
               </option>
             ))}
           </select>
-          <span className={floatingLabelClass}>{label}</span>
+          <span className={floatingLabelClassBySize[size]}>{label}</span>
           <svg
             aria-hidden
             viewBox="0 0 20 20"
-            className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500"
+            className={floatingChevronClassBySize[size]}
           >
             <path
               d="M5.5 7.5l4.5 4.5 4.5-4.5"

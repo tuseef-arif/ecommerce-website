@@ -18,7 +18,9 @@ export type ProductFormFieldKey =
   | "stock"
   | "isActive"
   | "image"
-  | "specs";
+  | "specs"
+  | "colors"
+  | "storages";
 
 export type ProductFormState = {
   errorMessage: string | null;

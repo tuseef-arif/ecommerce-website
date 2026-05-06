@@ -343,6 +343,11 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
 
   const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const raw = String(formData.get("q") ?? "").trim();
+    if (raw.length === 0) return;
+    router.push(`/search?q=${encodeURIComponent(raw)}`);
+    setIsMenuOpen(false);
   };
 
   const isAdmin = user?.role === UserRole.ADMIN;

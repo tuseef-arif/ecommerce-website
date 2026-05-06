@@ -31,6 +31,10 @@ export const ProductImageUploader = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pickedFileName, setPickedFileName] = useState<string | null>(null);
   const [isMarkedForRemoval, setIsMarkedForRemoval] = useState(false);
+  const [clientError, setClientError] = useState<string | null>(null);
+  const acceptedMimeTypes = PRODUCT_IMAGE_ACCEPT_MIME.split(",").map((s) =>
+    s.trim(),
+  );
 
   useEffect(
     () => () => {
@@ -45,18 +49,37 @@ export const ProductImageUploader = ({
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
       setPickedFileName(null);
+      setClientError(null);
+      return;
+    }
+    if (!acceptedMimeTypes.includes(file.type)) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      setPickedFileName(null);
+      setClientError("Image must be a JPEG, PNG, or WebP file.");
+      return;
+    }
+    if (file.size > maxBytes) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      setPickedFileName(null);
+      setClientError(`Image is too large. Max ${formatMaxSize(maxBytes)}.`);
       return;
     }
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(file));
     setPickedFileName(file.name);
     setIsMarkedForRemoval(false);
+    setClientError(null);
   };
 
   const handleClearPicked = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setPickedFileName(null);
+    setClientError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -104,26 +127,11 @@ export const ProductImageUploader = ({
             name={fieldName}
             accept={PRODUCT_IMAGE_ACCEPT_MIME}
             onChange={handleFileChange}
-            className="block w-full text-sm text-neutral-700 file:mr-3 file:rounded-lg file:border file:border-neutral-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-neutral-700 hover:file:bg-neutral-50"
+            className="block w-full text-sm text-neutral-700 file:mr-3 file:w-36 file:rounded-lg file:border file:border-neutral-300 file:bg-white file:px-3 file:py-1.5 file:text-center file:text-sm file:font-semibold file:text-neutral-700 hover:file:bg-neutral-50"
           />
           <p className="text-xs text-neutral-500">
             JPEG, PNG, or WebP · up to {formatMaxSize(maxBytes)}.
           </p>
-
-          {pickedFileName ? (
-            <div className="flex items-center justify-between gap-2 rounded-md border border-neutral-200 bg-neutral-50 px-2 py-1.5 text-xs text-neutral-700">
-              <span className="truncate" title={pickedFileName}>
-                {pickedFileName}
-              </span>
-              <button
-                type="button"
-                onClick={handleClearPicked}
-                className="font-semibold text-neutral-700 underline-offset-2 hover:underline"
-              >
-                Clear
-              </button>
-            </div>
-          ) : null}
 
           {existingImagePath && !showingPreview ? (
             <CheckboxField
@@ -140,21 +148,21 @@ export const ProductImageUploader = ({
           {showingPreview ? (
             <Button
               type="button"
-              variant="ghost"
+              variant="primary"
               size="sm"
               onClick={handleClearPicked}
-              className="self-start"
+              className="w-36 self-start justify-center"
             >
-              Discard preview
+              Clear Image
             </Button>
           ) : null}
 
-          {errorMessage ? (
+          {clientError || errorMessage ? (
             <p
               role="alert"
               className="rounded-md border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700"
             >
-              {errorMessage}
+              {clientError ?? errorMessage}
             </p>
           ) : null}
         </div>

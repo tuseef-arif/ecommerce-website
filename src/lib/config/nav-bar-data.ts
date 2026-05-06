@@ -1,7 +1,7 @@
 /**
  * Main storefront header navigation — edit arrays here (same idea as `hero-page.ts`).
  * Desktop: first three entries render as dropdowns; `STORE_NAV_BAR_MORE_ITEMS` is the “More” menu.
- * Query params align with `categorySlides` in `site-config.ts` (`/categories?category=…`).
+ * Query params align with `categorySlides` in `site-config.ts` (`/products?category=…`).
  *
  * **Brand identity**
  * - Use one canonical `id` + `label` per brand (e.g. `xiaomi` / `Xiaomi`, `samsung` / `Samsung`) everywhere it appears.
@@ -39,116 +39,116 @@ export const STORE_NAV_BAR_DROPDOWNS: NavBarDropdownGroup[] = [
   {
     id: "mobiles",
     label: "Mobiles",
-    categoryHref: "/categories?category=mobiles",
+    categoryHref: "/products?category=mobiles",
     children: [
       {
         id: "samsung",
         label: "Samsung",
-        href: "/categories?category=mobiles&brand=samsung",
+        href: "/products?category=mobiles&brand=samsung",
       },
       {
         id: "oppo",
         label: "Oppo",
-        href: "/categories?category=mobiles&brand=oppo",
+        href: "/products?category=mobiles&brand=oppo",
       },
       {
         id: "infinix",
         label: "Infinix",
-        href: "/categories?category=mobiles&brand=infinix",
+        href: "/products?category=mobiles&brand=infinix",
       },
       {
         id: "xiaomi",
         label: "Xiaomi",
-        href: "/categories?category=mobiles&brand=xiaomi",
+        href: "/products?category=mobiles&brand=xiaomi",
       },
       {
         id: "vivo",
         label: "Vivo",
-        href: "/categories?category=mobiles&brand=vivo",
+        href: "/products?category=mobiles&brand=vivo",
       },
       {
         id: "tecno",
         label: "Tecno",
-        href: "/categories?category=mobiles&brand=tecno",
+        href: "/products?category=mobiles&brand=tecno",
       },
       {
         id: "realme",
         label: "Realme",
-        href: "/categories?category=mobiles&brand=realme",
+        href: "/products?category=mobiles&brand=realme",
       },
       {
         id: "honor",
         label: "Honor",
-        href: "/categories?category=mobiles&brand=honor",
+        href: "/products?category=mobiles&brand=honor",
       },
       {
         id: "iphone",
         label: "iPhone",
-        href: "/categories?category=mobiles&brand=iphone",
+        href: "/products?category=mobiles&brand=iphone",
       },
     ],
   },
   {
     id: "earbuds",
     label: "Earbuds",
-    categoryHref: "/categories?category=earbuds",
+    categoryHref: "/products?category=earbuds",
     children: [
       {
         id: "xiaomi",
         label: "Xiaomi",
-        href: "/categories?category=earbuds&brand=xiaomi",
+        href: "/products?category=earbuds&brand=xiaomi",
       },
       {
         id: "audionic",
         label: "Audionic",
-        href: "/categories?category=earbuds&brand=audionic",
+        href: "/products?category=earbuds&brand=audionic",
       },
       {
         id: "zero",
         label: "Zero",
-        href: "/categories?category=earbuds&brand=zero",
+        href: "/products?category=earbuds&brand=zero",
       },
       {
         id: "ronnin",
         label: "Ronnin",
-        href: "/categories?category=earbuds&brand=ronnin",
+        href: "/products?category=earbuds&brand=ronnin",
       },
     ],
   },
   {
     id: "smart-watches",
     label: "Smart Watches",
-    categoryHref: "/categories?category=smart-watches",
+    categoryHref: "/products?category=smart-watches",
     children: [
       {
         id: "faster",
         label: "Faster",
-        href: "/categories?category=smart-watches&brand=faster",
+        href: "/products?category=smart-watches&brand=faster",
       },
       {
         id: "nothing",
         label: "Nothing",
-        href: "/categories?category=smart-watches&brand=nothing",
+        href: "/products?category=smart-watches&brand=nothing",
       },
       {
         id: "zero",
         label: "Zero",
-        href: "/categories?category=smart-watches&brand=zero",
+        href: "/products?category=smart-watches&brand=zero",
       },
       {
         id: "dany",
         label: "Dany",
-        href: "/categories?category=smart-watches&brand=dany",
+        href: "/products?category=smart-watches&brand=dany",
       },
       {
         id: "samsung",
         label: "Samsung",
-        href: "/categories?category=smart-watches&brand=samsung",
+        href: "/products?category=smart-watches&brand=samsung",
       },
       {
         id: "huaview",
         label: "Huaview",
-        href: "/categories?category=smart-watches&brand=huaview",
+        href: "/products?category=smart-watches&brand=huaview",
       },
     ],
   },
@@ -162,37 +162,37 @@ export const STORE_NAV_BAR_MORE_ITEMS: NavBarMoreItem[] = [
   {
     id: "power-banks",
     label: "Power banks",
-    href: "/categories?category=power-banks",
+    href: "/products?category=power-banks",
   },
   {
     id: "data-cables",
     label: "Data cables",
-    href: "/categories?category=data-cables",
+    href: "/products?category=data-cables",
   },
   {
     id: "chargers",
     label: "Chargers",
-    href: "/categories?category=chargers",
+    href: "/products?category=chargers",
   },
   {
     id: "speakers",
     label: "Speakers",
-    href: "/categories?category=speakers",
+    href: "/products?category=speakers",
   },
   {
     id: "tablets",
     label: "Tablets",
-    href: "/categories?category=tablets",
+    href: "/products?category=tablets",
   },
   {
     id: "headphones",
     label: "Headphones",
-    href: "/categories?category=headphones",
+    href: "/products?category=headphones",
   },
   {
     id: "car-accessories",
     label: "Car accessories",
-    href: "/categories?category=car-accessories",
+    href: "/products?category=car-accessories",
   },
 ];
 

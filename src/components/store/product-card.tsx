@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { IconCart } from "@/components/icons";
 import { ProductImageWithFallback } from "@/components/store/product-image-with-fallback";
+import { ProductCardAddToCartButton } from "@/components/store/product-card-add-to-cart-button";
 import { SITE_PRODUCT_SLIDER } from "@/lib/config/site-config";
 import { formatProductPriceWithPrefix } from "@/lib/products/format-price";
 import type { StorefrontProductCardItem } from "@/lib/products/storefront-types";
@@ -33,6 +32,7 @@ export const ProductCard = ({
   layout = "rail",
 }: ProductCardProps) => {
   const { name, href, imagePath, price, finalPrice, discountLabel } = product;
+  const isInStock = product.isInStock;
 
   const hasDiscount = finalPrice < price;
   const pricePrefix = SITE_PRODUCT_SLIDER.pricePrefix;
@@ -140,17 +140,17 @@ export const ProductCard = ({
             : "px-3 pb-3 pt-1"
         }
       >
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
-          fullWidth
-          aria-label={`${SITE_PRODUCT_SLIDER.addToCartLabel}: ${name}`}
-          className="rounded-full"
-        >
-          <IconCart width={16} height={16} />
-          {SITE_PRODUCT_SLIDER.addToCartLabel}
-        </Button>
+        <ProductCardAddToCartButton
+          productId={product.id}
+          productName={name}
+          href={href}
+          imagePath={imagePath}
+          unitPrice={finalPrice}
+          stock={product.stock}
+          isInStock={isInStock}
+          colorOptions={product.colorOptions}
+          storageOptions={product.storageOptions}
+        />
       </div>
     </article>
   );

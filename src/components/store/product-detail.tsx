@@ -153,11 +153,15 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
           ) : null}
 
           <ProductPurchasePanel
+            productId={product.id}
+            productHref={`/products/${product.slug}`}
+            productImagePath={product.imagePath}
             productName={name}
             basePrice={price}
             finalBasePrice={finalPrice}
             discountLabel={discountLabel}
             isInStock={isInStock}
+            stock={product.stock}
             colorOptions={colorOptions}
             storageOptions={storageOptions}
           />

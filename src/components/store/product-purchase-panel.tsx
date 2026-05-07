@@ -1,9 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { IconCheckCircleFilled } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/select-field";
 import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  ADDED_BUTTON_CLASS,
+  ADDED_LABEL,
+  LIMIT_REACHED_LABEL,
+  useAddToCartFeedback,
+} from "@/components/store/use-add-to-cart-feedback";
+import { addItemToStoreCart } from "@/lib/cart/store-cart";
 import {
   SITE_PRODUCT_DETAIL,
   SITE_PRODUCT_SLIDER,
@@ -15,6 +23,9 @@ import {
 import type { ProductVariantOption } from "@/lib/products/specs";
 
 type ProductPurchasePanelProps = {
+  productId: string;
+  productHref: string;
+  productImagePath: string | null;
   /** Product name — used in CTA aria-labels for screen readers. */
   productName: string;
   /** Original (pre-discount) base price in store currency units. */
@@ -29,6 +40,8 @@ type ProductPurchasePanelProps = {
   discountLabel: string | null;
   /** Whether stock is positive — flips the CTA into a disabled state. */
   isInStock: boolean;
+  /** Current inventory count; used to cap cart additions. */
+  stock: number;
   colorOptions: ReadonlyArray<ProductVariantOption>;
   storageOptions: ReadonlyArray<ProductVariantOption>;
 };
@@ -68,11 +81,15 @@ const findDelta = (
  * relevant dropdown simply isn't rendered.
  */
 export const ProductPurchasePanel = ({
+  productId,
+  productHref,
+  productImagePath,
   productName,
   basePrice,
   finalBasePrice,
   discountLabel,
   isInStock,
+  stock,
   colorOptions,
   storageOptions,
 }: ProductPurchasePanelProps) => {
@@ -104,6 +121,9 @@ export const ProductPurchasePanel = ({
   const [selectedStorage, setSelectedStorage] = useState<string>(
     () => storageOptions[0]?.value ?? "",
   );
+  const { status, isAdded, showAdded, showLimitReached } =
+    useAddToCartFeedback();
+  const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
 
   const colorDelta = findDelta(colorOptions, selectedColor);
   const storageDelta = findDelta(storageOptions, selectedStorage);
@@ -118,11 +138,30 @@ export const ProductPurchasePanel = ({
     pricePrefix,
   );
   const finalPriceAmount = formatProductPriceAmount(displayFinalPrice);
+  const maxQuantityPerAdd = Math.max(1, Math.min(10, stock));
+  const quantityOptions = useMemo(
+    () =>
+      Array.from({ length: maxQuantityPerAdd }, (_, index) => {
+        const value = String(index + 1);
+        return { value, label: value };
+      }),
+    [maxQuantityPerAdd],
+  );
+  const addToCartCtaLabel = !isInStock
+    ? SITE_PRODUCT_DETAIL.addToCartDisabledLabel
+    : status === "limit_reached"
+      ? LIMIT_REACHED_LABEL
+      : isAdded
+        ? ADDED_LABEL
+        : SITE_PRODUCT_DETAIL.addToCartLabel;
 
-  const showsBothColumns = hasColors && hasStorages;
-  const variantsLayoutClass = showsBothColumns
-    ? "grid w-full grid-cols-2 gap-2 sm:max-w-xl sm:gap-4"
-    : "grid w-full grid-cols-1 gap-3 sm:max-w-sm";
+  const variantFieldCount = (hasColors ? 1 : 0) + (hasStorages ? 1 : 0) + 1;
+  const variantsLayoutClass =
+    variantFieldCount >= 3
+      ? "grid w-full grid-cols-3 gap-2 sm:max-w-xl sm:gap-4"
+      : variantFieldCount === 2
+        ? "grid w-full grid-cols-2 gap-2 sm:max-w-xl sm:gap-4"
+        : "grid w-full grid-cols-1 gap-2 sm:max-w-[7rem]";
 
   return (
     <div className="flex flex-col gap-5">
@@ -150,38 +189,43 @@ export const ProductPurchasePanel = ({
         ) : null}
       </div>
 
-      {hasColors || hasStorages ? (
-        <section
-          aria-label={SITE_PRODUCT_DETAIL.colorOptionsHeading}
-          className={variantsLayoutClass}
-        >
-          {hasColors ? (
-            <SelectField
-              name="color"
-              label={SITE_PRODUCT_DETAIL.colorSelectLabel}
-              variant="floating"
-              options={colorSelectOptions}
-              value={selectedColor}
-              onChange={(event) => setSelectedColor(event.currentTarget.value)}
-              wrapperClassName="w-full"
-            />
-          ) : null}
+      <section aria-label="Product options" className={variantsLayoutClass}>
+        {hasColors ? (
+          <SelectField
+            name="color"
+            label={SITE_PRODUCT_DETAIL.colorSelectLabel}
+            variant="floating"
+            options={colorSelectOptions}
+            value={selectedColor}
+            onChange={(event) => setSelectedColor(event.currentTarget.value)}
+            wrapperClassName="w-full"
+          />
+        ) : null}
 
-          {hasStorages ? (
-            <SelectField
-              name="storage"
-              label={SITE_PRODUCT_DETAIL.storageOptionsHeading}
-              variant="floating"
-              options={storageSelectOptions}
-              value={selectedStorage}
-              onChange={(event) =>
-                setSelectedStorage(event.currentTarget.value)
-              }
-              wrapperClassName="w-full"
-            />
-          ) : null}
-        </section>
-      ) : null}
+        {hasStorages ? (
+          <SelectField
+            name="storage"
+            label={SITE_PRODUCT_DETAIL.storageOptionsHeading}
+            variant="floating"
+            options={storageSelectOptions}
+            value={selectedStorage}
+            onChange={(event) => setSelectedStorage(event.currentTarget.value)}
+            wrapperClassName="w-full"
+          />
+        ) : null}
+
+        <SelectField
+          name="quantity"
+          label="Quantity"
+          variant="floating"
+          options={quantityOptions}
+          value={String(selectedQuantity)}
+          onChange={(event) =>
+            setSelectedQuantity(Math.max(1, Number(event.currentTarget.value)))
+          }
+          wrapperClassName="w-full"
+        />
+      </section>
 
       <div className="grid w-full grid-cols-2 gap-2 pt-1 sm:max-w-xl sm:gap-3">
         <Button
@@ -189,16 +233,38 @@ export const ProductPurchasePanel = ({
           variant="primary"
           size="md"
           disabled={!isInStock}
-          aria-label={`${
-            isInStock
-              ? SITE_PRODUCT_DETAIL.addToCartLabel
-              : SITE_PRODUCT_DETAIL.addToCartDisabledLabel
-          }: ${productName}`}
-          className="w-full rounded-md"
+          aria-label={`${addToCartCtaLabel}: ${productName}`}
+          className={`w-full rounded-md transition-all duration-200 ${isAdded ? ADDED_BUTTON_CLASS : ""}`}
+          onClick={() => {
+            if (!isInStock) return;
+            const result = addItemToStoreCart(
+              {
+                productId,
+                name: productName,
+                href: productHref,
+                imagePath: productImagePath,
+                unitPrice: displayFinalPrice,
+                selectedColor: hasColors ? selectedColor || null : null,
+                selectedStorage: hasStorages ? selectedStorage || null : null,
+              },
+              selectedQuantity,
+              { maxAllowed: maxQuantityPerAdd },
+            );
+            if (result.ok && result.addedQuantity > 0) {
+              showAdded();
+              return;
+            }
+            showLimitReached();
+          }}
         >
-          {isInStock
-            ? SITE_PRODUCT_DETAIL.addToCartLabel
-            : SITE_PRODUCT_DETAIL.addToCartDisabledLabel}
+          {isAdded && isInStock ? (
+            <IconCheckCircleFilled
+              width={16}
+              height={16}
+              className="text-white"
+            />
+          ) : null}
+          {addToCartCtaLabel}
         </Button>
         <Button
           type="button"

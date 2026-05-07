@@ -94,6 +94,9 @@ type ProductCardRow = {
   slug: string;
   brand: string;
   imagePath: string | null;
+  stock: number;
+  colorOptions: unknown;
+  storageOptions: unknown;
   price: { toString: () => string } | number;
   discountType: ProductDiscountTypeValue;
   discountValue: { toString: () => string } | number | null;
@@ -118,6 +121,10 @@ const toCardItem = (row: ProductCardRow): StorefrontProductCardItem => {
     slug: row.slug,
     href: `/products/${row.slug}`,
     imagePath: safeProductImageSrc(row.imagePath),
+    stock: row.stock,
+    isInStock: row.stock > 0,
+    colorOptions: colorOptionsJsonToList(row.colorOptions),
+    storageOptions: storageOptionsJsonToList(row.storageOptions),
     price,
     finalPrice,
     discountLabel: buildDiscountLabel({
@@ -135,7 +142,7 @@ type FeaturedListOptions = {
 };
 
 /**
- * Returns active, in-stock products for a category slug, shaped for the
+ * Returns active products for a category slug, shaped for the
  * storefront `ProductCard` / `ProductSlider`.
  *
  * Ordering: discounted products first (deals up top), then newest. This keeps
@@ -158,7 +165,6 @@ export const listFeaturedProductsByCategorySlug = async (
   const rows = await prisma.product.findMany({
     where: {
       isActive: true,
-      stock: { gt: 0 },
       category: { slug: { equals: slug, mode: "insensitive" } },
       ...(excludeId ? { id: { not: excludeId } } : {}),
     },
@@ -170,6 +176,9 @@ export const listFeaturedProductsByCategorySlug = async (
       slug: true,
       brand: true,
       imagePath: true,
+      stock: true,
+      colorOptions: true,
+      storageOptions: true,
       price: true,
       discountType: true,
       discountValue: true,
@@ -181,7 +190,7 @@ export const listFeaturedProductsByCategorySlug = async (
 };
 
 /**
- * Returns active, in-stock products flagged by admins as "new arrivals".
+ * Returns active products flagged by admins as "new arrivals".
  * Ordered with discounted items first, then newest updates.
  */
 export const listFeaturedNewArrivalProducts = async (
@@ -203,13 +212,15 @@ export const listFeaturedNewArrivalProducts = async (
           "slug",
           "brand",
           "imagePath",
+          "stock",
+          "colorOptions",
+          "storageOptions",
           "price",
           "discountType",
           "discountValue",
           "isDiscountActive"
         FROM "Product"
         WHERE "isActive" = true
-          AND "stock" > 0
           AND "isNewArrival" = true
           AND "id" <> ${excludeId}
         ORDER BY "isDiscountActive" DESC, "updatedAt" DESC
@@ -223,13 +234,15 @@ export const listFeaturedNewArrivalProducts = async (
           "slug",
           "brand",
           "imagePath",
+          "stock",
+          "colorOptions",
+          "storageOptions",
           "price",
           "discountType",
           "discountValue",
           "isDiscountActive"
         FROM "Product"
         WHERE "isActive" = true
-          AND "stock" > 0
           AND "isNewArrival" = true
         ORDER BY "isDiscountActive" DESC, "updatedAt" DESC
         LIMIT ${take}
@@ -250,7 +263,7 @@ export const listFeaturedNewArrivalProducts = async (
 };
 
 /**
- * Returns active, in-stock products flagged by admins for the "On Sale" rail.
+ * Returns active products flagged by admins for the "On Sale" rail.
  * Ordered with discounted items first, then newest updates.
  */
 export const listFeaturedOnSaleProducts = async (
@@ -272,13 +285,15 @@ export const listFeaturedOnSaleProducts = async (
           "slug",
           "brand",
           "imagePath",
+          "stock",
+          "colorOptions",
+          "storageOptions",
           "price",
           "discountType",
           "discountValue",
           "isDiscountActive"
         FROM "Product"
         WHERE "isActive" = true
-          AND "stock" > 0
           AND "isOnSale" = true
           AND "id" <> ${excludeId}
         ORDER BY "isDiscountActive" DESC, "updatedAt" DESC
@@ -292,13 +307,15 @@ export const listFeaturedOnSaleProducts = async (
           "slug",
           "brand",
           "imagePath",
+          "stock",
+          "colorOptions",
+          "storageOptions",
           "price",
           "discountType",
           "discountValue",
           "isDiscountActive"
         FROM "Product"
         WHERE "isActive" = true
-          AND "stock" > 0
           AND "isOnSale" = true
         ORDER BY "isDiscountActive" DESC, "updatedAt" DESC
         LIMIT ${take}
@@ -399,7 +416,7 @@ export type StorefrontProductsPageInput = {
 export type StorefrontProductsPage = {
   /** Cards for the requested page slice. */
   items: StorefrontProductCardItem[];
-  /** Total active in-stock matches (pre-pagination). */
+  /** Total active matches (pre-pagination). */
   total: number;
   /** Whether more rows exist after the returned slice. */
   hasMore: boolean;
@@ -443,7 +460,7 @@ export const findStorefrontCategoryBySlug = async (
 };
 
 /**
- * Returns a paginated slice of active, in-stock products for the public
+ * Returns a paginated slice of active products for the public
  * listing page (`/products?category=…&brand=…`). Mirrors the rail's
  * "deals first, then newest" ordering so featured cards stay consistent.
  *
@@ -477,7 +494,6 @@ export const listStorefrontProductsPage = async (
 
   const where: Record<string, unknown> = {
     isActive: true,
-    stock: { gt: 0 },
   };
   if (slug.length > 0) {
     where.category = { slug: { equals: slug, mode: "insensitive" } };
@@ -515,6 +531,9 @@ export const listStorefrontProductsPage = async (
         slug: true,
         brand: true,
         imagePath: true,
+        stock: true,
+        colorOptions: true,
+        storageOptions: true,
         price: true,
         discountType: true,
         discountValue: true,
@@ -532,7 +551,7 @@ export const listStorefrontProductsPage = async (
 
 /**
  * Product-only catalog search used by `/search`.
- * Returns active, in-stock cards matching name/brand/model (case-insensitive).
+ * Returns active cards matching name/brand/model (case-insensitive).
  */
 export const searchStorefrontProducts = async (
   input: StorefrontSearchProductsInput,
@@ -551,7 +570,6 @@ export const searchStorefrontProducts = async (
   const rows = await prisma.product.findMany({
     where: {
       isActive: true,
-      stock: { gt: 0 },
       OR: [
         { name: { contains: rawQuery, mode: "insensitive" } },
         { brand: { contains: rawQuery, mode: "insensitive" } },
@@ -570,6 +588,9 @@ export const searchStorefrontProducts = async (
       slug: true,
       brand: true,
       imagePath: true,
+      stock: true,
+      colorOptions: true,
+      storageOptions: true,
       price: true,
       discountType: true,
       discountValue: true,
@@ -591,7 +612,6 @@ export const listStorefrontDistinctBrands = async (
   const rows = await prisma.product.findMany({
     where: {
       isActive: true,
-      stock: { gt: 0 },
       ...(slug.length > 0
         ? { category: { slug: { equals: slug, mode: "insensitive" } } }
         : {}),
@@ -608,7 +628,7 @@ export const listStorefrontDistinctBrands = async (
 
 /**
  * Returns category options for the public `/products` category filter.
- * Includes only categories with at least one active, in-stock product.
+ * Includes only categories with at least one active product.
  */
 export const listStorefrontFilterCategories = async (): Promise<
   StorefrontFilterCategoryOption[]
@@ -618,7 +638,6 @@ export const listStorefrontFilterCategories = async (): Promise<
       products: {
         some: {
           isActive: true,
-          stock: { gt: 0 },
         },
       },
     },

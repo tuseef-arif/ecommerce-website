@@ -29,6 +29,7 @@ import {
   StoreHeaderDesktopShopNav,
   StoreHeaderMobileShopNav,
 } from "@/components/store/store-header-shop-nav";
+import { StoreCartDrawer } from "@/components/store/store-cart-drawer";
 import { mobileSignedInGreetingFromUser } from "@/components/store/account-popover-utils";
 import type { AccountPopoverUser, GuestView } from "@/lib/type/account-popover";
 import {
@@ -39,6 +40,11 @@ import {
   STORE_BUSINESS_NAME,
   STORE_SHELL,
 } from "@/lib/config/site-config";
+import {
+  STORE_CART_UPDATED_EVENT,
+  getStoreCartCount,
+  readStoreCart,
+} from "@/lib/cart/store-cart";
 
 const headerIconBtnClass =
   "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
@@ -120,6 +126,8 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
   const [isMobileLogoutPending, startMobileLogoutTransition] = useTransition();
   const [accountPopoverTriggerOrigin, setAccountPopoverTriggerOrigin] =
     useState<"mobile" | "desktop">("desktop");
+  const [clientCartItemCount, setClientCartItemCount] = useState(cartItemCount);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const accountMobileWrapRef = useRef<HTMLDivElement>(null);
   const accountDesktopWrapRef = useRef<HTMLDivElement>(null);
   const accountMobileTriggerRef = useRef<HTMLButtonElement>(null);
@@ -127,6 +135,16 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
   const desktopShopNavRef = useRef<HTMLDivElement>(null);
 
   const closeMenu = useCallback(() => setIsMenuOpen(false), []);
+
+  useEffect(() => {
+    const syncCartCount = () => {
+      setClientCartItemCount(getStoreCartCount(readStoreCart()));
+    };
+    syncCartCount();
+    window.addEventListener(STORE_CART_UPDATED_EVENT, syncCartCount);
+    return () =>
+      window.removeEventListener(STORE_CART_UPDATED_EVENT, syncCartCount);
+  }, []);
 
   const closeAccountPopover = useCallback(() => {
     setAccountPopoverOpen(false);
@@ -365,7 +383,7 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
   }, []);
 
   const cartBadgeText =
-    cartItemCount > 99 ? "99+" : String(Math.max(0, cartItemCount));
+    clientCartItemCount > 99 ? "99+" : String(Math.max(0, clientCartItemCount));
 
   const accountAria = user
     ? SITE_HEADER.accountAriaSignedIn
@@ -434,14 +452,19 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
                 <Link
                   href={SITE_ROUTES.cart}
                   className={
-                    cartItemCount > 0
+                    clientCartItemCount > 0
                       ? `${mobileToolbarIconClass} relative`
                       : mobileToolbarIconClass
                   }
                   aria-label={SITE_HEADER.cartAria}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setAccountPopoverOpen(false);
+                    setCartDrawerOpen(true);
+                  }}
                 >
                   <IconCart />
-                  {cartItemCount > 0 ? (
+                  {clientCartItemCount > 0 ? (
                     <span
                       className="absolute -right-0.5 -top-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-0.5 text-[0.625rem] font-bold leading-none text-white shadow-sm ring-2 ring-[var(--store-header-gradient-via)]"
                       aria-hidden
@@ -493,6 +516,42 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
             />
 
             <div className="flex shrink-0 items-center gap-1 md:gap-2">
+              {user ? (
+                <button
+                  type="button"
+                  className="inline-flex whitespace-nowrap px-1 text-sm font-medium text-white transition-colors hover:text-white/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:text-base"
+                  aria-expanded={accountPopoverOpen}
+                  aria-haspopup="dialog"
+                  aria-controls={ACCOUNT_POPOVER_ELEMENT_ID}
+                  aria-label={SITE_HEADER.accountAriaSignedIn}
+                  onClick={() => {
+                    setAccountPopoverTriggerOrigin("desktop");
+                    setAccountPopoverOpen(true);
+                  }}
+                >
+                  {mobileSignedInGreetingFromUser(user)}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="inline-flex whitespace-nowrap px-1 text-sm font-medium text-white transition-colors hover:text-white/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:text-base"
+                  aria-expanded={accountPopoverOpen}
+                  aria-haspopup="dialog"
+                  aria-controls={ACCOUNT_POPOVER_ELEMENT_ID}
+                  aria-label={SITE_HEADER.accountMenuButtonSignedOutAria}
+                  onClick={() => {
+                    setInitialGuestView("login");
+                    setLoginNoticeMessage(null);
+                    setSignupUrlError(null);
+                    setResetPasswordToken(null);
+                    setResetPasswordUrlError(null);
+                    setAccountPopoverTriggerOrigin("desktop");
+                    setAccountPopoverOpen(true);
+                  }}
+                >
+                  {SITE_HEADER.loginCta}
+                </button>
+              )}
               <div ref={accountDesktopWrapRef} className="relative">
                 <button
                   ref={accountDesktopTriggerRef}
@@ -510,13 +569,29 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
                   <IconAccount />
                 </button>
               </div>
-              <Link
-                href={SITE_ROUTES.cart}
-                className={headerIconBtnClass}
+              <button
+                type="button"
+                className={
+                  clientCartItemCount > 0
+                    ? `${headerIconBtnClass} relative`
+                    : headerIconBtnClass
+                }
                 aria-label={SITE_HEADER.cartAria}
+                onClick={() => {
+                  setAccountPopoverOpen(false);
+                  setCartDrawerOpen(true);
+                }}
               >
                 <IconCart />
-              </Link>
+                {clientCartItemCount > 0 ? (
+                  <span
+                    className="absolute -right-0.5 -top-1 flex h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-0.5 text-[0.625rem] font-bold leading-none text-white shadow-sm ring-2 ring-[var(--store-header-gradient-via)]"
+                    aria-hidden
+                  >
+                    {cartBadgeText}
+                  </span>
+                ) : null}
+              </button>
             </div>
           </div>
 
@@ -563,7 +638,7 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
                   <div className="min-w-0 pr-11">
                     <Link
                       href={SITE_ROUTES.home}
-                      className="block text-base font-bold leading-tight text-white hover:text-white/95"
+                      className="block text-lg font-bold leading-tight text-white hover:text-white/95 sm:text-xl"
                       aria-label={SITE_ARIA_LOGO_HOME}
                       onClick={closeMenu}
                     >
@@ -638,6 +713,10 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
           ) : null}
         </div>
       </header>
+      <StoreCartDrawer
+        isOpen={cartDrawerOpen}
+        onClose={() => setCartDrawerOpen(false)}
+      />
       <StoreAuthSuccessDialog
         isOpen={mobileLogoutSuccessOpen}
         onDismiss={finalizeMobileLogoutSuccess}

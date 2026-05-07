@@ -41,7 +41,7 @@ export const PriceRangePanel = () => (
         <Link
           key={range.label}
           href={buildPriceRangeHref(range)}
-          className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--store-brand-primary)]/70 px-2 py-2 text-center text-xs font-semibold text-[var(--store-brand-primary)] transition-colors hover:bg-[var(--store-brand-primary)]/5 sm:text-sm"
+          className="inline-flex min-h-11 items-center justify-center rounded-none border border-[var(--store-brand-primary)]/70 px-2 py-2 text-center text-xs font-semibold text-[var(--store-brand-primary)] transition-colors hover:bg-[var(--store-brand-primary)]/5 sm:text-sm"
         >
           {range.label}
         </Link>

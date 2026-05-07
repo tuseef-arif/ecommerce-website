@@ -8,9 +8,9 @@ import { SITE_ROUTES } from "@/lib/config/site-config";
  * everyone else to the home page. Runs before the route renders so the user
  * never sees the placeholder page. The matching server page (see
  * `src/app/(auth)/post-login/page.tsx`) keeps the same logic as a defense-in-
- * depth fallback for clients where middleware is bypassed.
+ * depth fallback for clients where proxy is bypassed.
  */
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   if (req.nextUrl.pathname !== SITE_ROUTES.postLogin) {
     return NextResponse.next();
   }

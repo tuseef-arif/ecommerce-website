@@ -1,0 +1,215 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { SelectField } from "@/components/ui/select-field";
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  SITE_PRODUCT_DETAIL,
+  SITE_PRODUCT_SLIDER,
+} from "@/lib/config/site-config";
+import {
+  formatProductPriceAmount,
+  formatProductPriceWithPrefix,
+} from "@/lib/products/format-price";
+import type { ProductVariantOption } from "@/lib/products/specs";
+
+type ProductPurchasePanelProps = {
+  /** Product name — used in CTA aria-labels for screen readers. */
+  productName: string;
+  /** Original (pre-discount) base price in store currency units. */
+  basePrice: number;
+  /**
+   * Effective base price after any store-level discount. Equal to
+   * `basePrice` when no discount is active. Variant deltas are added on top
+   * of this value (deltas themselves are never discounted).
+   */
+  finalBasePrice: number;
+  /** Pre-formatted discount badge label, or `null` when no discount runs. */
+  discountLabel: string | null;
+  /** Whether stock is positive — flips the CTA into a disabled state. */
+  isInStock: boolean;
+  colorOptions: ReadonlyArray<ProductVariantOption>;
+  storageOptions: ReadonlyArray<ProductVariantOption>;
+};
+
+const buildOptionLabel = (
+  option: ProductVariantOption,
+  pricePrefix: string,
+): string => {
+  if (option.priceDelta <= 0) return option.value;
+  const suffix = `(${SITE_PRODUCT_DETAIL.variantOptionDeltaPrefix}${pricePrefix} ${formatProductPriceAmount(
+    option.priceDelta,
+  )})`;
+  return `${option.value} ${suffix}`;
+};
+
+const findDelta = (
+  options: ReadonlyArray<ProductVariantOption>,
+  value: string,
+): number => {
+  const match = options.find((option) => option.value === value);
+  return match ? match.priceDelta : 0;
+};
+
+/**
+ * Client island that owns the shopper's variant selection and renders the
+ * three coupled UI pieces — live price, color/storage dropdowns, and the
+ * Add-to-Cart / Compare CTAs — in lockstep. Lifted into its own component so
+ * the rest of `ProductDetail` stays server-rendered for SEO and faster TTFB.
+ *
+ * Pricing rule: the discount (if any) applies to the base price only;
+ * variant `priceDelta` values are added on top of the discounted total. This
+ * matches the "+Rs 500 for white" sticker-style pricing shoppers expect on
+ * mobile shop fronts and avoids surprising "your discount got smaller" UX
+ * when picking a more expensive variant.
+ *
+ * Falls back gracefully when the admin hasn't entered any options: the
+ * relevant dropdown simply isn't rendered.
+ */
+export const ProductPurchasePanel = ({
+  productName,
+  basePrice,
+  finalBasePrice,
+  discountLabel,
+  isInStock,
+  colorOptions,
+  storageOptions,
+}: ProductPurchasePanelProps) => {
+  const pricePrefix = SITE_PRODUCT_SLIDER.pricePrefix;
+
+  const hasColors = colorOptions.length > 0;
+  const hasStorages = storageOptions.length > 0;
+
+  const colorSelectOptions = useMemo(
+    () =>
+      colorOptions.map((option) => ({
+        value: option.value,
+        label: buildOptionLabel(option, pricePrefix),
+      })),
+    [colorOptions, pricePrefix],
+  );
+  const storageSelectOptions = useMemo(
+    () =>
+      storageOptions.map((option) => ({
+        value: option.value,
+        label: buildOptionLabel(option, pricePrefix),
+      })),
+    [storageOptions, pricePrefix],
+  );
+
+  const [selectedColor, setSelectedColor] = useState<string>(
+    () => colorOptions[0]?.value ?? "",
+  );
+  const [selectedStorage, setSelectedStorage] = useState<string>(
+    () => storageOptions[0]?.value ?? "",
+  );
+
+  const colorDelta = findDelta(colorOptions, selectedColor);
+  const storageDelta = findDelta(storageOptions, selectedStorage);
+  const totalDelta = colorDelta + storageDelta;
+
+  const displayFinalPrice = finalBasePrice + totalDelta;
+  const displayOriginalPrice = basePrice + totalDelta;
+  const hasDiscount = displayFinalPrice < displayOriginalPrice;
+
+  const originalPriceLabel = formatProductPriceWithPrefix(
+    displayOriginalPrice,
+    pricePrefix,
+  );
+  const finalPriceAmount = formatProductPriceAmount(displayFinalPrice);
+
+  const showsBothColumns = hasColors && hasStorages;
+  const variantsLayoutClass = showsBothColumns
+    ? "grid w-full grid-cols-2 gap-2 sm:max-w-xl sm:gap-4"
+    : "grid w-full grid-cols-1 gap-3 sm:max-w-sm";
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="flex items-baseline gap-1.5">
+          <span className="text-base font-semibold text-neutral-700 sm:text-lg">
+            {pricePrefix}
+          </span>
+          <span className="text-3xl font-bold text-neutral-900 tabular-nums sm:text-4xl">
+            {finalPriceAmount}
+          </span>
+        </span>
+        {hasDiscount ? (
+          <span className="text-sm text-neutral-400 line-through tabular-nums sm:text-base">
+            {originalPriceLabel}
+          </span>
+        ) : null}
+        {discountLabel ? (
+          <StatusBadge
+            tone="success"
+            className="px-2.5 py-1 text-[11px] uppercase tracking-wide"
+          >
+            {discountLabel}
+          </StatusBadge>
+        ) : null}
+      </div>
+
+      {hasColors || hasStorages ? (
+        <section
+          aria-label={SITE_PRODUCT_DETAIL.colorOptionsHeading}
+          className={variantsLayoutClass}
+        >
+          {hasColors ? (
+            <SelectField
+              name="color"
+              label={SITE_PRODUCT_DETAIL.colorSelectLabel}
+              variant="floating"
+              options={colorSelectOptions}
+              value={selectedColor}
+              onChange={(event) => setSelectedColor(event.currentTarget.value)}
+              wrapperClassName="w-full"
+            />
+          ) : null}
+
+          {hasStorages ? (
+            <SelectField
+              name="storage"
+              label={SITE_PRODUCT_DETAIL.storageOptionsHeading}
+              variant="floating"
+              options={storageSelectOptions}
+              value={selectedStorage}
+              onChange={(event) =>
+                setSelectedStorage(event.currentTarget.value)
+              }
+              wrapperClassName="w-full"
+            />
+          ) : null}
+        </section>
+      ) : null}
+
+      <div className="grid w-full grid-cols-2 gap-2 pt-1 sm:max-w-xl sm:gap-3">
+        <Button
+          type="button"
+          variant="primary"
+          size="md"
+          disabled={!isInStock}
+          aria-label={`${
+            isInStock
+              ? SITE_PRODUCT_DETAIL.addToCartLabel
+              : SITE_PRODUCT_DETAIL.addToCartDisabledLabel
+          }: ${productName}`}
+          className="w-full rounded-md"
+        >
+          {isInStock
+            ? SITE_PRODUCT_DETAIL.addToCartLabel
+            : SITE_PRODUCT_DETAIL.addToCartDisabledLabel}
+        </Button>
+        <Button
+          type="button"
+          variant="accent"
+          size="md"
+          aria-label={`${SITE_PRODUCT_DETAIL.compareAriaLabel}: ${productName}`}
+          className="w-full rounded-md"
+        >
+          {SITE_PRODUCT_DETAIL.compareLabel}
+        </Button>
+      </div>
+    </div>
+  );
+};

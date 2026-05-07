@@ -8,6 +8,8 @@ declare module "next-auth" {
       id: string;
       email: string;
       role: UserRole;
+      /** Mirrors `User.status`; false when deactivated or JWT cleared. */
+      isActive: boolean;
       name?: string | null;
       firstName?: string | null;
       lastName?: string | null;
@@ -36,5 +38,7 @@ declare module "next-auth/jwt" {
     lastName?: string | null;
     phone?: string | null;
     profileImagePath?: string | null;
+    /** Present when JWT was refreshed against DB and account is ACTIVE. */
+    isActive?: boolean;
   }
 }

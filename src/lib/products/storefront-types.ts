@@ -4,7 +4,10 @@
  * (e.g. `ProductSlider`) never see Prisma `Decimal` instances.
  */
 
-import type { ProductSpecEntry } from "@/lib/products/specs";
+import type {
+  ProductSpecEntry,
+  ProductVariantOption,
+} from "@/lib/products/specs";
 
 export type StorefrontProductCardItem = {
   id: string;
@@ -50,7 +53,14 @@ export type StorefrontProductDetail = StorefrontProductCardItem & {
   };
   specs: ProductSpecEntry[];
   keyFeatures: string[];
-  colorOptions: string[];
-  /** Admin-managed list of storage variants (e.g. "128 GB"). */
-  storageOptions: string[];
+  /**
+   * Admin-managed list of available colors with an optional per-option
+   * `priceDelta` added on top of the base price when selected.
+   */
+  colorOptions: ProductVariantOption[];
+  /**
+   * Admin-managed list of storage variants (e.g. "128 GB") with an optional
+   * per-option `priceDelta` added on top of the base price when selected.
+   */
+  storageOptions: ProductVariantOption[];
 };

@@ -4,6 +4,7 @@
  */
 
 import type { ProductDiscountTypeValue } from "@/lib/products/discount";
+import type { ProductVariantOption } from "@/lib/products/specs";
 
 export type AdminProductSpecEntry = {
   key: string;
@@ -45,10 +46,18 @@ export type AdminProductDetail = {
   isActive: boolean;
   categoryId: string;
   specs: AdminProductSpecEntry[];
-  /** Admin-managed list of available color names. */
-  colorOptions: string[];
-  /** Admin-managed list of available storage variants (e.g. "128 GB"). */
-  storageOptions: string[];
+  /**
+   * Admin-managed list of available colors. Each entry carries an optional
+   * `priceDelta` (≥0) added to the product's base price when the shopper
+   * picks that color. Legacy `string[]` data is auto-upgraded to deltas of 0.
+   */
+  colorOptions: ProductVariantOption[];
+  /**
+   * Admin-managed list of available storage variants (e.g. "128 GB"). Each
+   * entry carries an optional `priceDelta` (≥0) so larger capacities can be
+   * priced above the base.
+   */
+  storageOptions: ProductVariantOption[];
 };
 
 export type AdminProductCategoryOption = {

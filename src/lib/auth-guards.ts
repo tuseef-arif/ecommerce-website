@@ -11,7 +11,7 @@ export const requireUser = async (
 ): Promise<{ id: string; email: string; role: UserRole }> => {
   const session = await auth();
 
-  if (!session?.user) {
+  if (!session?.user?.id || session.user.isActive === false) {
     redirect(options?.redirectTo ?? "/login");
   }
 

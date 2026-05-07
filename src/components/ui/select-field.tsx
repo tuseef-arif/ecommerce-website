@@ -36,12 +36,12 @@ const labeledFieldClass =
   "h-11 w-full rounded-lg border border-neutral-300 bg-white px-3 text-sm leading-6 text-neutral-900 outline-none ring-0 transition-colors focus:border-[var(--store-brand-primary)] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60";
 
 const floatingFieldClassBySize: Record<SelectFieldSize, string> = {
-  md: "peer min-h-[3.5rem] w-full appearance-none rounded-lg border border-neutral-300 bg-white px-3 pr-10 pt-5 pb-1.5 text-sm leading-6 text-neutral-900 outline-none ring-0 transition-colors focus:border-[var(--store-brand-primary)] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60",
+  md: "peer h-10 w-full appearance-none rounded-lg border border-neutral-300 bg-white px-3 pr-10 pt-3 pb-1 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors focus:border-[var(--store-brand-primary)] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60",
   sm: "peer h-10 w-full appearance-none rounded-lg border border-neutral-300 bg-white px-2.5 pr-8 pt-3 pb-1 text-xs leading-5 text-neutral-900 outline-none ring-0 transition-colors focus:border-[var(--store-brand-primary)] focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60 sm:px-3 sm:pr-9 sm:text-sm",
 };
 
 const floatingLabelClassBySize: Record<SelectFieldSize, string> = {
-  md: "pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 bg-white px-1 text-sm text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium peer-focus:text-[var(--store-brand-primary)] peer-[:not(:invalid)]:top-0 peer-[:not(:invalid)]:-translate-y-1/2 peer-[:not(:invalid)]:text-xs peer-[:not(:invalid)]:font-medium peer-[:not(:invalid)]:text-neutral-600",
+  md: "pointer-events-none absolute left-3 top-1/2 z-[1] -translate-y-1/2 bg-white px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:invalid)]:top-0 peer-[:not(:invalid)]:-translate-y-1/2 peer-[:not(:invalid)]:text-[10px] peer-[:not(:invalid)]:text-neutral-600",
   sm: "pointer-events-none absolute left-2.5 top-0 z-[1] -translate-y-1/2 bg-white px-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-600 transition-colors duration-150 peer-focus:text-[var(--store-brand-primary)] sm:left-3",
 };
 

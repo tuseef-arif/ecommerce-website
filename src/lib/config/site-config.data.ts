@@ -296,6 +296,15 @@ export const SITE_DEFAULTS = {
     storagesRowPlaceholder: "e.g. 128 GB",
     storagesAddCta: "+ Add storage",
     optionRowRemoveAria: "Remove option",
+    /**
+     * Helper shown under each option list. The first option is treated as the
+     * base — keep its extra at 0; charge a premium on others by entering an
+     * amount (e.g. 500 means +Rs 500 on the base price for that variant).
+     */
+    optionDeltaHelper:
+      "Add an extra cost per option to bump the price when shoppers pick that variant. Leave blank or 0 for base price.",
+    /** Screen reader label for the per-row delta input. */
+    optionDeltaSrLabel: "Extra cost",
   },
   /**
    * Public product detail page (`/products/[slug]`).
@@ -318,6 +327,12 @@ export const SITE_DEFAULTS = {
     colorSelectLabel: "Color",
     /** Placeholder shown when an admin hasn't entered any options yet. */
     variantSelectPlaceholder: "Choose an option",
+    /**
+     * Suffix appended to a variant option label when it carries a positive
+     * `priceDelta`, e.g. `"White (+Rs 500)"`. The "+" + formatted amount are
+     * built in the component; this stays as the parenthetical wrapper.
+     */
+    variantOptionDeltaPrefix: "+",
     specsHeading: "Specifications",
     specsEmpty: "Detailed specifications will be added soon.",
     relatedHeading: "More from {category}",

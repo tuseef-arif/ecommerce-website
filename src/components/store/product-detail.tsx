@@ -1,18 +1,13 @@
 import Link from "next/link";
 import { ProductImageWithFallback } from "@/components/store/product-image-with-fallback";
+import { ProductPurchasePanel } from "@/components/store/product-purchase-panel";
 import { ProductSpecList } from "@/components/store/product-spec-list";
-import { ProductVariantSelectors } from "@/components/store/product-variant-selectors";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import {
   SITE_PRODUCT_DETAIL,
   SITE_PRODUCT_SLIDER,
   SITE_ROUTES,
 } from "@/lib/config/site-config";
-import {
-  formatProductPriceAmount,
-  formatProductPriceWithPrefix,
-} from "@/lib/products/format-price";
 import type { StorefrontProductDetail } from "@/lib/products/storefront-types";
 
 type ProductDetailProps = {
@@ -20,11 +15,12 @@ type ProductDetailProps = {
 };
 
 /**
- * Server-rendered product detail block: media, pricing, key info, CTA,
- * features, color/storage variants, and the spec table. The slider/related
- * rail is rendered as a sibling (see `RelatedProductsRail`). Variant
- * selection is the only piece that needs client interactivity, so it's
- * isolated in `ProductVariantSelectors` to keep the rest server-rendered.
+ * Server-rendered product detail block: media, header, key features, spec
+ * table, and breadcrumb. The interactive pricing/variant/CTA strip lives in
+ * `ProductPurchasePanel` (a client island) so the price stays in lockstep
+ * with the shopper's color/storage selection without forcing the rest of
+ * the page out of the server. The related-products rail is rendered as a
+ * sibling (see `RelatedProductsRail`).
  */
 export const ProductDetail = ({ product }: ProductDetailProps) => {
   const {
@@ -45,11 +41,6 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
   } = product;
 
   const hasDiscount = finalPrice < price;
-  const pricePrefix = SITE_PRODUCT_SLIDER.pricePrefix;
-  /** Strikethrough rendering shows the full prefixed string for clarity. */
-  const originalPriceLabel = formatProductPriceWithPrefix(price, pricePrefix);
-  /** Final price is split so we can render the prefix smaller than the amount. */
-  const finalPriceAmount = formatProductPriceAmount(finalPrice);
 
   const categoryHref = `/products?category=${category.slug}`;
   const specsHeadingId = "product-detail-specs-heading";
@@ -148,30 +139,6 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
             </StatusBadge>
           </div>
 
-          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="flex items-baseline gap-1.5">
-              <span className="text-base font-semibold text-neutral-700 sm:text-lg">
-                {pricePrefix}
-              </span>
-              <span className="text-3xl font-bold text-neutral-900 tabular-nums sm:text-4xl">
-                {finalPriceAmount}
-              </span>
-            </span>
-            {hasDiscount ? (
-              <span className="text-sm text-neutral-400 line-through tabular-nums sm:text-base">
-                {originalPriceLabel}
-              </span>
-            ) : null}
-            {discountLabel ? (
-              <StatusBadge
-                tone="success"
-                className="px-2.5 py-1 text-[11px] uppercase tracking-wide"
-              >
-                {discountLabel}
-              </StatusBadge>
-            ) : null}
-          </div>
-
           {keyFeatures.length > 0 ? (
             <section aria-label={SITE_PRODUCT_DETAIL.keyFeaturesHeading}>
               <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
@@ -185,38 +152,15 @@ export const ProductDetail = ({ product }: ProductDetailProps) => {
             </section>
           ) : null}
 
-          <ProductVariantSelectors
+          <ProductPurchasePanel
+            productName={name}
+            basePrice={price}
+            finalBasePrice={finalPrice}
+            discountLabel={discountLabel}
+            isInStock={isInStock}
             colorOptions={colorOptions}
             storageOptions={storageOptions}
           />
-
-          <div className="grid w-full grid-cols-1 gap-2 pt-1 sm:max-w-xl sm:grid-cols-2 sm:gap-3">
-            <Button
-              type="button"
-              variant="primary"
-              size="md"
-              disabled={!isInStock}
-              aria-label={`${
-                isInStock
-                  ? SITE_PRODUCT_DETAIL.addToCartLabel
-                  : SITE_PRODUCT_DETAIL.addToCartDisabledLabel
-              }: ${name}`}
-              className="w-full rounded-md"
-            >
-              {isInStock
-                ? SITE_PRODUCT_DETAIL.addToCartLabel
-                : SITE_PRODUCT_DETAIL.addToCartDisabledLabel}
-            </Button>
-            <Button
-              type="button"
-              variant="accent"
-              size="md"
-              aria-label={`${SITE_PRODUCT_DETAIL.compareAriaLabel}: ${name}`}
-              className="w-full rounded-md"
-            >
-              {SITE_PRODUCT_DETAIL.compareLabel}
-            </Button>
-          </div>
         </section>
       </div>
 

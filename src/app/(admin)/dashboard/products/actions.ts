@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import {
   adminProductFormSchema,
   parseSpecsJsonInput,
-  parseStringListJsonInput,
+  parseVariantListJsonInput,
 } from "@/lib/products/admin-schemas";
 import { PRODUCT_IMAGE_MAX_BYTES } from "@/lib/products/image-constants";
 import {
@@ -16,6 +16,7 @@ import {
   saveProductImage,
   type SaveProductImageError,
 } from "@/lib/products/image-storage";
+import type { ProductVariantOption } from "@/lib/products/specs";
 import type {
   DeleteProductResult,
   ProductFormFieldKey,
@@ -139,7 +140,9 @@ const parseFormDataInput = (formData: FormData) => ({
 
 /**
  * Parses + validates the variant lists shared by create + update actions.
- * Keeps both action paths in lockstep with the same error mapping.
+ * Keeps both action paths in lockstep with the same error mapping. Each
+ * option carries an optional `priceDelta` that the storefront adds to the
+ * product's base price when the shopper picks that option.
  */
 const parseVariantListsOrError = (input: {
   colorsJson: string;
@@ -147,13 +150,13 @@ const parseVariantListsOrError = (input: {
 }):
   | {
       ok: true;
-      colorOptions: string[] | null;
-      storageOptions: string[] | null;
+      colorOptions: ProductVariantOption[] | null;
+      storageOptions: ProductVariantOption[] | null;
     }
   | { ok: false; state: ProductFormState } => {
-  let colorOptions: string[] | null;
+  let colorOptions: ProductVariantOption[] | null;
   try {
-    colorOptions = parseStringListJsonInput(input.colorsJson, "Color options");
+    colorOptions = parseVariantListJsonInput(input.colorsJson, "Color options");
   } catch (error) {
     return {
       ok: false,
@@ -166,9 +169,9 @@ const parseVariantListsOrError = (input: {
       },
     };
   }
-  let storageOptions: string[] | null;
+  let storageOptions: ProductVariantOption[] | null;
   try {
-    storageOptions = parseStringListJsonInput(
+    storageOptions = parseVariantListJsonInput(
       input.storagesJson,
       "Storage options",
     );

@@ -25,6 +25,7 @@ import type {
   AdminProductDetail,
   AdminProductSpecEntry,
 } from "@/lib/products/admin-types";
+import type { ProductVariantOption } from "@/lib/products/specs";
 
 type ProductFormMode = "create" | "edit";
 
@@ -55,8 +56,8 @@ const fallbackInitialDetail = {
   isActive: true,
   categoryId: "",
   specs: [] as AdminProductSpecEntry[],
-  colorOptions: [] as string[],
-  storageOptions: [] as string[],
+  colorOptions: [] as ProductVariantOption[],
+  storageOptions: [] as ProductVariantOption[],
 };
 
 const cancelHref = "/dashboard/products";

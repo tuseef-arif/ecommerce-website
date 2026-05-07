@@ -11,6 +11,8 @@ type ProductsListingFiltersProps = {
   selectedCategory: string;
   brandOptions: ReadonlyArray<string>;
   selectedBrand: string;
+  selectedMinPrice: number | null;
+  selectedMaxPrice: number | null;
   selectedSort: StorefrontProductsSort;
   className?: string;
   labels: {
@@ -41,6 +43,8 @@ export const ProductsListingFilters = ({
   selectedCategory,
   brandOptions,
   selectedBrand,
+  selectedMinPrice,
+  selectedMaxPrice,
   selectedSort,
   className = "",
   labels,
@@ -56,6 +60,12 @@ export const ProductsListingFilters = ({
     if (nextCategory.length > 0) params.set("category", nextCategory);
     if (nextBrand.length > 0) params.set("brand", nextBrand);
     if (nextSort !== "latest") params.set("sort", nextSort);
+    if (selectedMinPrice !== null) {
+      params.set("minPrice", String(selectedMinPrice));
+    }
+    if (selectedMaxPrice !== null) {
+      params.set("maxPrice", String(selectedMaxPrice));
+    }
     const query = params.toString();
     router.push(query.length > 0 ? `/products?${query}` : "/products");
   };

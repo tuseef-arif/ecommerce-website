@@ -44,6 +44,8 @@ export type AdminProductDetail = {
   isDiscountActive: boolean;
   stock: number;
   isActive: boolean;
+  isOnSale: boolean;
+  isNewArrival: boolean;
   categoryId: string;
   specs: AdminProductSpecEntry[];
   /**

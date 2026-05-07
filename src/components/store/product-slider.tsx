@@ -27,6 +27,8 @@ type ProductSliderProps = {
   products: ReadonlyArray<StorefrontProductCardItem>;
   /** Optional rail title rendered above the track. */
   title?: string;
+  /** Optional rail description rendered under the title. */
+  description?: string;
   /** When provided, renders a "View all" link beside the title. */
   viewAllHref?: string;
   /** Override the default "View all" CTA copy. */
@@ -48,6 +50,7 @@ type ProductSliderProps = {
 export const ProductSlider = ({
   products,
   title,
+  description,
   viewAllHref,
   viewAllLabel,
   ariaLabel,
@@ -152,9 +155,14 @@ export const ProductSlider = ({
       >
         {title ? (
           <header className="mb-3 flex items-end justify-between gap-3">
-            <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">
-              {title}
-            </h2>
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900 sm:text-xl">
+                {title}
+              </h2>
+              {description ? (
+                <p className="mt-1 text-sm text-neutral-600">{description}</p>
+              ) : null}
+            </div>
           </header>
         ) : null}
         <div className="rounded-2xl border border-dashed border-neutral-200 bg-white px-4 py-8 text-center text-sm text-neutral-500">
@@ -175,12 +183,17 @@ export const ProductSlider = ({
       {(title || viewAllHref) && (
         <header className="mb-3 flex items-end justify-between gap-3">
           {title ? (
-            <h2
-              id={headingId}
-              className="text-lg font-semibold text-neutral-900 sm:text-xl"
-            >
-              {title}
-            </h2>
+            <div>
+              <h2
+                id={headingId}
+                className="text-lg font-semibold text-neutral-900 sm:text-xl"
+              >
+                {title}
+              </h2>
+              {description ? (
+                <p className="mt-1 text-sm text-neutral-600">{description}</p>
+              ) : null}
+            </div>
           ) : (
             <span />
           )}

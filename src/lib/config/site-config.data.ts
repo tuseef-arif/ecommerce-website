@@ -94,7 +94,7 @@ export const SITE_DEFAULTS = {
       clearBrandFilterAriaLabel: "Clear brand filter",
       emptyStateTitle: "No products found",
       emptyStateLead:
-        "We couldn't find products for this filter. Try clearing the brand filter or browse another category.",
+        "We couldn't find products for this filter. Try clearing the filter or browse another category.",
       emptyStateBrowseAllCta: "Browse all products",
       loadingMoreLabel: "Loading more products…",
       loadMoreCta: "Load more",

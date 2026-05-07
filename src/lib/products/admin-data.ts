@@ -209,6 +209,23 @@ export const getAdminProductById = async (
     },
   });
   if (!row) return null;
+  let isOnSale = false;
+  let isNewArrival = false;
+  try {
+    const productFlags = await prisma.$queryRaw<
+      Array<{ isOnSale: boolean; isNewArrival: boolean }>
+    >`
+      SELECT "isOnSale", "isNewArrival"
+      FROM "Product"
+      WHERE "id" = ${productId}
+      LIMIT 1
+    `;
+    isOnSale = productFlags[0]?.isOnSale ?? false;
+    isNewArrival = productFlags[0]?.isNewArrival ?? false;
+  } catch {
+    isOnSale = false;
+    isNewArrival = false;
+  }
 
   return {
     id: row.id,
@@ -225,6 +242,8 @@ export const getAdminProductById = async (
     isDiscountActive: row.isDiscountActive,
     stock: row.stock,
     isActive: row.isActive,
+    isOnSale,
+    isNewArrival,
     categoryId: row.categoryId,
     specs: specsJsonToEntries(row.specs),
     colorOptions: colorOptionsJsonToList(row.colorOptions),

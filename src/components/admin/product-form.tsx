@@ -54,6 +54,8 @@ const fallbackInitialDetail = {
   isDiscountActive: false,
   stock: 0,
   isActive: true,
+  isOnSale: false,
+  isNewArrival: false,
   categoryId: "",
   specs: [] as AdminProductSpecEntry[],
   colorOptions: [] as ProductVariantOption[],
@@ -348,12 +350,26 @@ export const ProductForm = ({
         errorMessage={state.fieldErrors.specs ?? null}
       />
 
-      <CheckboxField
-        name="isActive"
-        defaultChecked={initial.isActive}
-        label="Active (visible to shoppers)"
-        labelClassName="text-neutral-800"
-      />
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <CheckboxField
+          name="isActive"
+          defaultChecked={initial.isActive}
+          label="Active (visible to shoppers)"
+          labelClassName="text-neutral-800"
+        />
+        <CheckboxField
+          name="isOnSale"
+          defaultChecked={initial.isOnSale}
+          label="On Sale (show in slider)"
+          labelClassName="text-neutral-800"
+        />
+        <CheckboxField
+          name="isNewArrival"
+          defaultChecked={initial.isNewArrival}
+          label="New arrival (show in slider)"
+          labelClassName="text-neutral-800"
+        />
+      </div>
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-neutral-200 pt-4">
         <Button

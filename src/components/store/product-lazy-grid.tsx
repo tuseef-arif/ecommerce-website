@@ -27,6 +27,10 @@ type ProductLazyGridProps = {
   categorySlug: string;
   /** Active brand filter (free text or empty string when not filtered). */
   brand: string;
+  /** Active min price filter (inclusive). */
+  minPrice: number | null;
+  /** Active max price filter (inclusive). */
+  maxPrice: number | null;
   /** Active sort mode for listing results. */
   sort: StorefrontProductsSort;
 };
@@ -45,6 +49,8 @@ export const ProductLazyGrid = ({
   initialHasMore,
   categorySlug,
   brand,
+  minPrice,
+  maxPrice,
   sort,
 }: ProductLazyGridProps) => {
   const [items, setItems] = useState<StorefrontProductCardItem[]>(() => [
@@ -69,6 +75,8 @@ export const ProductLazyGrid = ({
         const result = await loadMoreStorefrontProductsAction({
           categorySlug,
           brand,
+          minPrice,
+          maxPrice,
           sort,
           skip,
         });
@@ -97,7 +105,7 @@ export const ProductLazyGrid = ({
         inFlightRef.current = false;
       }
     });
-  }, [brand, categorySlug, hasMore, skip, sort]);
+  }, [brand, categorySlug, hasMore, maxPrice, minPrice, skip, sort]);
 
   useEffect(() => {
     if (!hasMore) return undefined;

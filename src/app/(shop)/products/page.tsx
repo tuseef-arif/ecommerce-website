@@ -23,6 +23,8 @@ type ProductsListingSearchParams = {
   category?: string | string[];
   brand?: string | string[];
   sort?: string | string[];
+  minPrice?: string | string[];
+  maxPrice?: string | string[];
 };
 
 type ProductsListingPageProps = {
@@ -45,6 +47,17 @@ const parseSort = (
   const raw = sanitizeSingle(value, 24).toLowerCase();
   if (raw === "price-desc" || raw === "price-asc") return raw;
   return "latest";
+};
+
+const parsePriceBound = (
+  value: string | string[] | undefined,
+): number | null => {
+  const raw = sanitizeSingle(value, 20);
+  if (raw.length === 0) return null;
+  if (!/^\d+(\.\d{1,2})?$/.test(raw)) return null;
+  const parsed = Number.parseFloat(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
 };
 
 const interpolate = (
@@ -129,6 +142,8 @@ export default async function ProductsListingPage({
   const rawCategory = sanitizeSingle(resolved.category, 80).toLowerCase();
   const rawBrand = sanitizeSingle(resolved.brand, 80);
   const rawSort = parseSort(resolved.sort);
+  const rawMinPrice = parsePriceBound(resolved.minPrice);
+  const rawMaxPrice = parsePriceBound(resolved.maxPrice);
 
   const copy = SITE_PRODUCTS_LISTING_PAGE;
 
@@ -142,6 +157,8 @@ export default async function ProductsListingPage({
     listStorefrontProductsPage({
       categorySlug: category?.slug ?? "",
       brand: rawBrand,
+      minPrice: rawMinPrice,
+      maxPrice: rawMaxPrice,
       sort: rawSort,
       skip: 0,
       take: STORE_PRODUCTS_PAGE_SIZE,
@@ -159,10 +176,17 @@ export default async function ProductsListingPage({
         });
 
   const browseAllHref = "/products";
+  const hasActiveFilters =
+    rawCategory.length > 0 ||
+    rawBrand.length > 0 ||
+    rawSort !== "latest" ||
+    rawMinPrice !== null ||
+    rawMaxPrice !== null;
   const isEmpty = initialPage.items.length === 0;
 
   return (
     <main
+      id="products-top"
       className={`flex flex-1 flex-col gap-6 py-6 md:gap-8 md:py-10 ${STORE_SHELL}`}
     >
       <div className="flex items-center justify-between gap-3 text-xs text-neutral-500 sm:text-sm">
@@ -188,11 +212,18 @@ export default async function ProductsListingPage({
             ) : null}
           </ol>
         </nav>
-        {!isEmpty ? (
-          <p className="text-right text-xs tracking-wide text-neutral-500 sm:text-sm">
-            {resultLabel}
-          </p>
-        ) : null}
+        <div className="flex items-center gap-1.5 text-right text-xs tracking-wide text-neutral-500 sm:gap-2 sm:text-sm">
+          {hasActiveFilters ? (
+            <Link
+              href={browseAllHref}
+              className="text-neutral-500 transition-colors hover:text-[var(--store-brand-primary)]"
+            >
+              Clear Filters
+            </Link>
+          ) : null}
+          <span aria-hidden>{hasActiveFilters ? "-" : null}</span>
+          <p>{resultLabel}</p>
+        </div>
       </div>
 
       <header className="flex flex-col gap-3">
@@ -204,6 +235,8 @@ export default async function ProductsListingPage({
             selectedCategory={rawCategory}
             brandOptions={brandOptions}
             selectedBrand={rawBrand}
+            selectedMinPrice={rawMinPrice}
+            selectedMaxPrice={rawMaxPrice}
             selectedSort={rawSort}
             labels={{
               category: copy.filterCategoryLabel,
@@ -238,11 +271,13 @@ export default async function ProductsListingPage({
         </section>
       ) : (
         <ProductLazyGrid
-          key={`${category?.slug ?? "all"}|${rawBrand.trim().toLowerCase()}|${rawSort}`}
+          key={`${category?.slug ?? "all"}|${rawBrand.trim().toLowerCase()}|${rawSort}|${rawMinPrice ?? "none"}|${rawMaxPrice ?? "none"}`}
           initialItems={initialPage.items}
           initialHasMore={initialPage.hasMore}
           categorySlug={category?.slug ?? ""}
           brand={rawBrand}
+          minPrice={rawMinPrice}
+          maxPrice={rawMaxPrice}
           sort={rawSort}
         />
       )}

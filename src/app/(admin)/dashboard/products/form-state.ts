@@ -17,6 +17,8 @@ export type ProductFormFieldKey =
   | "discountValue"
   | "stock"
   | "isActive"
+  | "isOnSale"
+  | "isNewArrival"
   | "image"
   | "specs"
   | "colors"

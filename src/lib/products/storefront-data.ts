@@ -69,6 +69,25 @@ const buildDiscountLabel = (input: {
   return null;
 };
 
+const isUnknownFlagArgumentError = (
+  error: unknown,
+  fieldName: "isNewArrival" | "isOnSale",
+): boolean => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return new RegExp(`Unknown argument \`${fieldName}\``, "i").test(message);
+};
+
+const isMissingFlagColumnError = (
+  error: unknown,
+  fieldName: "isNewArrival" | "isOnSale",
+): boolean => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return (
+    message.includes(`column "${fieldName}" does not exist`) ||
+    message.includes("Code: `42703`")
+  );
+};
+
 type ProductCardRow = {
   id: string;
   name: string;
@@ -162,6 +181,143 @@ export const listFeaturedProductsByCategorySlug = async (
 };
 
 /**
+ * Returns active, in-stock products flagged by admins as "new arrivals".
+ * Ordered with discounted items first, then newest updates.
+ */
+export const listFeaturedNewArrivalProducts = async (
+  options: FeaturedListOptions = {},
+): Promise<StorefrontProductCardItem[]> => {
+  const take = Math.min(
+    MAX_FEATURED_LIMIT,
+    Math.max(1, Math.trunc(options.limit ?? DEFAULT_FEATURED_LIMIT)),
+  );
+  const excludeId = options.excludeProductId?.trim();
+
+  let rows: ProductCardRow[];
+  try {
+    if (excludeId) {
+      rows = await prisma.$queryRaw<ProductCardRow[]>`
+        SELECT
+          "id",
+          "name",
+          "slug",
+          "brand",
+          "imagePath",
+          "price",
+          "discountType",
+          "discountValue",
+          "isDiscountActive"
+        FROM "Product"
+        WHERE "isActive" = true
+          AND "stock" > 0
+          AND "isNewArrival" = true
+          AND "id" <> ${excludeId}
+        ORDER BY "isDiscountActive" DESC, "updatedAt" DESC
+        LIMIT ${take}
+      `;
+    } else {
+      rows = await prisma.$queryRaw<ProductCardRow[]>`
+        SELECT
+          "id",
+          "name",
+          "slug",
+          "brand",
+          "imagePath",
+          "price",
+          "discountType",
+          "discountValue",
+          "isDiscountActive"
+        FROM "Product"
+        WHERE "isActive" = true
+          AND "stock" > 0
+          AND "isNewArrival" = true
+        ORDER BY "isDiscountActive" DESC, "updatedAt" DESC
+        LIMIT ${take}
+      `;
+    }
+  } catch (error) {
+    if (
+      isUnknownFlagArgumentError(error, "isNewArrival") ||
+      isMissingFlagColumnError(error, "isNewArrival")
+    ) {
+      // Runtime Prisma client is stale; degrade gracefully until regenerated.
+      return [];
+    }
+    throw error;
+  }
+
+  return rows.map(toCardItem);
+};
+
+/**
+ * Returns active, in-stock products flagged by admins for the "On Sale" rail.
+ * Ordered with discounted items first, then newest updates.
+ */
+export const listFeaturedOnSaleProducts = async (
+  options: FeaturedListOptions = {},
+): Promise<StorefrontProductCardItem[]> => {
+  const take = Math.min(
+    MAX_FEATURED_LIMIT,
+    Math.max(1, Math.trunc(options.limit ?? DEFAULT_FEATURED_LIMIT)),
+  );
+  const excludeId = options.excludeProductId?.trim();
+
+  let rows: ProductCardRow[];
+  try {
+    if (excludeId) {
+      rows = await prisma.$queryRaw<ProductCardRow[]>`
+        SELECT
+          "id",
+          "name",
+          "slug",
+          "brand",
+          "imagePath",
+          "price",
+          "discountType",
+          "discountValue",
+          "isDiscountActive"
+        FROM "Product"
+        WHERE "isActive" = true
+          AND "stock" > 0
+          AND "isOnSale" = true
+          AND "id" <> ${excludeId}
+        ORDER BY "isDiscountActive" DESC, "updatedAt" DESC
+        LIMIT ${take}
+      `;
+    } else {
+      rows = await prisma.$queryRaw<ProductCardRow[]>`
+        SELECT
+          "id",
+          "name",
+          "slug",
+          "brand",
+          "imagePath",
+          "price",
+          "discountType",
+          "discountValue",
+          "isDiscountActive"
+        FROM "Product"
+        WHERE "isActive" = true
+          AND "stock" > 0
+          AND "isOnSale" = true
+        ORDER BY "isDiscountActive" DESC, "updatedAt" DESC
+        LIMIT ${take}
+      `;
+    }
+  } catch (error) {
+    if (
+      isUnknownFlagArgumentError(error, "isOnSale") ||
+      isMissingFlagColumnError(error, "isOnSale")
+    ) {
+      return [];
+    }
+    throw error;
+  }
+
+  return rows.map(toCardItem);
+};
+
+/**
  * Fetches a single active product by slug for the public detail page.
  * Returns `null` for unknown / inactive slugs so the route can call
  * `notFound()` cleanly.
@@ -228,6 +384,10 @@ export type StorefrontProductsPageInput = {
   categorySlug?: string;
   /** Optional brand filter (case-insensitive exact match). */
   brand?: string;
+  /** Optional min price filter (inclusive). */
+  minPrice?: number | null;
+  /** Optional max price filter (inclusive). */
+  maxPrice?: number | null;
   /** Sort order for listing cards. */
   sort?: StorefrontProductsSort;
   /** Items to skip — `0` for the first page. */
@@ -297,6 +457,14 @@ export const listStorefrontProductsPage = async (
   const slug = (input.categorySlug ?? "").trim().toLowerCase();
   const brand = (input.brand ?? "").trim();
   const sort = input.sort ?? "latest";
+  const minPrice =
+    typeof input.minPrice === "number" && Number.isFinite(input.minPrice)
+      ? Math.max(0, input.minPrice)
+      : null;
+  const maxPrice =
+    typeof input.maxPrice === "number" && Number.isFinite(input.maxPrice)
+      ? Math.max(0, input.maxPrice)
+      : null;
 
   const take = Math.max(
     1,
@@ -316,6 +484,12 @@ export const listStorefrontProductsPage = async (
   }
   if (brand.length > 0) {
     where.brand = { equals: brand, mode: "insensitive" };
+  }
+  if (minPrice !== null || maxPrice !== null) {
+    where.price = {
+      ...(minPrice !== null ? { gte: minPrice } : {}),
+      ...(maxPrice !== null ? { lte: maxPrice } : {}),
+    };
   }
 
   const orderBy =

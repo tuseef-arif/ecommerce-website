@@ -80,6 +80,14 @@ export const adminProductFormSchema = z
       .string()
       .optional()
       .transform((value) => value === "on" || value === "true"),
+    isOnSale: z
+      .string()
+      .optional()
+      .transform((value) => value === "on" || value === "true"),
+    isNewArrival: z
+      .string()
+      .optional()
+      .transform((value) => value === "on" || value === "true"),
     /** JSON string from the specs editor (array of `{ key, value }` pairs). */
     specsJson: z.string().max(20_000).optional().default(""),
     /** JSON string from the color options editor (array of strings). */

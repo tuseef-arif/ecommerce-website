@@ -112,7 +112,9 @@ const fieldErrorsFromZod = (
       top === "discountType" ||
       top === "discountValue" ||
       top === "stock" ||
-      top === "isActive"
+      top === "isActive" ||
+      top === "isOnSale" ||
+      top === "isNewArrival"
     ) {
       if (!fieldErrors[top]) fieldErrors[top] = issue.message;
     }
@@ -132,6 +134,12 @@ const parseFormDataInput = (formData: FormData) => ({
   stock: String(formData.get("stock") ?? ""),
   isActive: formData.has("isActive")
     ? String(formData.get("isActive") ?? "")
+    : undefined,
+  isOnSale: formData.has("isOnSale")
+    ? String(formData.get("isOnSale") ?? "")
+    : undefined,
+  isNewArrival: formData.has("isNewArrival")
+    ? String(formData.get("isNewArrival") ?? "")
     : undefined,
   specsJson: String(formData.get("specsJson") ?? ""),
   colorsJson: String(formData.get("colorsJson") ?? ""),
@@ -199,6 +207,28 @@ const extractFormImage = (formData: FormData): File | null => {
 
 const SLUG_COLLISION_MAX_ATTEMPTS = 6;
 
+const isUnknownFlagArgumentError = (
+  error: unknown,
+  fieldName: "isNewArrival" | "isOnSale",
+): boolean => {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return new RegExp(`Unknown argument \`${fieldName}\``, "i").test(message);
+};
+
+const syncProductSliderFlagsById = async (input: {
+  productId: string;
+  isOnSale: boolean;
+  isNewArrival: boolean;
+}) => {
+  await prisma.$executeRaw`
+    UPDATE "Product"
+    SET
+      "isOnSale" = ${input.isOnSale},
+      "isNewArrival" = ${input.isNewArrival}
+    WHERE "id" = ${input.productId}
+  `;
+};
+
 /* <SECURITY_REVIEW>
  * createProductAction
  * - Auth: requireAdmin() before any read/write.
@@ -261,12 +291,15 @@ export const createProductAction = async (
   const baseSlug = parsed.data.slug;
   let lastError: unknown;
   let created = false;
+  let createdProductId: string | null = null;
+  let shouldSkipOnSaleField = false;
+  let shouldSkipNewArrivalField = false;
 
   for (let attempt = 0; attempt < SLUG_COLLISION_MAX_ATTEMPTS; attempt++) {
     const candidateSlug =
       attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
     try {
-      await prisma.product.create({
+      const createdProduct = await prisma.product.create({
         data: {
           name: parsed.data.name,
           slug: candidateSlug,
@@ -286,12 +319,34 @@ export const createProductAction = async (
           isDiscountActive: parsed.data.isDiscountActive,
           stock: parsed.data.stock,
           isActive: parsed.data.isActive,
+          ...(shouldSkipOnSaleField ? {} : { isOnSale: parsed.data.isOnSale }),
+          ...(shouldSkipNewArrivalField
+            ? {}
+            : { isNewArrival: parsed.data.isNewArrival }),
           categoryId: parsed.data.categoryId,
         },
+        select: { id: true },
       });
+      createdProductId = createdProduct.id;
       created = true;
       break;
     } catch (error) {
+      if (
+        isUnknownFlagArgumentError(error, "isOnSale") &&
+        !shouldSkipOnSaleField
+      ) {
+        shouldSkipOnSaleField = true;
+        lastError = error;
+        continue;
+      }
+      if (
+        isUnknownFlagArgumentError(error, "isNewArrival") &&
+        !shouldSkipNewArrivalField
+      ) {
+        shouldSkipNewArrivalField = true;
+        lastError = error;
+        continue;
+      }
       const code = (error as { code?: string } | undefined)?.code;
       if (code === "P2002") {
         lastError = error;
@@ -325,6 +380,17 @@ export const createProductAction = async (
       errorMessage: "Could not create product. Please try again.",
       fieldErrors: {},
     };
+  }
+
+  if (
+    createdProductId &&
+    (shouldSkipOnSaleField || shouldSkipNewArrivalField)
+  ) {
+    await syncProductSliderFlagsById({
+      productId: createdProductId,
+      isOnSale: parsed.data.isOnSale,
+      isNewArrival: parsed.data.isNewArrival,
+    });
   }
 
   revalidatePath("/dashboard/products");
@@ -396,6 +462,8 @@ export const updateProductAction = async (
 
   let nextImagePath: string | null = existing.imagePath;
   let uploadedThisRequest: string | null = null;
+  const shouldIncludeOnSaleField = true;
+  const shouldIncludeNewArrivalField = true;
 
   if (imageFile) {
     const upload = await saveProductImage(imageFile);
@@ -434,35 +502,88 @@ export const updateProductAction = async (
         isDiscountActive: parsed.data.isDiscountActive,
         stock: parsed.data.stock,
         isActive: parsed.data.isActive,
+        ...(shouldIncludeOnSaleField ? { isOnSale: parsed.data.isOnSale } : {}),
+        ...(shouldIncludeNewArrivalField
+          ? { isNewArrival: parsed.data.isNewArrival }
+          : {}),
         categoryId: parsed.data.categoryId,
       },
     });
   } catch (error) {
-    // Roll back the just-uploaded image if the DB write fails.
-    if (uploadedThisRequest) {
-      await deleteProductImageIfOwned(uploadedThisRequest);
-    }
-    const code = (error as { code?: string } | undefined)?.code;
-    if (code === "P2003") {
+    if (
+      isUnknownFlagArgumentError(error, "isNewArrival") ||
+      isUnknownFlagArgumentError(error, "isOnSale")
+    ) {
+      try {
+        await prisma.product.update({
+          where: { id: idParsed.data },
+          data: {
+            // Fallback path when runtime Prisma client is stale.
+            name: parsed.data.name,
+            brand: parsed.data.brand,
+            model: parsed.data.model,
+            description: parsed.data.description,
+            imagePath: nextImagePath,
+            specs: specsValue ?? undefined,
+            colorOptions: variants.colorOptions ?? undefined,
+            storageOptions: variants.storageOptions ?? undefined,
+            price: parsed.data.price.toFixed(2),
+            discountType: parsed.data.discountType,
+            discountValue:
+              parsed.data.discountValue === null
+                ? null
+                : parsed.data.discountValue.toFixed(2),
+            isDiscountActive: parsed.data.isDiscountActive,
+            stock: parsed.data.stock,
+            isActive: parsed.data.isActive,
+            categoryId: parsed.data.categoryId,
+          },
+        });
+        await syncProductSliderFlagsById({
+          productId: idParsed.data,
+          isOnSale: parsed.data.isOnSale,
+          isNewArrival: parsed.data.isNewArrival,
+        });
+      } catch (fallbackError) {
+        if (uploadedThisRequest) {
+          await deleteProductImageIfOwned(uploadedThisRequest);
+        }
+        console.error("updateProductAction fallback failed", {
+          productId: idParsed.data,
+          error: fallbackError,
+        });
+        return {
+          errorMessage: "Could not save product. Please try again.",
+          fieldErrors: {},
+        };
+      }
+    } else {
+      // Roll back the just-uploaded image if the DB write fails.
+      if (uploadedThisRequest) {
+        await deleteProductImageIfOwned(uploadedThisRequest);
+      }
+      const code = (error as { code?: string } | undefined)?.code;
+      if (code === "P2003") {
+        return {
+          errorMessage: "Selected category no longer exists.",
+          fieldErrors: { categoryId: "Pick an existing category." },
+        };
+      }
+      if (code === "P2025") {
+        return {
+          errorMessage: "Product no longer exists.",
+          fieldErrors: {},
+        };
+      }
+      console.error("updateProductAction failed", {
+        productId: idParsed.data,
+        error,
+      });
       return {
-        errorMessage: "Selected category no longer exists.",
-        fieldErrors: { categoryId: "Pick an existing category." },
-      };
-    }
-    if (code === "P2025") {
-      return {
-        errorMessage: "Product no longer exists.",
+        errorMessage: "Could not save product. Please try again.",
         fieldErrors: {},
       };
     }
-    console.error("updateProductAction failed", {
-      productId: idParsed.data,
-      error,
-    });
-    return {
-      errorMessage: "Could not save product. Please try again.",
-      fieldErrors: {},
-    };
   }
 
   // Clean up the previous image only after the DB write succeeded and only if

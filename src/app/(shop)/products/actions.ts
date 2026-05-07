@@ -24,6 +24,8 @@ const loadMoreSchema = z.object({
     .transform((value) => value.trim()),
   sort: z.enum(["latest", "price-desc", "price-asc"]),
   skip: z.number().int().min(0).max(10_000),
+  minPrice: z.number().min(0).max(1_000_000).nullable(),
+  maxPrice: z.number().min(0).max(1_000_000).nullable(),
 });
 
 export type LoadMoreStorefrontProductsResult =
@@ -72,6 +74,8 @@ export const loadMoreStorefrontProductsAction = async (input: {
   brand: string;
   sort: StorefrontProductsSort;
   skip: number;
+  minPrice: number | null;
+  maxPrice: number | null;
 }): Promise<LoadMoreStorefrontProductsResult> => {
   const parsed = loadMoreSchema.safeParse(input);
   if (!parsed.success) {
@@ -79,10 +83,12 @@ export const loadMoreStorefrontProductsAction = async (input: {
   }
 
   try {
-    const { categorySlug, brand, sort, skip } = parsed.data;
+    const { categorySlug, brand, sort, skip, minPrice, maxPrice } = parsed.data;
     const page = await listStorefrontProductsPage({
       categorySlug,
       brand,
+      minPrice,
+      maxPrice,
       sort,
       skip,
       take: STORE_PRODUCTS_PAGE_SIZE,

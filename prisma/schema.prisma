@@ -115,6 +115,8 @@ model Product {
   isDiscountActive Boolean @default(false)
   stock       Int
   isActive    Boolean     @default(true)
+  isOnSale    Boolean     @default(false)
+  isNewArrival Boolean    @default(false)
   categoryId  String
   category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   cartItems   CartItem[]

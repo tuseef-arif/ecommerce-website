@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { CategorySlider } from "@/components/store/category-slider";
 import { StoreFooter } from "@/components/store/store-footer";
 import { StoreHeader } from "@/components/store/store-header";
+import { FeatureCardsStrip } from "@/components/ui/feature-cards-strip";
 
 export default async function ShopLayout({
   children,
@@ -28,6 +29,7 @@ export default async function ShopLayout({
       />
       <CategorySlider />
       {children}
+      <FeatureCardsStrip />
       <StoreFooter />
     </div>
   );

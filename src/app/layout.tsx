@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { geistMono, satoshi } from "./fonts";
+import { FloatingWhatsAppButton } from "@/components/store/floating-whatsapp-button";
 import {
   SITE_AREA_SERVED_CITY,
   SITE_AREA_SERVED_COUNTRY,
@@ -93,6 +94,7 @@ export default function RootLayout({
           }}
         />
         {children}
+        <FloatingWhatsAppButton />
       </body>
     </html>
   );

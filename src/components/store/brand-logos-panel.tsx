@@ -14,7 +14,7 @@ const BRAND_LOGOS: ReadonlyArray<BrandLogoItem> = [
   { name: "Tecno", imagePath: "/assets/brand/Tecno.webp" },
   { name: "Oppo", imagePath: "/assets/brand/Oppo.png" },
   { name: "RealMe", imagePath: "/assets/brand/RealMe.webp" },
-  { name: "UGreen", imagePath: "/assets/brand/UGreen.webp" },
+  { name: "Infinix", imagePath: "/assets/brand/Infinix.png" },
 ];
 
 const buildBrandHref = (brandName: string): string => {

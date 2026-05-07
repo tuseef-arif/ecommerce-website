@@ -117,10 +117,23 @@ Day 5 progress (2026-05-02):
 
 ### Day 6: Product Management CRUD
 
-- Build admin product list/create/edit/delete.
-- Support brand, model, specs, price, stock, category, image path.
-- Use Zod validation in all admin write actions.
-- Exit criteria: admin can fully manage product catalog.
+- [x] Dashboard UI design scaffold completed (current focus: design and product management modules).
+- [x] Build admin product list/create/edit/delete.
+- [x] Support brand, model, specs, price, stock, category, image path (including product option variants and image handling).
+- [x] Use Zod validation in admin write actions.
+- [x] Add storefront product sections on the home page (product sliders/rails).
+- [x] Build products listing view with search and filters.
+- [x] Implement global search across products, brands, categories, and models.
+- [x] Exit criteria met: admin can fully manage product catalog.
+
+Day 6 progress (2026-05-06):
+
+- Completed admin products dashboard experience for catalog operations (list, create, edit, delete).
+- Added and wired product create/update flows with validated inputs and improved admin form UX.
+- Added homepage product slider/rail sections for storefront merchandising.
+- Delivered products listing page with filtering/search capabilities.
+- Implemented reusable global search (API + grouped results page) across products, brands, categories, and models.
+- Polished field-height consistency across admin and auth/account forms for a more uniform UI.
 
 ### Day 7: Global Sales Utility
 
@@ -131,10 +144,29 @@ Day 5 progress (2026-05-02):
 
 ### Day 8: Admin Order Management
 
-- Admin order list and detail view.
-- Update status (`PENDING`, `SHIPPED`, `DELIVERED`).
-- Add audit-friendly status update timestamps.
-- Exit criteria: admin can manage fulfillment lifecycle.
+- [x] Admin order list and detail view.
+- [x] Update status (`PENDING`, `SHIPPED`, `DELIVERED`).
+- [x] Add audit-friendly status update timestamps (auto-set `shippedAt`/`deliveredAt`).
+- [x] Admin customer list, create/edit/delete with role management.
+- [x] Admin order create flow with snapshot pricing + transactional stock decrement.
+- Exit criteria met: admin can manage fulfillment lifecycle and the full customer roster.
+
+Day 8 progress (2026-05-06):
+
+- Added admin Customers CRUD: list page with search + role filter + pagination, create/edit/delete actions (Zod-validated, bcrypt-hashed passwords, self-demote/self-delete safeguards) under `src/app/(admin)/dashboard/customers/` with shared types/data/schemas in `src/lib/customers/`.
+- Added admin Orders CRUD: list page with search + status + date-range filters, create flow that snapshots current pricing/discount and decrements stock atomically inside `prisma.$transaction`, edit flow that updates status with audit-friendly timestamps, and delete flow under `src/app/(admin)/dashboard/orders/` with shared types/data/schemas in `src/lib/orders/`.
+- Reused existing shared admin primitives (`AdminPageHeader`, `Button`, `SelectField`, `FormInputField`, `StatusBadge`, `ConfirmDialog`) for visual + behavioural consistency with the Products module.
+- Marked Customers + Orders as implemented in `src/components/admin/admin-sidebar.tsx`.
+
+Day 8 extension progress (2026-05-07):
+
+- Completed admin split-view UX parity across Customers and Orders: both modules now have dedicated detail and edit routes, with row/table actions opening detail first and edit as a secondary action.
+- Expanded admin Orders edit capabilities from status-only to full mutable order editing (status + line items) while keeping customer read-only in edit mode.
+- Implemented transactional order-edit stock reconciliation using quantity deltas (old vs new line items) so inventory remains consistent on repeated edits.
+- Added new order status `CONFIRMED` end-to-end (Prisma schema + migration, generated client, Zod schemas, filters, badges, forms, and status transition handling).
+- Updated order list/table interactions to match customer UX conventions (clickable order id to detail view, clickable customer display name with orange hover state, display-name-first customer column).
+- Improved order detail/edit display behavior: status-aware date line in headers (Placed/Confirmed/Shipped/Delivered), removed redundant shipped/delivered info blocks as requested.
+- Finalized admin sidebar behavior and polish: sticky/fixed-height navigation shell, centered branded logo/title treatment, and logout confirmation popup using shared `ConfirmDialog`.
 
 ## Milestone 4 - Shop Experience (Days 9-11)
 

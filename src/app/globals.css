@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: only light;
+  forced-color-adjust: none;
   --background: #ffffff;
   --foreground: #171717;
   /* Brand (shared by header gradient + footer) */
@@ -179,10 +181,6 @@
 .auth-page-primary-btn:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-.shop-home-main__lead {
-  color: var(--store-content-muted);
 }
 
 .auth-page-lead {
@@ -442,33 +440,44 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --custom-link-underline: rgb(237 237 237 / 0.35);
-  }
-}
-
+html,
 body {
   background: var(--background);
   color: var(--foreground);
+  color-scheme: only light;
+  forced-color-adjust: none;
+}
+
+input,
+select,
+textarea,
+button {
+  color-scheme: only light;
+}
+
+@media (forced-colors: active) {
+  :root {
+    forced-color-adjust: none;
+  }
 }
 
 /* Horizontal category strip: swipe / scroll with no visible scrollbar (all viewports) */
-.store-category-slider__track {
+.store-category-slider__track,
+.store-product-slider__track {
   -ms-overflow-style: none;
   scrollbar-width: none;
   scrollbar-color: transparent transparent;
 }
 
-.store-category-slider__track::-webkit-scrollbar {
+.store-category-slider__track::-webkit-scrollbar,
+.store-product-slider__track::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
 }
 
-.store-category-slider__track::-webkit-scrollbar-thumb {
+.store-category-slider__track::-webkit-scrollbar-thumb,
+.store-product-slider__track::-webkit-scrollbar-thumb {
   background: transparent;
 }
 

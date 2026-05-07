@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { geistMono, satoshi } from "./fonts";
 import {
@@ -34,6 +34,16 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Force light mode in all browsers (incognito, OS dark scheme, Chrome's
+ * Auto Dark Theme, Edge / Samsung Force Dark). The storefront is intentionally
+ * a light, branded experience and must not be auto-inverted by the browser.
+ */
+export const viewport: Viewport = {
+  colorScheme: "only light",
+  themeColor: "#ffffff",
+};
+
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": ["Organization", "MobilePhoneStore"],
@@ -64,7 +74,18 @@ export default function RootLayout({
       lang="en"
       className={`${satoshi.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col font-sans">
+      {/*
+        `suppressHydrationWarning` here silences the *body's own* attribute
+        diffs only — Grammarly and similar browser extensions inject markers
+        like `data-new-gr-c-s-check-loaded` and `data-gr-ext-installed` onto
+        `<body>` before React hydrates, which would otherwise trigger a
+        hydration warning. The suppression is shallow per React's contract,
+        so legitimate mismatches inside the tree still surface normally.
+      */}
+      <body
+        className="flex min-h-full flex-col font-sans"
+        suppressHydrationWarning
+      >
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

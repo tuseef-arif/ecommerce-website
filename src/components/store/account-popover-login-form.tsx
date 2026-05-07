@@ -20,7 +20,7 @@ import { SITE_HEADER, SITE_ROUTES } from "@/lib/config/site-config";
 
 export type AccountPopoverLoginFormProps = {
   titleId: string;
-  onSignedIn: () => void;
+  onSignedIn: (redirectUrl?: string | null) => void;
   defaultEmail?: string;
   initialSuccessMessage?: string | null;
   onForgotPassword: () => void;
@@ -55,7 +55,7 @@ export const AccountPopoverLoginForm = ({
         email,
         password,
         redirect: false,
-        callbackUrl: SITE_ROUTES.home,
+        callbackUrl: SITE_ROUTES.postLogin,
       });
 
       if (!response || response.error) {
@@ -63,7 +63,7 @@ export const AccountPopoverLoginForm = ({
         return;
       }
 
-      onSignedIn();
+      onSignedIn(response.url);
     } finally {
       setIsPending(false);
     }
@@ -76,7 +76,7 @@ export const AccountPopoverLoginForm = ({
     try {
       const response = await signIn("google", {
         redirect: false,
-        callbackUrl: SITE_ROUTES.home,
+        callbackUrl: SITE_ROUTES.postLogin,
       });
 
       if (!response || response.error) {
@@ -84,7 +84,7 @@ export const AccountPopoverLoginForm = ({
         return;
       }
 
-      onSignedIn();
+      onSignedIn(response.url);
     } finally {
       setIsPending(false);
     }

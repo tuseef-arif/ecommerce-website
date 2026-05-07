@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
 import { CategorySlider } from "@/components/store/category-slider";
-import { HeroBanner } from "@/components/store/hero-banner";
 import { StoreFooter } from "@/components/store/store-footer";
 import { StoreHeader } from "@/components/store/store-header";
+import { FeatureCardsStrip } from "@/components/ui/feature-cards-strip";
 
 export default async function ShopLayout({
   children,
@@ -28,8 +28,8 @@ export default async function ShopLayout({
         }
       />
       <CategorySlider />
-      <HeroBanner />
       {children}
+      <FeatureCardsStrip />
       <StoreFooter />
     </div>
   );

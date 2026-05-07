@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { CheckboxField } from "@/components/ui/checkbox-field";
 import { FormInputField } from "@/components/ui/form-input-field";
 import { PasswordInputField } from "@/components/ui/password-input-field";
 import { SITE_LOGIN_PAGE } from "@/lib/config/site-config";
@@ -42,15 +43,11 @@ export const LoginCredentialsFields = ({
       {showRememberMe || forgotPasswordControl ? (
         <div className="flex items-center justify-between gap-2">
           {showRememberMe ? (
-            <label className="inline-flex items-center gap-2 text-sm text-neutral-700">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-300 text-[var(--store-brand-primary)] focus:ring-[var(--store-brand-primary)]"
-              />
-              Remember me
-            </label>
+            <CheckboxField
+              label="Remember me"
+              checked={rememberMe}
+              onChange={(event) => setRememberMe(event.currentTarget.checked)}
+            />
           ) : (
             <span />
           )}

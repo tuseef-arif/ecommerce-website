@@ -343,6 +343,11 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
 
   const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const raw = String(formData.get("q") ?? "").trim();
+    if (raw.length === 0) return;
+    router.push(`/search?q=${encodeURIComponent(raw)}`);
+    setIsMenuOpen(false);
   };
 
   const isAdmin = user?.role === UserRole.ADMIN;
@@ -602,7 +607,7 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
                     <div className="flex flex-col gap-2">
                       {isAdmin ? (
                         <Link
-                          href={SITE_ROUTES.admin}
+                          href={SITE_ROUTES.dashboard}
                           className="rounded-lg px-3 py-2.5 text-center text-sm font-medium text-neutral-800 ring-1 ring-neutral-200 hover:bg-white"
                           onClick={closeMenu}
                         >

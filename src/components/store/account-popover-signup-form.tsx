@@ -46,7 +46,7 @@ const formatResendCountdown = (seconds: number): string => {
 export type AccountPopoverSignupFormProps = {
   titleId: string;
   initialUrlError?: string | null;
-  onSignedIn: () => void;
+  onSignedIn: (redirectUrl?: string | null) => void;
   onNeedManualLogin: (email: string) => void;
   onGoLogin: () => void;
 };
@@ -131,11 +131,11 @@ export const AccountPopoverSignupForm = ({
         email: creds.email,
         password: creds.password,
         redirect: false,
-        callbackUrl: SITE_ROUTES.home,
+        callbackUrl: SITE_ROUTES.postLogin,
       });
 
       if (!response?.error) {
-        onSignedIn();
+        onSignedIn(response?.url);
         return;
       }
 

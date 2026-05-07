@@ -480,15 +480,6 @@ export const AccountPopoverSignedInMenu = ({
               <p className="min-w-0 max-w-full truncate text-2xl font-semibold text-neutral-900">
                 {displayLine}
               </p>
-              {isAdmin ? (
-                <Link
-                  href={SITE_ROUTES.admin}
-                  onClick={onNavigate}
-                  className="account-admin-badge-neon shrink-0 text-sm font-bold tracking-wide"
-                >
-                  {SITE_HEADER.accountPopoverAdminBadge}
-                </Link>
-              ) : null}
             </div>
 
             <div className="mx-auto mt-5 max-w-sm space-y-3 text-left">

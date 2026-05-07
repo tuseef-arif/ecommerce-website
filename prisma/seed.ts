@@ -31,9 +31,16 @@ const main = async () => {
   });
 
   const categories = [
-    { name: "Mobiles", slug: "smartphones" },
-    { name: "Accessories", slug: "accessories" },
-    { name: "Wearables", slug: "wearables" },
+    { name: "Mobiles", slug: "mobiles" },
+    { name: "Earbuds", slug: "earbuds" },
+    { name: "Smart Watches", slug: "smart-watches" },
+    { name: "Power Banks", slug: "power-banks" },
+    { name: "Data Cables", slug: "data-cables" },
+    { name: "Chargers", slug: "chargers" },
+    { name: "Speakers", slug: "speakers" },
+    { name: "Tablets", slug: "tablets" },
+    { name: "Headphones", slug: "headphones" },
+    { name: "Car Accessories", slug: "car-accessories" },
   ];
 
   for (const category of categories) {
@@ -44,83 +51,9 @@ const main = async () => {
     });
   }
 
-  const categoryMap = new Map(
-    (
-      await prisma.category.findMany({
-        where: { slug: { in: categories.map((category) => category.slug) } },
-        select: { id: true, slug: true },
-      })
-    ).map((category) => [category.slug, category.id]),
-  );
-
-  const products = [
-    {
-      name: "Nova X1",
-      slug: "nova-x1",
-      brand: "Nova",
-      model: "X1",
-      description: "Mid-range 5G smartphone with AMOLED display.",
-      price: "699.00",
-      stock: 30,
-      categorySlug: "smartphones",
-      specs: { ram: "8GB", storage: "256GB", battery: "4800mAh" },
-    },
-    {
-      name: "Nova Buds Pro",
-      slug: "nova-buds-pro",
-      brand: "Nova",
-      model: "Buds Pro",
-      description: "Wireless ANC earbuds with fast charging case.",
-      price: "129.00",
-      stock: 80,
-      categorySlug: "accessories",
-      specs: { batteryLife: "28h", noiseCancellation: true },
-    },
-    {
-      name: "Pulse Watch 2",
-      slug: "pulse-watch-2",
-      brand: "Pulse",
-      model: "Watch 2",
-      description: "Fitness smartwatch with heart-rate and GPS tracking.",
-      price: "249.00",
-      stock: 45,
-      categorySlug: "wearables",
-      specs: { display: "1.43in OLED", waterResistance: "5ATM" },
-    },
-  ];
-
-  for (const product of products) {
-    const categoryId = categoryMap.get(product.categorySlug);
-
-    if (!categoryId) {
-      throw new Error(`Missing category for slug: ${product.categorySlug}`);
-    }
-
-    await prisma.product.upsert({
-      where: { slug: product.slug },
-      update: {
-        name: product.name,
-        brand: product.brand,
-        model: product.model,
-        description: product.description,
-        price: product.price,
-        stock: product.stock,
-        specs: product.specs,
-        categoryId,
-      },
-      create: {
-        name: product.name,
-        slug: product.slug,
-        brand: product.brand,
-        model: product.model,
-        description: product.description,
-        price: product.price,
-        stock: product.stock,
-        specs: product.specs,
-        categoryId,
-      },
-    });
-  }
+  // Products are no longer seeded from this file — admins create them via
+  // the `/dashboard/products` UI. Categories above are still seeded so the
+  // dropdowns and storefront nav have something to link to on a fresh install.
 
   await prisma.globalSetting.upsert({
     where: { id: 1 },
@@ -132,9 +65,7 @@ const main = async () => {
     },
   });
 
-  console.log(
-    "Seed completed: admin user, categories, products, global settings.",
-  );
+  console.log("Seed completed: admin user, categories, global settings.");
 };
 
 main()

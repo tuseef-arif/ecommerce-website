@@ -13,6 +13,8 @@ import { CATEGORY_SLIDER_SCROLL_DURATION_MS } from "@/lib/constants/ui-timeouts"
 import { FROSTED_SLIDER_ARROW_CLASS } from "./store-slider-arrows";
 const SCROLL_FRACTION = 0.38;
 const SCROLL_MAX_PX = 240;
+const VIEW_ALL_PRODUCTS_HREF = "/products";
+const VIEW_ALL_PRODUCTS_LABEL = "View All";
 
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
@@ -107,7 +109,7 @@ export const CategorySlider = () => {
 
   return (
     <section
-      className="border-b border-neutral-100 bg-white"
+      className="relative isolate z-0 overflow-x-clip border-b border-neutral-100 bg-white"
       aria-label={SITE_CATEGORY_SLIDER.sectionAriaLabel}
     >
       <div className={`relative ${STORE_SHELL}`}>
@@ -146,6 +148,22 @@ export const CategorySlider = () => {
               </span>
             </Link>
           ))}
+          <Link
+            href={VIEW_ALL_PRODUCTS_HREF}
+            className="group flex w-[4.75rem] shrink-0 snap-start flex-col items-center gap-2 rounded-md border-b-[3px] border-transparent bg-transparent px-1.5 pb-1 pt-1.5 transition-[background-color,border-color] duration-200 ease-out hover:border-[var(--store-brand-primary)] hover:bg-[#f2f2f2] focus-visible:border-[var(--store-brand-primary)] focus-visible:bg-[#f2f2f2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)] sm:w-[5.25rem] md:w-28"
+          >
+            <span className="relative flex h-16 w-full items-center justify-center overflow-hidden sm:h-[4.5rem] md:h-20">
+              <span
+                aria-hidden="true"
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border-2 border-neutral-300 transition-colors duration-200 ease-out group-hover:border-[var(--store-brand-primary)] group-focus-visible:border-[var(--store-brand-primary)]"
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-neutral-500 transition-colors duration-200 ease-out group-hover:bg-[var(--store-brand-primary)] group-focus-visible:bg-[var(--store-brand-primary)]" />
+              </span>
+            </span>
+            <span className="w-full text-center text-[0.6875rem] font-medium leading-tight text-neutral-900 transition-colors duration-200 ease-out group-hover:text-[var(--store-brand-primary)] group-focus-visible:text-[var(--store-brand-primary)] sm:text-xs">
+              {VIEW_ALL_PRODUCTS_LABEL}
+            </span>
+          </Link>
         </div>
 
         <button

@@ -45,3 +45,6 @@ next-env.d.ts
 # Runtime user profile uploads (keep folder via .gitkeep)
 /public/uploads/profile-images/*
 !/public/uploads/profile-images/.gitkeep
+
+# Runtime product image uploads (folder is created on demand)
+/public/uploads/products/

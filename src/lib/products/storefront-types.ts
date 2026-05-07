@@ -17,6 +17,8 @@ export type StorefrontProductCardItem = {
   href: string;
   /** Same-origin path or absolute URL; already validated by `safeProductImageSrc`. */
   imagePath: string | null;
+  /** Current inventory count; used for cart add limits. */
+  stock: number;
   /** Original list price, in store currency units (e.g. PKR). */
   price: number;
   /**
@@ -31,6 +33,12 @@ export type StorefrontProductCardItem = {
    * server-side so the card stays presentational and translation-friendly.
    */
   discountLabel: string | null;
+  /** Whether stock is positive; used to switch CTA copy to "Out of stock". */
+  isInStock: boolean;
+  /** Variant options for add-to-cart selection UI on cards. */
+  colorOptions: ProductVariantOption[];
+  /** Variant options for add-to-cart selection UI on cards. */
+  storageOptions: ProductVariantOption[];
 };
 
 /**
@@ -43,7 +51,6 @@ export type StorefrontProductDetail = StorefrontProductCardItem & {
   model: string;
   productType: string;
   description: string | null;
-  stock: number;
   /** Whether stock is positive — used to flip the "In stock" / "Out of stock" pill. */
   isInStock: boolean;
   category: {

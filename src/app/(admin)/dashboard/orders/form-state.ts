@@ -4,7 +4,7 @@
  * unions, type-only exports).
  */
 
-export type OrderFormFieldKey = "userId" | "status" | "items";
+export type OrderFormFieldKey = "userId" | "status" | "paymentMethod" | "items";
 
 export type OrderFormState = {
   errorMessage: string | null;

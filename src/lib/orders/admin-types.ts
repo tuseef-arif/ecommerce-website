@@ -7,16 +7,18 @@
  * are serialised as ISO `string` for client-component safety.
  */
 
-import type { OrderStatus } from "@/generated/prisma/enums";
+import type { OrderStatus, PaymentMethod } from "@/generated/prisma/enums";
 import type { ProductVariantOption } from "@/lib/products/specs";
 
 export type AdminOrderStatusFilter = "all" | OrderStatus;
+export type AdminOrderPaymentMethodFilter = "all" | PaymentMethod;
 
 export type AdminOrderListItem = {
   id: string;
   /** Short uppercased suffix for compact table cells (last 6 chars). */
   shortId: string;
   status: OrderStatus;
+  paymentMethod: PaymentMethod;
   itemsCount: number;
   /** Total quantity across all line items. */
   itemsQuantity: number;
@@ -59,6 +61,7 @@ export type AdminOrderDetail = {
   id: string;
   shortId: string;
   status: OrderStatus;
+  paymentMethod: PaymentMethod;
   subtotal: string;
   discountAmount: string;
   totalAmount: string;
@@ -85,6 +88,7 @@ export type AdminOrderListPage = {
 export type AdminOrdersListFilters = {
   q: string;
   status: AdminOrderStatusFilter;
+  paymentMethod: AdminOrderPaymentMethodFilter;
   /** Inclusive lower bound, ISO date (YYYY-MM-DD). Empty when not filtered. */
   from: string;
   /** Inclusive upper bound, ISO date (YYYY-MM-DD). Empty when not filtered. */

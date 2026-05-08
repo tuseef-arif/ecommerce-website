@@ -58,6 +58,9 @@ const fieldErrorsFromZod = (
       top === "firstName" ||
       top === "lastName" ||
       top === "phone" ||
+      top === "address" ||
+      top === "city" ||
+      top === "country" ||
       top === "role" ||
       top === "status" ||
       top === "password"
@@ -73,6 +76,9 @@ const parseFormDataInput = (formData: FormData) => ({
   firstName: String(formData.get("firstName") ?? ""),
   lastName: String(formData.get("lastName") ?? ""),
   phone: String(formData.get("phone") ?? ""),
+  address: String(formData.get("address") ?? ""),
+  city: String(formData.get("city") ?? ""),
+  country: String(formData.get("country") ?? ""),
   role: String(formData.get("role") ?? "USER"),
   status: String(formData.get("status") ?? "ACTIVE"),
   password: String(formData.get("password") ?? ""),
@@ -102,6 +108,9 @@ export const createCustomerAction = async (
         firstName: parsed.data.firstName,
         lastName: parsed.data.lastName,
         phone: parsed.data.phone,
+        address: parsed.data.address,
+        city: parsed.data.city,
+        country: parsed.data.country,
         role: parsed.data.role,
         status: parsed.data.status,
         password: hashed,
@@ -170,6 +179,9 @@ export const updateCustomerAction = async (
         firstName: parsed.data.firstName,
         lastName: parsed.data.lastName,
         phone: parsed.data.phone,
+        address: parsed.data.address,
+        city: parsed.data.city,
+        country: parsed.data.country,
         role: parsed.data.role,
         status: parsed.data.status,
         ...(parsed.data.password

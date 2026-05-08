@@ -35,6 +35,9 @@ const buildOrderWhere = (filters: AdminOrdersListFilters) => {
   if (orFilters.length > 0) where.OR = orFilters;
 
   if (filters.status !== "all") where.status = filters.status;
+  if (filters.paymentMethod !== "all") {
+    where.paymentMethod = filters.paymentMethod;
+  }
 
   const createdAt: Record<string, Date> = {};
   if (filters.from) {
@@ -68,6 +71,7 @@ export const listAdminOrders = async (
       select: {
         id: true,
         status: true,
+        paymentMethod: true,
         subtotal: true,
         discountAmount: true,
         totalAmount: true,
@@ -93,6 +97,7 @@ export const listAdminOrders = async (
     id: row.id,
     shortId: shortenOrderId(row.id),
     status: row.status,
+    paymentMethod: row.paymentMethod,
     itemsCount: row.items.length,
     itemsQuantity: row.items.reduce((sum, item) => sum + item.quantity, 0),
     subtotal: row.subtotal.toFixed(2),
@@ -132,6 +137,7 @@ export const getAdminOrderById = async (
     select: {
       id: true,
       status: true,
+      paymentMethod: true,
       subtotal: true,
       discountAmount: true,
       totalAmount: true,
@@ -172,6 +178,7 @@ export const getAdminOrderById = async (
     id: row.id,
     shortId: shortenOrderId(row.id),
     status: row.status,
+    paymentMethod: row.paymentMethod,
     subtotal: row.subtotal.toFixed(2),
     discountAmount: row.discountAmount.toFixed(2),
     totalAmount: row.totalAmount.toFixed(2),

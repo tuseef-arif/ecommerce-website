@@ -12,6 +12,10 @@ import { Button } from "@/components/ui/button";
 import { FormInputField } from "@/components/ui/form-input-field";
 import { SelectField } from "@/components/ui/select-field";
 import { SITE_PRODUCT_SLIDER } from "@/lib/config/site-config";
+import {
+  PAYMENT_METHOD_OPTIONS,
+  paymentMethodLabel,
+} from "@/lib/orders/payment-method";
 import type {
   AdminOrderCustomerOption,
   AdminOrderDetail,
@@ -140,6 +144,9 @@ export const OrderForm = ({
                   #{initialOrder.shortId}
                 </h2>
                 <OrderStatusBadge status={initialOrder.status} />
+                <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+                  {paymentMethodLabel(initialOrder.paymentMethod)}
+                </span>
               </div>
               <p className="text-sm text-neutral-600">
                 {initialOrder.customer.displayName}{" "}
@@ -169,7 +176,7 @@ export const OrderForm = ({
           currencyPrefix={currencyPrefix}
           errorMessage={state.fieldErrors.items ?? null}
           leadFields={
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)]">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
               <SelectField
                 label="Customer"
                 name="userId"
@@ -193,6 +200,15 @@ export const OrderForm = ({
                 defaultValue="PENDING"
                 error={state.fieldErrors.status ?? null}
               />
+              <SelectField
+                label="Payment"
+                name="paymentMethod"
+                variant="floating"
+                size="sm"
+                options={PAYMENT_METHOD_OPTIONS}
+                defaultValue="COD"
+                error={state.fieldErrors.paymentMethod ?? null}
+              />
               <div className="hidden min-h-[2.5rem] lg:block" aria-hidden />
             </div>
           }
@@ -207,7 +223,7 @@ export const OrderForm = ({
           initialItems={editInitialItems}
           stockAllowanceByProductId={editStockAllowanceByProductId}
           leadFields={
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)]">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
               <FormInputField
                 label="Customer"
                 name="customerDisplay"
@@ -224,6 +240,15 @@ export const OrderForm = ({
                 options={STATUS_OPTIONS}
                 defaultValue={initialOrder.status}
                 error={state.fieldErrors.status ?? null}
+              />
+              <SelectField
+                label="Payment"
+                name="paymentMethod"
+                variant="floating"
+                size="sm"
+                options={PAYMENT_METHOD_OPTIONS}
+                defaultValue={initialOrder.paymentMethod}
+                error={state.fieldErrors.paymentMethod ?? null}
               />
               <div className="hidden min-h-[2.5rem] lg:block" aria-hidden />
             </div>

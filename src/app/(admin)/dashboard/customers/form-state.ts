@@ -10,6 +10,9 @@ export type CustomerFormFieldKey =
   | "firstName"
   | "lastName"
   | "phone"
+  | "address"
+  | "city"
+  | "country"
   | "role"
   | "status"
   | "password";

@@ -65,6 +65,18 @@ export const CustomerDetailCard = ({ customer }: CustomerDetailCardProps) => {
         <ReadOnlyField label="Phone" value={displayOrDash(customer.phone)} />
       </div>
 
+      <div className="grid gap-4 md:grid-cols-3">
+        <ReadOnlyField
+          label="Address"
+          value={displayOrDash(customer.address)}
+        />
+        <ReadOnlyField label="City" value={displayOrDash(customer.city)} />
+        <ReadOnlyField
+          label="Country"
+          value={displayOrDash(customer.country)}
+        />
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <ReadOnlyField
           label="Role"

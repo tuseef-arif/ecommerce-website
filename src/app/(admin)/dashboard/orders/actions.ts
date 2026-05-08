@@ -63,6 +63,8 @@ const fieldErrorsFromZod = (
       if (!fieldErrors.userId) fieldErrors.userId = issue.message;
     } else if (top === "status") {
       if (!fieldErrors.status) fieldErrors.status = issue.message;
+    } else if (top === "paymentMethod") {
+      if (!fieldErrors.paymentMethod) fieldErrors.paymentMethod = issue.message;
     } else if (top === "itemsJson") {
       if (!fieldErrors.items) fieldErrors.items = issue.message;
     }
@@ -73,11 +75,13 @@ const fieldErrorsFromZod = (
 const parseCreateInput = (formData: FormData) => ({
   userId: String(formData.get("userId") ?? ""),
   status: String(formData.get("status") ?? "PENDING"),
+  paymentMethod: String(formData.get("paymentMethod") ?? "COD"),
   itemsJson: String(formData.get("itemsJson") ?? ""),
 });
 
 const parseUpdateInput = (formData: FormData) => ({
   status: String(formData.get("status") ?? ""),
+  paymentMethod: String(formData.get("paymentMethod") ?? "COD"),
   itemsJson: String(formData.get("itemsJson") ?? ""),
 });
 
@@ -346,6 +350,7 @@ export const createOrderAction = async (
         data: {
           userId: customer.id,
           status,
+          paymentMethod: parsed.data.paymentMethod,
           subtotal: round2(subtotal),
           discountAmount: round2(discountAmount),
           totalAmount: round2(totalAmount),
@@ -529,6 +534,7 @@ export const updateOrderAction = async (
         where: { id: idParsed.data },
         data: {
           status,
+          paymentMethod: parsed.data.paymentMethod,
           shippedAt: nextShippedAt,
           deliveredAt: nextDeliveredAt,
           subtotal: round2(subtotal),

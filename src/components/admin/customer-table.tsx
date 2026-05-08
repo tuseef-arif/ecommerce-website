@@ -7,18 +7,6 @@ type CustomerTableProps = {
   items: ReadonlyArray<AdminCustomerListItem>;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-});
-
-const formatDate = (iso: string): string => {
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return iso;
-  return dateFormatter.format(parsed);
-};
-
 const initialFor = (name: string): string => {
   const trimmed = name.trim();
   if (trimmed.length === 0) return "?";
@@ -42,31 +30,22 @@ export const CustomerTable = ({ items }: CustomerTableProps) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] table-fixed text-left text-sm">
+        <table className="w-full min-w-[560px] table-fixed text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
-              <th scope="col" className="w-[22%] px-4 py-3">
+              <th scope="col" className="w-[40%] px-4 py-3">
                 Customer
               </th>
-              <th scope="col" className="w-[20%] px-4 py-3">
-                Email
-              </th>
-              <th scope="col" className="w-[12%] px-4 py-3">
-                Phone
-              </th>
-              <th scope="col" className="w-[10%] px-4 py-3">
+              <th scope="col" className="w-[16%] px-4 py-3">
                 Status
               </th>
-              <th scope="col" className="w-[10%] px-4 py-3">
+              <th scope="col" className="w-[16%] px-4 py-3">
                 Role
               </th>
-              <th scope="col" className="w-[8%] px-4 py-3 text-right">
+              <th scope="col" className="w-[12%] px-4 py-3 text-right">
                 Orders
               </th>
-              <th scope="col" className="w-[10%] px-4 py-3">
-                Joined
-              </th>
-              <th scope="col" className="w-[8%] px-4 py-3 text-right">
+              <th scope="col" className="w-[16%] px-4 py-3 text-right">
                 Actions
               </th>
             </tr>
@@ -99,12 +78,6 @@ export const CustomerTable = ({ items }: CustomerTableProps) => {
                     </div>
                   </div>
                 </td>
-                <td className="truncate px-4 py-3 text-neutral-700">
-                  {item.email}
-                </td>
-                <td className="truncate px-4 py-3 text-neutral-700">
-                  {item.phone ?? <span className="text-neutral-400">—</span>}
-                </td>
                 <td className="px-4 py-3">
                   <StatusBadge
                     tone={item.status === "ACTIVE" ? "success" : "warning"}
@@ -121,9 +94,6 @@ export const CustomerTable = ({ items }: CustomerTableProps) => {
                 </td>
                 <td className="px-4 py-3 text-right font-mono tabular-nums text-neutral-900">
                   {item.ordersCount}
-                </td>
-                <td className="px-4 py-3 text-neutral-700">
-                  {formatDate(item.createdAtIso)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3">
                   <CustomerRowActions

@@ -36,6 +36,7 @@ export const SITE_DEFAULTS = {
     registerVerifyEmail: "/register/verify-email",
     resetPassword: "/reset-password",
     cart: "/cart",
+    checkout: "/checkout",
     contact: "/contact",
     /** Staff dashboard (route implemented separately) */
     dashboard: "/dashboard",

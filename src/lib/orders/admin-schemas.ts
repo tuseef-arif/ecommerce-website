@@ -13,9 +13,12 @@ const orderStatusSchema = z.enum([
   "DELIVERED",
 ]);
 
+const paymentMethodSchema = z.enum(["BANK_TRANSFER", "SELF_COLLECTION", "COD"]);
+
 export const adminOrderCreateSchema = z.object({
   userId: trimmed(40).pipe(z.string().min(1, "Customer is required.")),
   status: orderStatusSchema.default("PENDING"),
+  paymentMethod: paymentMethodSchema.default("COD"),
   itemsJson: z
     .string()
     .max(50_000, "Order items payload is too large.")
@@ -26,6 +29,7 @@ export type AdminOrderCreateValues = z.output<typeof adminOrderCreateSchema>;
 
 export const adminOrderUpdateSchema = z.object({
   status: orderStatusSchema,
+  paymentMethod: paymentMethodSchema,
   itemsJson: z
     .string()
     .max(50_000, "Order items payload is too large.")

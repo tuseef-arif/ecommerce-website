@@ -25,6 +25,7 @@ type ProductCardAddToCartButtonProps = {
   productName: string;
   href: string;
   imagePath: string | null;
+  originalUnitPrice: number;
   unitPrice: number;
   stock: number;
   isInStock: boolean;
@@ -42,6 +43,7 @@ export const ProductCardAddToCartButton = ({
   productName,
   href,
   imagePath,
+  originalUnitPrice,
   unitPrice,
   stock,
   isInStock,
@@ -84,6 +86,7 @@ export const ProductCardAddToCartButton = ({
         name: productName,
         href,
         imagePath,
+        originalUnitPrice,
         unitPrice,
         selectedColor: color,
         selectedStorage: storage,

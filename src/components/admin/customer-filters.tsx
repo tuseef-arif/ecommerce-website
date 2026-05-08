@@ -13,6 +13,12 @@ const ROLE_OPTIONS = [
   { value: "admin", label: "Admins" },
 ] as const;
 
+const STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+] as const;
+
 /**
  * Server-rendered filter bar that submits via plain GET so the URL captures
  * search/filter state (shareable, refresh-safe). Mirrors the products bar.
@@ -22,7 +28,7 @@ export const CustomerFilters = ({ filters }: CustomerFiltersProps) => {
     <form
       method="get"
       action="/dashboard/customers"
-      className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[3fr_1fr_auto]"
+      className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[3fr_1fr_1fr_auto]"
     >
       <FormInputField
         id="customer-search"
@@ -41,6 +47,15 @@ export const CustomerFilters = ({ filters }: CustomerFiltersProps) => {
         name="role"
         options={ROLE_OPTIONS}
         defaultValue={filters.role}
+        variant="floating"
+        size="sm"
+      />
+
+      <SelectField
+        label="Status"
+        name="status"
+        options={STATUS_OPTIONS}
+        defaultValue={filters.status}
         variant="floating"
         size="sm"
       />

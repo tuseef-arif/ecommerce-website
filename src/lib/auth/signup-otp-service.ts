@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
+import { UserStatus } from "@/generated/prisma/enums";
 import type { RegisterAccountInput } from "@/lib/validation/register-account-schema";
 import {
   generateSignupOtpCode,
@@ -82,10 +83,14 @@ export const startSignupEmailVerification = async (
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
-    select: { id: true },
+    select: { id: true, status: true },
   });
 
-  if (existingUser) {
+  // INACTIVE users (e.g. auto-created during guest checkout) are allowed to
+  // re-run the sign-up flow; on successful OTP verification we update their
+  // existing row in-place rather than creating a duplicate. Only ACTIVE users
+  // block re-signup.
+  if (existingUser && existingUser.status === UserStatus.ACTIVE) {
     return { ok: false, error: "EMAIL_TAKEN" };
   }
 
@@ -105,6 +110,9 @@ export const startSignupEmailVerification = async (
           firstName: data.firstName,
           lastName: data.lastName,
           phone: data.phone,
+          address: data.address,
+          city: data.city,
+          country: data.country,
           expiresAt,
         },
       });
@@ -249,25 +257,50 @@ export const completeSignupWithOtp = async (
         return { ok: false, error: "INVALID_CODE" };
       }
 
-      const taken = await tx.user.findUnique({
+      const existing = await tx.user.findUnique({
         where: { email: row.email },
-        select: { id: true },
+        select: { id: true, status: true },
       });
 
-      if (taken) {
+      // ACTIVE accounts cannot be reclaimed via the sign-up flow even if the
+      // status changed between start and complete.
+      if (existing && existing.status === UserStatus.ACTIVE) {
         await tx.signupOtpChallenge.delete({ where: { id: row.id } });
         return { ok: false, error: "EMAIL_TAKEN" };
       }
 
-      await tx.user.create({
-        data: {
-          email: row.email,
-          password: row.passwordHash,
-          firstName: row.firstName,
-          lastName: row.lastName,
-          phone: row.phone,
-        },
-      });
+      if (existing) {
+        // INACTIVE row (typically autoCreated during guest checkout): replace
+        // its profile + credentials with the freshly verified sign-up details
+        // and activate the account. Email is the stable identity link.
+        await tx.user.update({
+          where: { id: existing.id },
+          data: {
+            password: row.passwordHash,
+            firstName: row.firstName,
+            lastName: row.lastName,
+            phone: row.phone,
+            address: row.address,
+            city: row.city,
+            country: row.country,
+            status: UserStatus.ACTIVE,
+            autoCreated: false,
+          },
+        });
+      } else {
+        await tx.user.create({
+          data: {
+            email: row.email,
+            password: row.passwordHash,
+            firstName: row.firstName,
+            lastName: row.lastName,
+            phone: row.phone,
+            address: row.address,
+            city: row.city,
+            country: row.country,
+          },
+        });
+      }
 
       await tx.signupOtpChallenge.delete({ where: { id: row.id } });
       return { ok: true };

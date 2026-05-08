@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FormInputField } from "@/components/ui/form-input-field";
 import { SelectField } from "@/components/ui/select-field";
+import { PAYMENT_METHOD_OPTIONS } from "@/lib/orders/payment-method";
 import type { AdminOrdersListFilters } from "@/lib/orders/admin-types";
 
 type OrderFiltersProps = {
@@ -13,6 +14,11 @@ const STATUS_OPTIONS = [
   { value: "CONFIRMED", label: "Confirmed" },
   { value: "SHIPPED", label: "Shipped" },
   { value: "DELIVERED", label: "Delivered" },
+] as const;
+
+const PAYMENT_FILTER_OPTIONS = [
+  { value: "all", label: "All payments" },
+  ...PAYMENT_METHOD_OPTIONS,
 ] as const;
 
 const COMPACT_INPUT_CLASS_NAME =
@@ -30,7 +36,7 @@ export const OrderFilters = ({ filters }: OrderFiltersProps) => {
     <form
       method="get"
       action="/dashboard/orders"
-      className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]"
+      className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]"
     >
       <FormInputField
         id="order-search"
@@ -49,6 +55,15 @@ export const OrderFilters = ({ filters }: OrderFiltersProps) => {
         name="status"
         options={STATUS_OPTIONS}
         defaultValue={filters.status}
+        variant="floating"
+        size="sm"
+      />
+
+      <SelectField
+        label="Payment"
+        name="paymentMethod"
+        options={PAYMENT_FILTER_OPTIONS}
+        defaultValue={filters.paymentMethod}
         variant="floating"
         size="sm"
       />

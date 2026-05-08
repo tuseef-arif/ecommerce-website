@@ -246,6 +246,7 @@ export const ProductPurchasePanel = ({
                 name: productName,
                 href: productHref,
                 imagePath: productImagePath,
+                originalUnitPrice: displayOriginalPrice,
                 unitPrice: displayFinalPrice,
                 selectedColor: hasColors ? selectedColor || null : null,
                 selectedStorage: hasStorages ? selectedStorage || null : null,

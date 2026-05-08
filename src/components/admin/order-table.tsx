@@ -45,28 +45,25 @@ export const OrderTable = ({ items }: OrderTableProps) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] table-fixed text-left text-sm">
+        <table className="w-full min-w-[640px] table-fixed text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
               <th scope="col" className="w-[14%] px-4 py-3">
                 Order
               </th>
-              <th scope="col" className="w-[24%] px-4 py-3">
+              <th scope="col" className="w-[26%] px-4 py-3">
                 Customer
               </th>
-              <th scope="col" className="w-[14%] px-4 py-3">
+              <th scope="col" className="w-[16%] px-4 py-3">
                 Status
               </th>
-              <th scope="col" className="w-[11%] px-4 py-3 text-right">
-                Items
-              </th>
-              <th scope="col" className="w-[12%] px-4 py-3 text-right">
+              <th scope="col" className="w-[14%] px-4 py-3 text-right">
                 Total
               </th>
-              <th scope="col" className="w-[13%] px-4 py-3">
+              <th scope="col" className="w-[16%] px-4 py-3">
                 Created
               </th>
-              <th scope="col" className="w-[12%] px-4 py-3 text-right">
+              <th scope="col" className="w-[14%] px-4 py-3 text-right">
                 Actions
               </th>
             </tr>
@@ -92,13 +89,6 @@ export const OrderTable = ({ items }: OrderTableProps) => {
                 </td>
                 <td className="px-4 py-3">
                   <OrderStatusBadge status={item.status} />
-                </td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums text-neutral-900">
-                  {item.itemsQuantity}
-                  <span className="ml-1 text-xs text-neutral-500">
-                    ({item.itemsCount}{" "}
-                    {item.itemsCount === 1 ? "line" : "lines"})
-                  </span>
                 </td>
                 <td className="px-4 py-3 text-right font-mono tabular-nums text-neutral-900">
                   {formatMoney(item.totalAmount)}

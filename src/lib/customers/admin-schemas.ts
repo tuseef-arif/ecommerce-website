@@ -23,6 +23,15 @@ const phoneSchema = optionalTrimmed(40).transform((value) => {
   if (value.length === 0) return null;
   return value;
 });
+const addressSchema = optionalTrimmed(200).transform((value) =>
+  value.length === 0 ? null : value,
+);
+const citySchema = optionalTrimmed(80).transform((value) =>
+  value.length === 0 ? null : value,
+);
+const countrySchema = optionalTrimmed(80).transform((value) =>
+  value.length === 0 ? null : value,
+);
 
 const firstNameSchema = optionalTrimmed(80).transform((value) =>
   value.length === 0 ? null : value,
@@ -62,6 +71,9 @@ export const adminCustomerCreateSchema = z.object({
   firstName: firstNameSchema,
   lastName: lastNameSchema,
   phone: phoneSchema,
+  address: addressSchema,
+  city: citySchema,
+  country: countrySchema,
   role: roleSchema,
   status: statusSchema,
   password: passwordCreateSchema,
@@ -80,6 +92,9 @@ export const adminCustomerUpdateSchema = z.object({
   firstName: firstNameSchema,
   lastName: lastNameSchema,
   phone: phoneSchema,
+  address: addressSchema,
+  city: citySchema,
+  country: countrySchema,
   role: roleSchema,
   status: statusSchema,
   password: passwordUpdateSchema,

@@ -19,10 +19,14 @@ const buildCustomerWhere = (filters: AdminCustomersListFilters) => {
       { firstName: { contains: filters.q, mode: "insensitive" } },
       { lastName: { contains: filters.q, mode: "insensitive" } },
       { phone: { contains: filters.q, mode: "insensitive" } },
+      { address: { contains: filters.q, mode: "insensitive" } },
+      { city: { contains: filters.q, mode: "insensitive" } },
+      { country: { contains: filters.q, mode: "insensitive" } },
     ];
   }
   if (filters.role === "user") where.role = "USER";
   if (filters.role === "admin") where.role = "ADMIN";
+  if (filters.status !== "all") where.status = filters.status;
 
   return where;
 };
@@ -46,6 +50,9 @@ export const listAdminCustomers = async (
         firstName: true,
         lastName: true,
         phone: true,
+        address: true,
+        city: true,
+        country: true,
         profileImagePath: true,
         role: true,
         status: true,
@@ -68,6 +75,9 @@ export const listAdminCustomers = async (
       lastName: row.lastName,
     }),
     phone: row.phone,
+    address: row.address,
+    city: row.city,
+    country: row.country,
     profileImagePath: row.profileImagePath,
     role: row.role,
     status: row.status,
@@ -98,6 +108,9 @@ export const getAdminCustomerById = async (
       firstName: true,
       lastName: true,
       phone: true,
+      address: true,
+      city: true,
+      country: true,
       profileImagePath: true,
       role: true,
       status: true,
@@ -114,6 +127,9 @@ export const getAdminCustomerById = async (
     firstName: row.firstName ?? "",
     lastName: row.lastName ?? "",
     phone: row.phone ?? "",
+    address: row.address ?? "",
+    city: row.city ?? "",
+    country: row.country ?? "",
     profileImagePath: row.profileImagePath,
     role: row.role,
     status: row.status,

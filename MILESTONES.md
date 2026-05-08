@@ -2,6 +2,12 @@
 
 This file is our daily execution tracker for building the Mobile Shop E-commerce platform in a controlled sequence.
 
+### Current status snapshot (2026-05-09)
+
+**Storefront:** product listing/detail, persisted cart (drawer + `/cart`), checkout with transactional order creation from the cart payload, and the customer-facing **Order received** summary route are in place. **Admin:** product catalog CRUD, customers CRUD + roles, and the orders module (listing, filtering, detail, edit including line items + stock reconciliation, status lifecycle timestamps) align with Milestone 3 Day 6 and Day 8; see dated progress blocks there. Milestone 3 Day 7 (global/category sales utility UX) remains the open checklist group below.
+
+**Still on the roadmap:** signed-in **order history** index (`/account/orders` is reserved in site config) and session-scoped access control for customer order URLs (tracked under Milestone 5 Day 12).
+
 ## Milestone 1 - Database Foundation (Days 1-3)
 
 ### Day 1: Database Decision + Environment Setup
@@ -172,33 +178,45 @@ Day 8 extension progress (2026-05-07):
 
 ### Day 9: Product Listing and Detail
 
-- Build storefront listing with category filter/search basics.
-- Add product detail page with specs and price breakdown.
-- Exit criteria: user can browse and inspect products.
+- [x] Build storefront listing with category filter/search basics.
+- [x] Add product detail page with specs and price breakdown.
+- [x] Exit criteria: user can browse and inspect products.
+
+Day 9 progress (2026-05-09):
+
+- Delivered `src/app/(shop)/products/` listing with loading states and `src/app/(shop)/products/[slug]/` detail flow.
 
 ### Day 10: Persistent Cart
 
-- Implement cart actions (add/update/remove/clear).
-- Persist cart items per authenticated user.
-- Validate stock constraints at write time.
-- Exit criteria: cart survives refresh and session continuity.
+- [x] Implement cart actions (add/update/remove/clear).
+- [x] Persist cart items (browser `localStorage` via `src/lib/cart/store-cart.ts`; survives refresh for the same device/browser).
+- [x] Validate stock constraints at write time (add-to-cart and cart line updates respect caps and availability).
+- [x] Exit criteria: cart survives refresh and session continuity for the storefront session.
+
+Day 10 progress (2026-05-09):
+
+- Cart drawer (`src/components/store/store-cart-drawer.tsx`), dedicated cart page (`src/app/(shop)/cart/page.tsx`), and product add flows (`product-purchase-panel`, `product-card-add-to-cart-button`) wired to shared cart helpers.
 
 ### Day 11: Checkout and Order Creation
 
-- Build checkout form and order summary.
-- Create transactional order from cart.
-- Snapshot price/discount into `OrderItem`.
-- Decrement stock and clear cart after successful order.
-- Exit criteria: successful end-to-end purchase flow.
+- [x] Build checkout form and order summary.
+- [x] Create transactional order from cart payload.
+- [x] Snapshot price/discount into `OrderItem`.
+- [x] Decrement stock and clear cart after successful order.
+- [x] Exit criteria: successful end-to-end purchase flow.
+
+Day 11 progress (2026-05-09):
+
+- Checkout UI in `src/app/(shop)/checkout/page.tsx` with `placeCheckoutOrderAction` in `src/app/(shop)/actions.ts` (Zod boundary, Prisma transaction, server-side pricing, stock decrement, optional guest/auto-user path). Success routes to `order-received/[orderid]`.
 
 ## Milestone 5 - User and Release Readiness (Days 12-14)
 
 ### Day 12: User Order History
 
-- Build user order history list.
-- Add order detail page with items, totals, status.
-- Enforce owner/admin access checks.
-- Exit criteria: users can view only their own orders.
+- [ ] Build user order history list (signed-in account index; `SITE_CONFIG` already references `/account/orders` in `src/lib/config/site-config.data.ts`).
+- [x] Add post-checkout order summary with items, totals, and payment/shipping context (`src/app/(shop)/order-received/[orderid]/page.tsx`).
+- [ ] Enforce owner/admin access checks on customer order views (recommended before treating history as complete).
+- [ ] Exit criteria (full): users can browse their own orders and cannot read others — **partially met** via acknowledgment page only until history + access gates ship.
 
 ### Day 13: Hardening and Performance
 

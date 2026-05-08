@@ -2,6 +2,7 @@ import { OrderDetailActions } from "@/components/admin/order-detail-actions";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import type { AdminOrderDetail } from "@/lib/orders/admin-types";
 import { SITE_PRODUCT_SLIDER } from "@/lib/config/site-config";
+import { paymentMethodLabel } from "@/lib/orders/payment-method";
 import type { OrderStatus } from "@/generated/prisma/enums";
 
 type OrderDetailCardProps = {
@@ -59,6 +60,9 @@ export const OrderDetailCard = ({ order }: OrderDetailCardProps) => {
             #{order.shortId}
           </h2>
           <OrderStatusBadge status={order.status} />
+          <span className="inline-flex items-center rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 text-xs font-medium text-neutral-700">
+            {paymentMethodLabel(order.paymentMethod)}
+          </span>
         </div>
         <p className="text-sm text-neutral-600">
           {order.customer.displayName}{" "}

@@ -31,7 +31,7 @@ export default async function DashboardProductsPage({
 
   const [products, brands, categories] = await Promise.all([
     listAdminProducts(filters),
-    listAdminProductDistinctBrands(),
+    listAdminProductDistinctBrands(filters.category),
     listAdminProductCategories(),
   ]);
 

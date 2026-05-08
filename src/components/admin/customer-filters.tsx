@@ -22,7 +22,7 @@ export const CustomerFilters = ({ filters }: CustomerFiltersProps) => {
     <form
       method="get"
       action="/dashboard/customers"
-      className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-[3fr_1fr_auto]"
+      className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[3fr_1fr_auto]"
     >
       <FormInputField
         id="customer-search"

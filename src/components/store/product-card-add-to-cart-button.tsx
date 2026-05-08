@@ -9,6 +9,7 @@ import {
   ADDED_BUTTON_CLASS,
   ADDED_LABEL,
   LIMIT_REACHED_LABEL,
+  OUT_OF_STOCK_LABEL,
   useAddToCartFeedback,
 } from "@/components/store/use-add-to-cart-feedback";
 import {
@@ -56,9 +57,8 @@ export const ProductCardAddToCartButton = ({
   const [selectedStorage, setSelectedStorage] = useState(
     storageOptions[0]?.value ?? "",
   );
-  const { status, isAdded, showAdded, showLimitReached } =
+  const { status, isAdded, showAdded, showLimitReached, showOutOfStock } =
     useAddToCartFeedback();
-  const maxAllowed = Math.max(1, Math.min(10, stock));
 
   const colorSelectOptions = useMemo(
     () =>
@@ -89,10 +89,14 @@ export const ProductCardAddToCartButton = ({
         selectedStorage: storage,
       },
       1,
-      { maxAllowed },
+      { maxPerUser: 10, stockAvailable: stock },
     );
     if (result.ok && result.addedQuantity > 0) {
       showAdded();
+      return;
+    }
+    if (!result.ok && result.reason === "out_of_stock") {
+      showOutOfStock();
       return;
     }
     showLimitReached();
@@ -100,11 +104,13 @@ export const ProductCardAddToCartButton = ({
 
   const buttonLabel = !isInStock
     ? SITE_PRODUCT_DETAIL.addToCartDisabledLabel
-    : status === "limit_reached"
-      ? LIMIT_REACHED_LABEL
-      : isAdded
-        ? ADDED_LABEL
-        : SITE_PRODUCT_SLIDER.addToCartLabel;
+    : status === "out_of_stock"
+      ? OUT_OF_STOCK_LABEL
+      : status === "limit_reached"
+        ? LIMIT_REACHED_LABEL
+        : isAdded
+          ? ADDED_LABEL
+          : SITE_PRODUCT_SLIDER.addToCartLabel;
 
   return (
     <>

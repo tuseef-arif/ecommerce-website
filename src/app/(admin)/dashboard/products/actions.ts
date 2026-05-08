@@ -47,6 +47,27 @@ const productIdSchema = z
   .min(1, "Product id is required.")
   .max(40, "Invalid product id.");
 
+const buildSafeListRedirect = (
+  rawReturnTo: FormDataEntryValue | null,
+  bannerStatus: "updated",
+): string => {
+  if (typeof rawReturnTo !== "string") {
+    return `/dashboard/products?status=${bannerStatus}`;
+  }
+  const trimmed = rawReturnTo.trim();
+  if (!trimmed.startsWith("/dashboard/products")) {
+    return `/dashboard/products?status=${bannerStatus}`;
+  }
+  const [pathname, rawQuery = ""] = trimmed.split("?", 2);
+  if (pathname !== "/dashboard/products") {
+    return `/dashboard/products?status=${bannerStatus}`;
+  }
+  const params = new URLSearchParams(rawQuery);
+  params.set("status", bannerStatus);
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
+};
+
 export const deleteProductAction = async (
   productId: string,
 ): Promise<DeleteProductResult> => {
@@ -410,6 +431,10 @@ export const updateProductAction = async (
   formData: FormData,
 ): Promise<ProductFormState> => {
   await requireAdmin();
+  const nextListHref = buildSafeListRedirect(
+    formData.get("returnTo"),
+    "updated",
+  );
 
   const productIdRaw = String(formData.get("productId") ?? "");
   const idParsed = productIdSchema.safeParse(productIdRaw);
@@ -594,5 +619,5 @@ export const updateProductAction = async (
 
   revalidatePath("/dashboard/products");
   revalidatePath(`/dashboard/products/${idParsed.data}/edit`);
-  redirect("/dashboard/products?status=updated");
+  redirect(nextListHref);
 };

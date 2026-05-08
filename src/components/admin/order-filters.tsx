@@ -30,7 +30,7 @@ export const OrderFilters = ({ filters }: OrderFiltersProps) => {
     <form
       method="get"
       action="/dashboard/orders"
-      className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]"
+      className="grid gap-3 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_1fr_auto]"
     >
       <FormInputField
         id="order-search"

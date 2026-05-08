@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteProductAction } from "@/app/(admin)/dashboard/products/actions";
 import type { DeleteProductResult } from "@/app/(admin)/dashboard/products/form-state";
@@ -27,9 +27,15 @@ export const ProductRowActions = ({
   productName,
 }: ProductRowActionsProps) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const currentQuery = searchParams.toString();
+  const editHref = currentQuery
+    ? `/dashboard/products/${productId}/edit?${currentQuery}`
+    : `/dashboard/products/${productId}/edit`;
 
   const handleConfirm = () => {
     setErrorMessage(null);
@@ -40,7 +46,12 @@ export const ProductRowActions = ({
         return;
       }
       setIsOpen(false);
-      router.replace("/dashboard/products?status=deleted");
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set("status", "deleted");
+      const nextQuery = nextParams.toString();
+      router.replace(
+        nextQuery ? `/dashboard/products?${nextQuery}` : "/dashboard/products",
+      );
       router.refresh();
     });
   };
@@ -49,7 +60,7 @@ export const ProductRowActions = ({
     <>
       <div className="flex items-center justify-end gap-1.5">
         <Link
-          href={`/dashboard/products/${productId}/edit`}
+          href={editHref}
           className="inline-flex min-h-8 items-center justify-center rounded-lg border border-neutral-300 bg-white px-2.5 text-xs font-semibold text-neutral-800 transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
         >
           Edit

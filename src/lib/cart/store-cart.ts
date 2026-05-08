@@ -10,13 +10,17 @@ export type StoreCartItem = {
   imagePath: string | null;
   unitPrice: number;
   quantity: number;
+  /** Max total quantity allowed for this product across all variants. */
+  maxAllowed?: number;
   selectedColor: string | null;
   selectedStorage: string | null;
 };
 export type StoreCartItemInput = Omit<StoreCartItem, "quantity">;
 type AddToCartOptions = {
-  /** Max total quantity allowed in cart for this product (across variants). */
-  maxAllowed: number;
+  /** Max quantity per user for this product (across variants). */
+  maxPerUser: number;
+  /** Current stock available for this product. */
+  stockAvailable: number;
 };
 
 export type AddToStoreCartResult =
@@ -28,7 +32,7 @@ export type AddToStoreCartResult =
     }
   | {
       ok: false;
-      reason: "limit_reached";
+      reason: "limit_reached" | "out_of_stock";
       addedQuantity: 0;
       currentProductQuantity: number;
     };
@@ -39,6 +43,26 @@ const itemKey = (
   item: Pick<StoreCartItem, "productId" | "selectedColor" | "selectedStorage">,
 ) =>
   `${item.productId}::${item.selectedColor ?? ""}::${item.selectedStorage ?? ""}`;
+
+const normalizeMaxAllowed = (
+  value: number | undefined,
+  fallback = 10,
+): number => {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.max(1, Math.trunc(value));
+};
+
+const getProductLimit = (
+  items: ReadonlyArray<StoreCartItem>,
+  productId: string,
+): number => {
+  const limits = items
+    .filter((row) => row.productId === productId)
+    .map((row) => normalizeMaxAllowed(row.maxAllowed, 10));
+  if (limits.length === 0) return 10;
+  // Use the smallest known cap to avoid overselling when variants disagree.
+  return Math.min(...limits);
+};
 
 export const readStoreCart = (): StoreCartItem[] => {
   if (!isBrowser()) return [];
@@ -61,6 +85,9 @@ export const readStoreCart = (): StoreCartItem[] => {
         typeof candidate.quantity === "number" &&
         Number.isInteger(candidate.quantity) &&
         candidate.quantity > 0 &&
+        (typeof candidate.maxAllowed === "number"
+          ? Number.isInteger(candidate.maxAllowed) && candidate.maxAllowed > 0
+          : candidate.maxAllowed === undefined) &&
         (typeof candidate.selectedColor === "string" ||
           candidate.selectedColor === null) &&
         (typeof candidate.selectedStorage === "string" ||
@@ -88,19 +115,31 @@ export const addItemToStoreCart = (
 ): AddToStoreCartResult => {
   const safeQty = Math.max(1, Math.trunc(quantity));
   const items = readStoreCart();
-  const maxAllowed = Math.max(
-    1,
-    Math.trunc(options?.maxAllowed ?? Number.POSITIVE_INFINITY),
+  const maxPerUser = Math.max(1, Math.trunc(options?.maxPerUser ?? 10));
+  const stockAvailable = Math.max(
+    0,
+    Math.trunc(options?.stockAvailable ?? Number.POSITIVE_INFINITY),
   );
+  const maxAllowed = Math.max(1, Math.min(maxPerUser, stockAvailable));
   const currentProductQuantity = items
     .filter((row) => row.productId === item.productId)
     .reduce((sum, row) => sum + row.quantity, 0);
-  const remaining = Math.max(0, maxAllowed - currentProductQuantity);
+  const remainingByUser = Math.max(0, maxPerUser - currentProductQuantity);
+  const remainingByStock = Math.max(0, stockAvailable - currentProductQuantity);
+  const remaining = Math.max(0, Math.min(remainingByUser, remainingByStock));
 
   if (remaining <= 0) {
+    const reason =
+      remainingByStock <= 0 && remainingByUser <= 0
+        ? maxPerUser <= stockAvailable
+          ? "limit_reached"
+          : "out_of_stock"
+        : remainingByStock <= 0
+          ? "out_of_stock"
+          : "limit_reached";
     return {
       ok: false,
-      reason: "limit_reached",
+      reason,
       addedQuantity: 0,
       currentProductQuantity,
     };
@@ -114,6 +153,10 @@ export const addItemToStoreCart = (
     items[existingIdx] = {
       ...current,
       quantity: current.quantity + acceptedQuantity,
+      maxAllowed: Math.min(
+        normalizeMaxAllowed(current.maxAllowed, maxAllowed),
+        maxAllowed,
+      ),
     };
     writeStoreCart(items);
     return {
@@ -123,7 +166,11 @@ export const addItemToStoreCart = (
       reachedLimit: currentProductQuantity + acceptedQuantity >= maxAllowed,
     };
   }
-  const nextItem: StoreCartItem = { ...item, quantity: acceptedQuantity };
+  const nextItem: StoreCartItem = {
+    ...item,
+    quantity: acceptedQuantity,
+    maxAllowed,
+  };
   writeStoreCart([...items, nextItem]);
   return {
     ok: true,
@@ -146,11 +193,44 @@ export const setStoreCartItemQuantity = (
   item: Pick<StoreCartItem, "productId" | "selectedColor" | "selectedStorage">,
   quantity: number,
 ) => {
-  const nextQty = Math.max(1, Math.min(10, Math.trunc(quantity)));
   const items = readStoreCart();
+  const target = items.find((row) => itemKey(row) === itemKey(item));
+  if (!target) return items;
+
+  const productLimit = getProductLimit(items, item.productId);
+  const quantityUsedByOtherVariants = items
+    .filter(
+      (row) =>
+        row.productId === item.productId && itemKey(row) !== itemKey(target),
+    )
+    .reduce((sum, row) => sum + row.quantity, 0);
+  const maxForThisLine = Math.max(
+    1,
+    productLimit - quantityUsedByOtherVariants,
+  );
+  const nextQty = Math.max(1, Math.min(maxForThisLine, Math.trunc(quantity)));
+
   const nextItems = items.map((row) =>
-    itemKey(row) === itemKey(item) ? { ...row, quantity: nextQty } : row,
+    itemKey(row) === itemKey(item)
+      ? { ...row, quantity: nextQty, maxAllowed: productLimit }
+      : row,
   );
   writeStoreCart(nextItems);
   return nextItems;
+};
+
+export const getStoreCartItemMaxQuantity = (
+  item: Pick<StoreCartItem, "productId" | "selectedColor" | "selectedStorage">,
+  items = readStoreCart(),
+): number => {
+  const target = items.find((row) => itemKey(row) === itemKey(item));
+  if (!target) return 10;
+  const productLimit = getProductLimit(items, item.productId);
+  const quantityUsedByOtherVariants = items
+    .filter(
+      (row) =>
+        row.productId === item.productId && itemKey(row) !== itemKey(target),
+    )
+    .reduce((sum, row) => sum + row.quantity, 0);
+  return Math.max(1, productLimit - quantityUsedByOtherVariants);
 };

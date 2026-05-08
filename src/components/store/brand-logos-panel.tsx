@@ -8,7 +8,7 @@ type BrandLogoItem = {
 
 const BRAND_LOGOS: ReadonlyArray<BrandLogoItem> = [
   { name: "Apple", imagePath: "/assets/brand/Apple.jpg" },
-  { name: "Baseus", imagePath: "/assets/brand/Baseus.webp" },
+  { name: "Vivo", imagePath: "/assets/brand/Vivo.png" },
   { name: "Xiaomi", imagePath: "/assets/brand/Xiaomi.webp" },
   { name: "Samsung", imagePath: "/assets/brand/Samsung.webp" },
   { name: "Tecno", imagePath: "/assets/brand/Tecno.webp" },
@@ -20,7 +20,7 @@ const BRAND_LOGOS: ReadonlyArray<BrandLogoItem> = [
 const buildBrandHref = (brandName: string): string => {
   const params = new URLSearchParams();
   params.set("brand", brandName);
-  return `/products?${params.toString()}#products-top`;
+  return `/products?${params.toString()}`;
 };
 
 export const BrandLogosPanel = () => (

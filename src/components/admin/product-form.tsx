@@ -40,6 +40,10 @@ type ProductFormProps = {
   categories: ReadonlyArray<AdminProductCategoryOption>;
   /** When editing, the existing product detail; absent on create. */
   initialProduct?: AdminProductDetail;
+  /** Where Cancel should return to. */
+  cancelHref?: string;
+  /** List route to return to after successful save in edit mode. */
+  returnTo?: string;
 };
 
 const fallbackInitialDetail = {
@@ -62,7 +66,6 @@ const fallbackInitialDetail = {
   storageOptions: [] as ProductVariantOption[],
 };
 
-const cancelHref = "/dashboard/products";
 const discountTypeOptions = [
   { value: "NONE", label: "No discount" },
   { value: "FIXED", label: "Fixed" },
@@ -78,6 +81,8 @@ export const ProductForm = ({
   action,
   categories,
   initialProduct,
+  cancelHref = "/dashboard/products",
+  returnTo,
 }: ProductFormProps) => {
   const [state, formAction, isPending] = useActionState<
     ProductFormState,
@@ -133,7 +138,12 @@ export const ProductForm = ({
       noValidate
     >
       {mode === "edit" && initialProduct ? (
-        <input type="hidden" name="productId" value={initialProduct.id} />
+        <>
+          <input type="hidden" name="productId" value={initialProduct.id} />
+          {returnTo ? (
+            <input type="hidden" name="returnTo" value={returnTo} />
+          ) : null}
+        </>
       ) : null}
 
       {state.errorMessage ? (

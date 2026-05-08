@@ -13,6 +13,9 @@ const applyProfileFieldsToToken = (
     firstName: string | null;
     lastName: string | null;
     phone: string | null;
+    address: string | null;
+    city: string | null;
+    country: string | null;
     role: UserRole;
     profileImagePath: string | null;
     status: UserStatus;
@@ -22,6 +25,9 @@ const applyProfileFieldsToToken = (
   token.firstName = row.firstName;
   token.lastName = row.lastName;
   token.phone = row.phone;
+  token.address = row.address;
+  token.city = row.city;
+  token.country = row.country;
   token.profileImagePath = row.profileImagePath;
   token.isActive = row.status !== UserStatus.INACTIVE;
   const full = [row.firstName, row.lastName]
@@ -39,6 +45,9 @@ const stripAuthFromToken = (token: JWT): JWT => {
   token.firstName = undefined;
   token.lastName = undefined;
   token.phone = undefined;
+  token.address = undefined;
+  token.city = undefined;
+  token.country = undefined;
   token.profileImagePath = undefined;
   token.isActive = false;
   return token;
@@ -108,6 +117,9 @@ export const authOptions: NextAuthOptions = {
           firstName: user.firstName,
           lastName: user.lastName,
           phone: user.phone,
+          address: user.address,
+          city: user.city,
+          country: user.country,
           profileImagePath: user.profileImagePath,
         };
       },
@@ -134,6 +146,9 @@ export const authOptions: NextAuthOptions = {
             firstName: true,
             lastName: true,
             phone: true,
+            address: true,
+            city: true,
+            country: true,
             role: true,
             profileImagePath: true,
             status: true,
@@ -160,6 +175,9 @@ export const authOptions: NextAuthOptions = {
                 firstName: true,
                 lastName: true,
                 phone: true,
+                address: true,
+                city: true,
+                country: true,
                 role: true,
                 profileImagePath: true,
                 status: true,
@@ -185,6 +203,9 @@ export const authOptions: NextAuthOptions = {
         token.firstName = user.firstName ?? undefined;
         token.lastName = user.lastName ?? undefined;
         token.phone = user.phone ?? undefined;
+        token.address = user.address ?? undefined;
+        token.city = user.city ?? undefined;
+        token.country = user.country ?? undefined;
         token.isActive = true;
         return token;
       }
@@ -196,6 +217,9 @@ export const authOptions: NextAuthOptions = {
             firstName: true,
             lastName: true,
             phone: true,
+            address: true,
+            city: true,
+            country: true,
             role: true,
             profileImagePath: true,
             status: true,
@@ -229,6 +253,9 @@ export const authOptions: NextAuthOptions = {
         session.user.firstName = undefined;
         session.user.lastName = undefined;
         session.user.phone = undefined;
+        session.user.address = undefined;
+        session.user.city = undefined;
+        session.user.country = undefined;
         session.user.profileImagePath = undefined;
         return session;
       }
@@ -253,6 +280,9 @@ export const authOptions: NextAuthOptions = {
       session.user.firstName = token.firstName ?? null;
       session.user.lastName = token.lastName ?? null;
       session.user.phone = token.phone ?? null;
+      session.user.address = token.address ?? null;
+      session.user.city = token.city ?? null;
+      session.user.country = token.country ?? null;
       session.user.profileImagePath = token.profileImagePath ?? null;
 
       return session;

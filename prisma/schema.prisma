@@ -29,6 +29,12 @@ enum OrderStatus {
   DELIVERED
 }
 
+enum PaymentMethod {
+  BANK_TRANSFER
+  SELF_COLLECTION
+  COD
+}
+
 enum ProductDiscountType {
   NONE
   PERCENT
@@ -42,10 +48,14 @@ model User {
   firstName            String?
   lastName             String?
   phone                String?
+  address              String?
+  city                 String?
+  country              String?
   /** Public URL path, e.g. `/uploads/profile-images/<id>.jpg` — stored under `public/`. */
   profileImagePath     String?
   role                 UserRole             @default(USER)
   status               UserStatus           @default(ACTIVE)
+  autoCreated          Boolean              @default(false)
   cartItems            CartItem[]
   orders               Order[]
   passwordResetTokens  PasswordResetToken[]
@@ -76,6 +86,9 @@ model SignupOtpChallenge {
   firstName    String
   lastName     String
   phone        String
+  address      String
+  city         String
+  country      String
   expiresAt    DateTime
   attemptCount Int      @default(0)
   createdAt    DateTime @default(now())
@@ -146,21 +159,24 @@ model CartItem {
 }
 
 model Order {
-  id             String      @id @default(cuid())
+  id             String        @id @default(cuid())
   userId         String
-  status         OrderStatus @default(PENDING)
-  subtotal       Decimal     @db.Decimal(10, 2)
-  discountAmount Decimal     @db.Decimal(10, 2)
-  totalAmount    Decimal     @db.Decimal(10, 2)
-  user           User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status         OrderStatus   @default(PENDING)
+  /** Payment method chosen at checkout. Defaults to COD so legacy rows stay safe. */
+  paymentMethod  PaymentMethod @default(COD)
+  subtotal       Decimal       @db.Decimal(10, 2)
+  discountAmount Decimal       @db.Decimal(10, 2)
+  totalAmount    Decimal       @db.Decimal(10, 2)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   items          OrderItem[]
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   shippedAt      DateTime?
   deliveredAt    DateTime?
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
+  @@index([paymentMethod])
 }
 
 model OrderItem {

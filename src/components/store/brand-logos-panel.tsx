@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -23,6 +25,20 @@ const buildBrandHref = (brandName: string): string => {
   return `/products?${params.toString()}`;
 };
 
+/**
+ * Force the document to the top before App Router's scroll heuristic runs.
+ * Next.js `<Link>` defaults to *preserving* scroll position and only scrolls
+ * to the top of the destination Page when that Page element is not visible
+ * in the viewport. The home page is significantly taller than the products
+ * listing, so navigating from a deep scroll position would otherwise leave
+ * the user clamped to the bottom of the products page (footer / feature
+ * strip) instead of seeing the filters and product grid.
+ */
+const handleScrollToTop = (): void => {
+  if (typeof window === "undefined") return;
+  window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+};
+
 export const BrandLogosPanel = () => (
   <section
     aria-label="Shop by brand"
@@ -36,6 +52,7 @@ export const BrandLogosPanel = () => (
         <Link
           key={brand.name}
           href={buildBrandHref(brand.name)}
+          onClick={handleScrollToTop}
           className="group relative flex h-24 items-center justify-center overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           title={brand.name}
           aria-label={`View ${brand.name} products`}

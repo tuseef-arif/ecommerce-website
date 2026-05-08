@@ -1,4 +1,5 @@
 import type {
+  AdminOrderPaymentMethodFilter,
   AdminOrderStatusFilter,
   AdminOrdersListFilters,
   AdminOrdersListStatus,
@@ -31,6 +32,16 @@ const parseStatus = (
   return "all";
 };
 
+const parsePaymentMethod = (
+  value: string | string[] | undefined,
+): AdminOrderPaymentMethodFilter => {
+  const raw = sanitizeSingle(value, 32).toUpperCase();
+  if (raw === "BANK_TRANSFER" || raw === "SELF_COLLECTION" || raw === "COD") {
+    return raw;
+  }
+  return "all";
+};
+
 const parseDate = (value: string | string[] | undefined): string => {
   const raw = sanitizeSingle(value, 10);
   if (!ISO_DATE_RE.test(raw)) return "";
@@ -51,6 +62,7 @@ export const parseAdminOrdersListFilters = (
 ): AdminOrdersListFilters => ({
   q: sanitizeSingle(searchParams.q, 120),
   status: parseStatus(searchParams.status),
+  paymentMethod: parsePaymentMethod(searchParams.paymentMethod),
   from: parseDate(searchParams.from),
   to: parseDate(searchParams.to),
   page: parsePage(searchParams.page),
@@ -77,6 +89,12 @@ const FILTER_STATUSES_IN_URL: ReadonlySet<string> = new Set([
   "DELIVERED",
 ]);
 
+const FILTER_PAYMENT_METHODS_IN_URL: ReadonlySet<string> = new Set([
+  "BANK_TRANSFER",
+  "SELF_COLLECTION",
+  "COD",
+]);
+
 export const buildAdminOrdersListHref = (
   filters: AdminOrdersListHrefInput,
 ): string => {
@@ -84,6 +102,12 @@ export const buildAdminOrdersListHref = (
   if (filters.q) params.set("q", filters.q);
   if (filters.status && FILTER_STATUSES_IN_URL.has(filters.status)) {
     params.set("status", filters.status);
+  }
+  if (
+    filters.paymentMethod &&
+    FILTER_PAYMENT_METHODS_IN_URL.has(filters.paymentMethod)
+  ) {
+    params.set("paymentMethod", filters.paymentMethod);
   }
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);

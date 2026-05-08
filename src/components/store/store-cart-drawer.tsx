@@ -80,7 +80,10 @@ export const StoreCartDrawer = ({ isOpen, onClose }: StoreCartDrawerProps) => {
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {items.length === 0 ? (
-            <p className="text-sm text-neutral-600">Your cart is empty.</p>
+            <p className="text-sm text-neutral-600">
+              Your cart is feeling a little light! 🛒 <br></br>Let’s fix
+              that—check out our latest arrivals and find something you love.
+            </p>
           ) : (
             <div className="space-y-3">
               {items.map((item) => (
@@ -171,7 +174,7 @@ export const StoreCartDrawer = ({ isOpen, onClose }: StoreCartDrawerProps) => {
                 View cart
               </Button>
             </Link>
-            <Link href={SITE_ROUTES.cart} onClick={onClose}>
+            <Link href={SITE_ROUTES.checkout} onClick={onClose}>
               <Button
                 type="button"
                 variant="accent"

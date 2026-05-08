@@ -31,6 +31,9 @@ const emptyDetails: RegisterAccountDetailsFieldsValue = {
   lastName: "",
   email: "",
   phone: "",
+  address: "",
+  city: "",
+  country: "",
   password: "",
   confirmPassword: "",
 };

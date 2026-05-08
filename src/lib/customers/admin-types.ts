@@ -10,6 +10,7 @@
 import type { UserRole, UserStatus } from "@/generated/prisma/enums";
 
 export type AdminCustomerRoleFilter = "all" | "user" | "admin";
+export type AdminCustomerStatusFilter = "all" | UserStatus;
 
 export type AdminCustomerListItem = {
   id: string;
@@ -19,6 +20,9 @@ export type AdminCustomerListItem = {
   /** First + last name composed for display, with email fallback. */
   displayName: string;
   phone: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
   /** Public URL path under `/uploads/` or null when not set. */
   profileImagePath: string | null;
   role: UserRole;
@@ -35,6 +39,9 @@ export type AdminCustomerDetail = {
   firstName: string;
   lastName: string;
   phone: string;
+  address: string;
+  city: string;
+  country: string;
   profileImagePath: string | null;
   role: UserRole;
   status: UserStatus;
@@ -54,6 +61,7 @@ export type AdminCustomerListPage = {
 export type AdminCustomersListFilters = {
   q: string;
   role: AdminCustomerRoleFilter;
+  status: AdminCustomerStatusFilter;
   page: number;
 };
 

@@ -5,6 +5,9 @@ import { signupPasswordSchema } from "@/lib/validation/signup-password-schema";
 const NAME_FIELD_MAX_LENGTH = 50;
 /** Entire address length per RFC 5321 / common SMTP limits. */
 const EMAIL_MAX_LENGTH = 254;
+const ADDRESS_MAX_LENGTH = 200;
+const CITY_MAX_LENGTH = 80;
+const COUNTRY_MAX_LENGTH = 80;
 
 const digitsOnlyPhone = (raw: string) => raw.trim().replace(/\D/g, "");
 
@@ -37,6 +40,21 @@ export const registerAccountSchema = z
           .min(10, "Enter a valid phone number (at least 10 digits).")
           .max(15, "Phone number is too long."),
       ),
+    address: z
+      .string()
+      .trim()
+      .min(1, "Address is required.")
+      .max(ADDRESS_MAX_LENGTH, "Address is too long."),
+    city: z
+      .string()
+      .trim()
+      .min(1, "City is required.")
+      .max(CITY_MAX_LENGTH, "City is too long."),
+    country: z
+      .string()
+      .trim()
+      .min(1, "Country is required.")
+      .max(COUNTRY_MAX_LENGTH, "Country is too long."),
     password: signupPasswordSchema,
     confirmPassword: z.string(),
   })

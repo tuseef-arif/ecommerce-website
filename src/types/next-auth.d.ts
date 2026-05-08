@@ -14,6 +14,9 @@ declare module "next-auth" {
       firstName?: string | null;
       lastName?: string | null;
       phone?: string | null;
+      address?: string | null;
+      city?: string | null;
+      country?: string | null;
       profileImagePath?: string | null;
     };
   }
@@ -26,6 +29,9 @@ declare module "next-auth" {
     firstName?: string | null;
     lastName?: string | null;
     phone?: string | null;
+    address?: string | null;
+    city?: string | null;
+    country?: string | null;
     profileImagePath?: string | null;
   }
 }
@@ -37,6 +43,9 @@ declare module "next-auth/jwt" {
     firstName?: string | null;
     lastName?: string | null;
     phone?: string | null;
+    address?: string | null;
+    city?: string | null;
+    country?: string | null;
     profileImagePath?: string | null;
     /** Present when JWT was refreshed against DB and account is ACTIVE. */
     isActive?: boolean;

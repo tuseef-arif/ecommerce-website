@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 
 export const ADDED_LABEL = "Added";
 export const LIMIT_REACHED_LABEL = "Limit reached";
-export const OUT_OF_STOCK_LABEL = "Out of stock";
+export const OUT_OF_STOCK_LABEL = "All are Added";
 export const ADDED_STATE_TIMEOUT_MS = 1100;
 export const ADDED_BUTTON_CLASS =
   "scale-[1.02] border-[#fe9922] bg-[#fe9922] hover:brightness-105 focus-visible:outline-[#fe9922]";

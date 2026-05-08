@@ -16,6 +16,9 @@ export type RegisterAccountDetailsFieldsValue = {
   lastName: string;
   email: string;
   phone: string;
+  address: string;
+  city: string;
+  country: string;
   password: string;
   confirmPassword: string;
 };
@@ -74,6 +77,32 @@ export const RegisterAccountDetailsFields = ({
       value={value.phone}
       onChange={(e) => onFieldChange("phone", e.target.value)}
     />
+    <FormInputField
+      label="Address"
+      name="address"
+      autoComplete="street-address"
+      required
+      value={value.address}
+      onChange={(e) => onFieldChange("address", e.target.value)}
+    />
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <FormInputField
+        label="City"
+        name="city"
+        autoComplete="address-level2"
+        required
+        value={value.city}
+        onChange={(e) => onFieldChange("city", e.target.value)}
+      />
+      <FormInputField
+        label="Country"
+        name="country"
+        autoComplete="country-name"
+        required
+        value={value.country}
+        onChange={(e) => onFieldChange("country", e.target.value)}
+      />
+    </div>
     <PasswordInputField
       label={SITE_LOGIN_PAGE.fieldPasswordLabel}
       name="password"

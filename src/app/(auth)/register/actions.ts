@@ -273,6 +273,9 @@ export const registerAccountInlineAction = async (
     lastName: formData.get("lastName"),
     email: formData.get("email"),
     phone: formData.get("phone"),
+    address: formData.get("address"),
+    city: formData.get("city"),
+    country: formData.get("country"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
   });
@@ -335,4 +338,111 @@ export const registerAccountInlineAction = async (
     pendingEmail: parsedData.data.email.toLowerCase(),
     emailForLogin: undefined,
   };
+};
+
+export type StartCheckoutAccountVerificationResult =
+  | { ok: true; pendingEmail: string }
+  | { ok: false; error: string };
+
+export const startCheckoutAccountVerificationAction = async (
+  input: z.input<typeof registerAccountSchema>,
+): Promise<StartCheckoutAccountVerificationResult> => {
+  const parsed = registerAccountSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error:
+        parsed.error.issues[0]?.message ?? "Please check your account details.",
+    };
+  }
+
+  const result = await startSignupEmailVerification(parsed.data);
+  if (!result.ok) {
+    if (result.error === "EMAIL_TAKEN") {
+      return {
+        ok: false,
+        error: "A user already exists on this email. Please login.",
+      };
+    }
+    if (result.error === "EMAIL_SEND_FAILED") {
+      return {
+        ok: false,
+        error: signupEmailSendUserMessage(result.emailSendHint),
+      };
+    }
+    if (result.error === "DATABASE") {
+      return { ok: false, error: signupDatabaseUserMessage(result.dbHint) };
+    }
+    return { ok: false, error: "Could not start account verification." };
+  }
+
+  return { ok: true, pendingEmail: parsed.data.email.toLowerCase() };
+};
+
+export type VerifyCheckoutAccountOtpResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export const verifyCheckoutAccountOtpAction = async (
+  email: string,
+  code: string,
+): Promise<VerifyCheckoutAccountOtpResult> => {
+  const emailParsed = verifyEmailFieldSchema.safeParse(email);
+  const codeParsed = registerOtpCodeSchema.safeParse(code);
+  if (!emailParsed.success || !codeParsed.success) {
+    return { ok: false, error: "Please enter a valid verification code." };
+  }
+
+  const result = await completeSignupWithOtp(
+    emailParsed.data.toLowerCase(),
+    codeParsed.data,
+  );
+
+  if (!result.ok) {
+    if (result.error === "INVALID_CODE" || result.error === "NOT_FOUND") {
+      return { ok: false, error: "Invalid or expired code." };
+    }
+    if (result.error === "EXPIRED") {
+      return { ok: false, error: "Code expired. Please request a new one." };
+    }
+    if (result.error === "LOCKED") {
+      return { ok: false, error: "Too many attempts. Please start again." };
+    }
+    if (result.error === "EMAIL_TAKEN") {
+      return {
+        ok: false,
+        error: "A user already exists on this email. Please login.",
+      };
+    }
+    return { ok: false, error: "Could not verify code. Please try again." };
+  }
+
+  return { ok: true };
+};
+
+export const resendCheckoutAccountOtpAction = async (
+  email: string,
+): Promise<VerifyCheckoutAccountOtpResult> => {
+  const emailParsed = verifyEmailFieldSchema.safeParse(email);
+  if (!emailParsed.success) {
+    return { ok: false, error: "Please provide a valid email address." };
+  }
+
+  const result = await resendSignupEmailVerification(
+    emailParsed.data.toLowerCase(),
+  );
+  if (!result.ok) {
+    if (result.error === "NOT_FOUND" || result.error === "EXPIRED") {
+      return { ok: false, error: "Verification session expired. Start again." };
+    }
+    if (result.error === "EMAIL_SEND_FAILED") {
+      return {
+        ok: false,
+        error: signupEmailSendUserMessage(result.emailSendHint),
+      };
+    }
+    return { ok: false, error: signupDatabaseUserMessage(result.dbHint) };
+  }
+
+  return { ok: true };
 };

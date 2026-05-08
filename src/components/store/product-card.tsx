@@ -145,6 +145,7 @@ export const ProductCard = ({
           productName={name}
           href={href}
           imagePath={imagePath}
+          originalUnitPrice={price}
           unitPrice={finalPrice}
           stock={product.stock}
           isInStock={isInStock}

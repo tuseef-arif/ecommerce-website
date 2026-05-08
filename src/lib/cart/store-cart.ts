@@ -8,6 +8,8 @@ export type StoreCartItem = {
   name: string;
   href: string;
   imagePath: string | null;
+  /** Original per-unit price before discount, when available. */
+  originalUnitPrice?: number;
   unitPrice: number;
   quantity: number;
   /** Max total quantity allowed for this product across all variants. */
@@ -80,6 +82,9 @@ export const readStoreCart = (): StoreCartItem[] => {
         typeof candidate.href === "string" &&
         (typeof candidate.imagePath === "string" ||
           candidate.imagePath === null) &&
+        (typeof candidate.originalUnitPrice === "number"
+          ? Number.isFinite(candidate.originalUnitPrice)
+          : candidate.originalUnitPrice === undefined) &&
         typeof candidate.unitPrice === "number" &&
         Number.isFinite(candidate.unitPrice) &&
         typeof candidate.quantity === "number" &&
@@ -103,6 +108,11 @@ const writeStoreCart = (items: StoreCartItem[]) => {
   if (!isBrowser()) return;
   window.localStorage.setItem(STORE_CART_STORAGE_KEY, JSON.stringify(items));
   window.dispatchEvent(new CustomEvent(STORE_CART_UPDATED_EVENT));
+};
+
+export const clearStoreCart = () => {
+  writeStoreCart([]);
+  return [];
 };
 
 export const getStoreCartCount = (items = readStoreCart()) =>
@@ -152,6 +162,10 @@ export const addItemToStoreCart = (
     const current = items[existingIdx]!;
     items[existingIdx] = {
       ...current,
+      originalUnitPrice:
+        typeof item.originalUnitPrice === "number"
+          ? item.originalUnitPrice
+          : current.originalUnitPrice,
       quantity: current.quantity + acceptedQuantity,
       maxAllowed: Math.min(
         normalizeMaxAllowed(current.maxAllowed, maxAllowed),

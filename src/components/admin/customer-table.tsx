@@ -33,13 +33,16 @@ export const CustomerTable = ({ items }: CustomerTableProps) => {
         <table className="w-full min-w-[560px] table-fixed text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
-              <th scope="col" className="w-[40%] px-4 py-3">
+              <th scope="col" className="w-[32%] px-4 py-3">
                 Customer
               </th>
-              <th scope="col" className="w-[16%] px-4 py-3">
+              <th scope="col" className="w-[24%] px-4 py-3">
+                Email
+              </th>
+              <th scope="col" className="w-[14%] px-4 py-3">
                 Status
               </th>
-              <th scope="col" className="w-[16%] px-4 py-3">
+              <th scope="col" className="w-[14%] px-4 py-3">
                 Role
               </th>
               <th scope="col" className="w-[12%] px-4 py-3 text-right">
@@ -76,6 +79,11 @@ export const CustomerTable = ({ items }: CustomerTableProps) => {
                         {item.displayName}
                       </Link>
                     </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="max-w-[220px] truncate text-sm text-neutral-700">
+                    {item.email}
                   </div>
                 </td>
                 <td className="px-4 py-3">

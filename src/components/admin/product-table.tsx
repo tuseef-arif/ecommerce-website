@@ -38,28 +38,28 @@ export const ProductTable = ({ items }: ProductTableProps) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] text-left text-sm">
+        <table className="w-full min-w-[760px] table-fixed text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="w-[34%] px-4 py-3">
                 Product
               </th>
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="w-[13%] px-4 py-3">
                 Brand
               </th>
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="w-[13%] px-4 py-3">
                 Category
               </th>
-              <th scope="col" className="px-4 py-3 text-right">
+              <th scope="col" className="w-[12%] px-4 py-3 text-right">
                 Price
               </th>
-              <th scope="col" className="px-4 py-3 text-right">
+              <th scope="col" className="w-[9%] px-4 py-3 text-right">
                 Stock
               </th>
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="w-[9%] px-4 py-3">
                 Status
               </th>
-              <th scope="col" className="px-4 py-3 text-right">
+              <th scope="col" className="w-[10%] px-4 py-3 text-right">
                 Actions
               </th>
             </tr>
@@ -91,8 +91,10 @@ export const ProductTable = ({ items }: ProductTableProps) => {
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-neutral-700">{item.brand}</td>
-                <td className="px-4 py-3 text-neutral-700">
+                <td className="truncate px-4 py-3 text-neutral-700">
+                  {item.brand}
+                </td>
+                <td className="truncate px-4 py-3 text-neutral-700">
                   {item.category.name}
                 </td>
                 <td className="px-4 py-3 text-right font-mono tabular-nums text-neutral-900">
@@ -108,7 +110,7 @@ export const ProductTable = ({ items }: ProductTableProps) => {
                     {item.isActive ? "Active" : "Inactive"}
                   </StatusBadge>
                 </td>
-                <td className="px-4 py-3">
+                <td className="whitespace-nowrap px-4 py-3">
                   <ProductRowActions
                     productId={item.id}
                     productName={item.name}

@@ -45,28 +45,28 @@ export const OrderTable = ({ items }: OrderTableProps) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] text-left text-sm">
+        <table className="w-full min-w-[760px] table-fixed text-left text-sm">
           <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="w-[14%] px-4 py-3">
                 Order
               </th>
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="w-[24%] px-4 py-3">
                 Customer
               </th>
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="w-[14%] px-4 py-3">
                 Status
               </th>
-              <th scope="col" className="px-4 py-3 text-right">
+              <th scope="col" className="w-[11%] px-4 py-3 text-right">
                 Items
               </th>
-              <th scope="col" className="px-4 py-3 text-right">
+              <th scope="col" className="w-[12%] px-4 py-3 text-right">
                 Total
               </th>
-              <th scope="col" className="px-4 py-3">
+              <th scope="col" className="w-[13%] px-4 py-3">
                 Created
               </th>
-              <th scope="col" className="px-4 py-3 text-right">
+              <th scope="col" className="w-[12%] px-4 py-3 text-right">
                 Actions
               </th>
             </tr>
@@ -85,7 +85,7 @@ export const OrderTable = ({ items }: OrderTableProps) => {
                 <td className="px-4 py-3">
                   <Link
                     href={`/dashboard/customers/${item.customer.id}`}
-                    className="truncate font-semibold text-neutral-900 transition-colors hover:text-[var(--store-brand-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
+                    className="block truncate font-semibold text-neutral-900 transition-colors hover:text-[var(--store-brand-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
                   >
                     {item.customer.displayName}
                   </Link>
@@ -106,7 +106,7 @@ export const OrderTable = ({ items }: OrderTableProps) => {
                 <td className="px-4 py-3 text-neutral-700">
                   {formatDate(item.createdAtIso)}
                 </td>
-                <td className="px-4 py-3">
+                <td className="whitespace-nowrap px-4 py-3">
                   <OrderRowActions orderId={item.id} shortId={item.shortId} />
                 </td>
               </tr>

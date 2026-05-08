@@ -186,7 +186,6 @@ export default async function ProductsListingPage({
 
   return (
     <main
-      id="products-top"
       className={`flex flex-1 flex-col gap-6 py-6 md:gap-8 md:py-10 ${STORE_SHELL}`}
     >
       <div className="flex items-center justify-between gap-3 text-xs text-neutral-500 sm:text-sm">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { STORE_SHELL, SITE_PRODUCT_SLIDER } from "@/lib/config/site-config";
 import {
   STORE_CART_UPDATED_EVENT,
+  getStoreCartItemMaxQuantity,
   readStoreCart,
   removeItemFromStoreCart,
   setStoreCartItemQuantity,
@@ -96,7 +97,14 @@ export default function CartPage() {
                       <input
                         type="number"
                         min={1}
-                        max={10}
+                        max={getStoreCartItemMaxQuantity(
+                          {
+                            productId: item.productId,
+                            selectedColor: item.selectedColor,
+                            selectedStorage: item.selectedStorage,
+                          },
+                          items,
+                        )}
                         value={item.quantity}
                         onChange={(event) =>
                           setStoreCartItemQuantity(
@@ -208,7 +216,14 @@ export default function CartPage() {
                       <input
                         type="number"
                         min={1}
-                        max={10}
+                        max={getStoreCartItemMaxQuantity(
+                          {
+                            productId: item.productId,
+                            selectedColor: item.selectedColor,
+                            selectedStorage: item.selectedStorage,
+                          },
+                          items,
+                        )}
                         value={item.quantity}
                         onChange={(event) =>
                           setStoreCartItemQuantity(

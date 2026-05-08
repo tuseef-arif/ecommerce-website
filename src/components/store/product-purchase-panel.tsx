@@ -9,6 +9,7 @@ import {
   ADDED_BUTTON_CLASS,
   ADDED_LABEL,
   LIMIT_REACHED_LABEL,
+  OUT_OF_STOCK_LABEL,
   useAddToCartFeedback,
 } from "@/components/store/use-add-to-cart-feedback";
 import { addItemToStoreCart } from "@/lib/cart/store-cart";
@@ -121,7 +122,7 @@ export const ProductPurchasePanel = ({
   const [selectedStorage, setSelectedStorage] = useState<string>(
     () => storageOptions[0]?.value ?? "",
   );
-  const { status, isAdded, showAdded, showLimitReached } =
+  const { status, isAdded, showAdded, showLimitReached, showOutOfStock } =
     useAddToCartFeedback();
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
 
@@ -149,11 +150,13 @@ export const ProductPurchasePanel = ({
   );
   const addToCartCtaLabel = !isInStock
     ? SITE_PRODUCT_DETAIL.addToCartDisabledLabel
-    : status === "limit_reached"
-      ? LIMIT_REACHED_LABEL
-      : isAdded
-        ? ADDED_LABEL
-        : SITE_PRODUCT_DETAIL.addToCartLabel;
+    : status === "out_of_stock"
+      ? OUT_OF_STOCK_LABEL
+      : status === "limit_reached"
+        ? LIMIT_REACHED_LABEL
+        : isAdded
+          ? ADDED_LABEL
+          : SITE_PRODUCT_DETAIL.addToCartLabel;
 
   const variantFieldCount = (hasColors ? 1 : 0) + (hasStorages ? 1 : 0) + 1;
   const variantsLayoutClass =
@@ -248,10 +251,14 @@ export const ProductPurchasePanel = ({
                 selectedStorage: hasStorages ? selectedStorage || null : null,
               },
               selectedQuantity,
-              { maxAllowed: maxQuantityPerAdd },
+              { maxPerUser: 10, stockAvailable: stock },
             );
             if (result.ok && result.addedQuantity > 0) {
               showAdded();
+              return;
+            }
+            if (!result.ok && result.reason === "out_of_stock") {
+              showOutOfStock();
               return;
             }
             showLimitReached();

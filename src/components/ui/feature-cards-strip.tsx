@@ -45,8 +45,12 @@ const FeatureCard = ({ title, subtitle, Icon }: FeatureCardItem) => (
       width={28}
       height={28}
     />
-    <h3 className="text-base font-semibold text-neutral-900">{title}</h3>
-    <p className="mt-1 text-sm text-neutral-600">{subtitle}</p>
+    <h3 className="w-full truncate whitespace-nowrap text-sm font-semibold text-neutral-900 sm:text-base">
+      {title}
+    </h3>
+    <p className="mt-1 w-full truncate whitespace-nowrap text-xs text-neutral-600 sm:text-sm">
+      {subtitle}
+    </p>
   </article>
 );
 

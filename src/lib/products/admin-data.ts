@@ -174,8 +174,19 @@ export const listAdminProductCategories = async (): Promise<
   });
 };
 
-export const listAdminProductDistinctBrands = async (): Promise<string[]> => {
+export const listAdminProductDistinctBrands = async (
+  categorySlug?: string,
+): Promise<string[]> => {
+  const normalizedCategorySlug = (categorySlug ?? "").trim().toLowerCase();
   const rows = await prisma.product.findMany({
+    where:
+      normalizedCategorySlug.length > 0
+        ? {
+            category: {
+              slug: { equals: normalizedCategorySlug, mode: "insensitive" },
+            },
+          }
+        : undefined,
     distinct: ["brand"],
     orderBy: { brand: "asc" },
     select: { brand: true },

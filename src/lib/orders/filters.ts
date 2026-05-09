@@ -26,7 +26,8 @@ const parseStatus = (
     raw === "PENDING" ||
     raw === "CONFIRMED" ||
     raw === "SHIPPED" ||
-    raw === "DELIVERED"
+    raw === "DELIVERED" ||
+    raw === "CANCELLED"
   )
     return raw;
   return "all";
@@ -45,8 +46,6 @@ const parsePaymentMethod = (
 const parseDate = (value: string | string[] | undefined): string => {
   const raw = sanitizeSingle(value, 10);
   if (!ISO_DATE_RE.test(raw)) return "";
-  const parsed = new Date(`${raw}T00:00:00Z`);
-  if (Number.isNaN(parsed.getTime())) return "";
   return raw;
 };
 
@@ -87,6 +86,7 @@ const FILTER_STATUSES_IN_URL: ReadonlySet<string> = new Set([
   "CONFIRMED",
   "SHIPPED",
   "DELIVERED",
+  "CANCELLED",
 ]);
 
 const FILTER_PAYMENT_METHODS_IN_URL: ReadonlySet<string> = new Set([

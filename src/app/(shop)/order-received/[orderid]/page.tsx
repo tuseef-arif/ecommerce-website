@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { formatInstantForStoreDate } from "@/lib/datetime/display-timezone";
 import { prisma } from "@/lib/prisma";
 import { SITE_PRODUCT_SLIDER, STORE_SHELL } from "@/lib/config/site-config";
 import {
@@ -33,6 +34,8 @@ export default async function OrderReceivedPage({
       paymentMethod: true,
       subtotal: true,
       discountAmount: true,
+      voucherCode: true,
+      voucherDiscountAmount: true,
       totalAmount: true,
       user: {
         select: {
@@ -60,11 +63,7 @@ export default async function OrderReceivedPage({
   if (!order) notFound();
 
   const shippingLabel = "Free";
-  const orderDate = new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(order.createdAt);
+  const orderDate = formatInstantForStoreDate(order.createdAt);
   const orderNumber = order.id.slice(-8).toUpperCase();
   const fullName =
     `${order.user.firstName ?? ""} ${order.user.lastName ?? ""}`.trim() || "—";
@@ -153,6 +152,26 @@ export default async function OrderReceivedPage({
                   )}
                 </td>
               </tr>
+              {Number(order.voucherDiscountAmount) > 0 ? (
+                <tr className="border-t border-neutral-200">
+                  <td className="px-4 py-3 font-semibold text-neutral-700">
+                    Voucher
+                    {order.voucherCode ? (
+                      <span className="ml-1 font-mono text-sm font-normal text-neutral-600">
+                        ({order.voucherCode})
+                      </span>
+                    ) : null}
+                    :
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-emerald-700">
+                    -{" "}
+                    {formatProductPriceWithPrefix(
+                      Number(order.voucherDiscountAmount),
+                      SITE_PRODUCT_SLIDER.pricePrefix,
+                    )}
+                  </td>
+                </tr>
+              ) : null}
               <tr className="border-t border-neutral-200">
                 <td className="px-4 py-3 font-semibold text-neutral-700">
                   Shipping:

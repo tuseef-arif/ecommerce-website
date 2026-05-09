@@ -64,8 +64,8 @@ const FILTER_STATUSES_IN_URL: ReadonlySet<string> = new Set([
   "inactive",
 ]);
 
-/** Builds a relative URL for the products list with the given filters/page. */
-export const buildAdminProductsListHref = (
+/** Query string (no leading `?`) for list filters; used by list URLs and edit links. */
+export const buildAdminProductsListQueryString = (
   filters: AdminProductsListHrefInput,
 ): string => {
   const params = new URLSearchParams();
@@ -77,6 +77,13 @@ export const buildAdminProductsListHref = (
   }
   if (filters.page && filters.page > 1)
     params.set("page", String(filters.page));
-  const query = params.toString();
+  return params.toString();
+};
+
+/** Builds a relative URL for the products list with the given filters/page. */
+export const buildAdminProductsListHref = (
+  filters: AdminProductsListHrefInput,
+): string => {
+  const query = buildAdminProductsListQueryString(filters);
   return query ? `/dashboard/products?${query}` : "/dashboard/products";
 };

@@ -1,7 +1,16 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useId, useMemo, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
+import { previewAdminEditVoucherAction } from "@/app/(admin)/dashboard/orders/actions";
+import { IconX } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { FormInputField } from "@/components/ui/form-input-field";
 import { SelectField } from "@/components/ui/select-field";
@@ -39,6 +48,14 @@ type OrderItemsEditorProps = {
   initialItems?: ReadonlyArray<OrderItemInput>;
   /** Existing reserved quantities to allow in edit mode stock checks. */
   stockAllowanceByProductId?: Readonly<Record<string, number>>;
+  /** When set, shows voucher field + preview for admin order edit. */
+  editVoucher?: {
+    orderId: string;
+    initialCode: string | null;
+    initialDiscountAmount: string;
+  };
+  /** Server-side validation error for `voucherCode` after save. */
+  voucherFieldError?: string | null;
 };
 
 type EditableRow = {
@@ -82,6 +99,8 @@ const formatMoney = (value: number): string =>
         maximumFractionDigits: 2,
       })
     : "0.00";
+
+const normalizeVoucherInput = (raw: string): string => raw.trim().toUpperCase();
 
 /** Build the option label, appending `(+Rs N)` when the variant has a delta. */
 const buildVariantOptionLabel = (
@@ -167,8 +186,34 @@ export const OrderItemsEditor = ({
   leadFields,
   initialItems,
   stockAllowanceByProductId,
+  editVoucher,
+  voucherFieldError,
 }: OrderItemsEditorProps) => {
   const groupId = useId();
+  const [isPreviewPending, startPreviewTransition] = useTransition();
+  const [voucherInput, setVoucherInput] = useState(
+    () => editVoucher?.initialCode ?? "",
+  );
+  const [appliedPreview, setAppliedPreview] = useState<{
+    code: string;
+    amount: number;
+  } | null>(() => {
+    if (!editVoucher) return null;
+    const amt = Number.parseFloat(editVoucher.initialDiscountAmount);
+    if (!editVoucher.initialCode || !Number.isFinite(amt) || amt <= 0) {
+      return null;
+    }
+    return { code: editVoucher.initialCode, amount: amt };
+  });
+  const [voucherLocalError, setVoucherLocalError] = useState<string | null>(
+    null,
+  );
+  const [hideServerVoucherError, setHideServerVoucherError] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setHideServerVoucherError(false));
+    return () => cancelAnimationFrame(id);
+  }, [voucherFieldError]);
   const [rows, setRows] = useState<EditableRow[]>(() => {
     if (!initialItems || initialItems.length === 0) return [createInitialRow()];
 
@@ -246,6 +291,59 @@ export const OrderItemsEditor = ({
 
   const serialized = useMemo(() => JSON.stringify(filledRows), [filledRows]);
 
+  const serializedWhenPreviewValid = useRef(serialized);
+
+  useEffect(() => {
+    if (!editVoucher) return;
+    if (serialized !== serializedWhenPreviewValid.current) {
+      setAppliedPreview(null);
+    }
+  }, [serialized, editVoucher]);
+
+  const handleVoucherInputChange = (next: string) => {
+    setVoucherInput(next);
+    setVoucherLocalError(null);
+    setHideServerVoucherError(true);
+    setAppliedPreview((prev) => {
+      if (!prev) return null;
+      const norm = normalizeVoucherInput(next);
+      if (norm.length === 0 || norm !== normalizeVoucherInput(prev.code)) {
+        return null;
+      }
+      return prev;
+    });
+  };
+
+  const handleVoucherClear = () => {
+    setVoucherInput("");
+    setVoucherLocalError(null);
+    setAppliedPreview(null);
+    serializedWhenPreviewValid.current = serialized;
+  };
+
+  const handleApplyVoucher = () => {
+    if (!editVoucher) return;
+    setVoucherLocalError(null);
+    startPreviewTransition(async () => {
+      const result = await previewAdminEditVoucherAction({
+        orderId: editVoucher.orderId,
+        itemsJson: serialized,
+        voucherCode: voucherInput,
+      });
+      if (!result.ok) {
+        setAppliedPreview(null);
+        setVoucherLocalError(result.error);
+        return;
+      }
+      serializedWhenPreviewValid.current = serialized;
+      if (result.appliedAmount <= 0 || result.code === null) {
+        setAppliedPreview(null);
+      } else {
+        setAppliedPreview({ code: result.code, amount: result.appliedAmount });
+      }
+    });
+  };
+
   const totals = useMemo(() => {
     let subtotal = 0;
     let total = 0;
@@ -314,14 +412,78 @@ export const OrderItemsEditor = ({
     );
   };
 
+  const voucherDiscountShown =
+    editVoucher && appliedPreview !== null && appliedPreview.amount > 0
+      ? appliedPreview.amount
+      : 0;
+  const orderGrandTotal = totals.total - voucherDiscountShown;
+  const voucherError =
+    voucherLocalError ??
+    (!hideServerVoucherError ? voucherFieldError : null) ??
+    null;
+
   return (
     <fieldset
       aria-labelledby={`${groupId}-label`}
       className="rounded-2xl border border-neutral-200 bg-white p-4"
     >
       {leadFields ? (
-        <div className="mb-4 border-b border-neutral-100 pb-4">
+        <div
+          className={`mb-4 border-b border-neutral-100 pb-4${editVoucher ? " space-y-4" : ""}`}
+        >
           {leadFields}
+          {editVoucher ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex w-full max-w-xs items-center gap-2 sm:max-w-sm">
+                <div className="relative min-w-0 flex-1">
+                  <FormInputField
+                    label="Insert Voucher"
+                    name="voucherCode"
+                    value={voucherInput}
+                    onChange={(event) =>
+                      handleVoucherInputChange(event.target.value)
+                    }
+                    autoComplete="off"
+                    wrapperClassName="min-w-0"
+                    inputClassName="peer h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 pb-1 pr-9 pt-3 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors placeholder:text-transparent focus:border-[var(--store-brand-primary)] focus:ring-0"
+                    labelClassName="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 bg-white px-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-neutral-600"
+                  />
+                  {appliedPreview !== null || voucherInput.trim().length > 0 ? (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 z-[2] -translate-y-1/2 rounded p-0.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
+                      aria-label={
+                        appliedPreview !== null
+                          ? "Remove voucher"
+                          : "Clear voucher code"
+                      }
+                      onClick={handleVoucherClear}
+                      disabled={isPreviewPending}
+                    >
+                      <IconX width={16} height={16} />
+                    </button>
+                  ) : null}
+                </div>
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="md"
+                  className="h-10 shrink-0 rounded-lg px-4"
+                  disabled={isPreviewPending}
+                  isLoading={isPreviewPending}
+                  loadingLabel="Applying…"
+                  onClick={handleApplyVoucher}
+                >
+                  Apply
+                </Button>
+              </div>
+              {voucherError ? (
+                <p className="text-xs text-red-600" role="alert">
+                  {voucherError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       ) : null}
       <div className="flex flex-col gap-1">
@@ -551,9 +713,22 @@ export const OrderItemsEditor = ({
           <dd className="text-right font-mono tabular-nums text-neutral-900">
             − {currencyPrefix} {formatMoney(totals.discount)}
           </dd>
+          {editVoucher && voucherDiscountShown > 0 && appliedPreview ? (
+            <>
+              <dt className="text-neutral-500">
+                Voucher{" "}
+                <span className="font-mono text-neutral-600">
+                  ({appliedPreview.code})
+                </span>
+              </dt>
+              <dd className="text-right font-mono tabular-nums text-emerald-700">
+                − {currencyPrefix} {formatMoney(voucherDiscountShown)}
+              </dd>
+            </>
+          ) : null}
           <dt className="font-semibold text-neutral-700">Total</dt>
           <dd className="text-right font-mono font-semibold tabular-nums text-neutral-900">
-            {currencyPrefix} {formatMoney(totals.total)}
+            {currencyPrefix} {formatMoney(orderGrandTotal)}
           </dd>
         </dl>
       </div>

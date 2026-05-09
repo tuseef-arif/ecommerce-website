@@ -9,17 +9,33 @@ type OrderStatusBadgeProps = {
 };
 
 const toneFor = (status: OrderStatus): StatusBadgeTone => {
-  if (status === "PENDING") return "warning";
-  if (status === "CONFIRMED") return "neutral";
-  if (status === "SHIPPED") return "info";
-  return "success";
+  switch (status) {
+    case "PENDING":
+      return "warning";
+    case "CONFIRMED":
+      return "neutral";
+    case "SHIPPED":
+      return "info";
+    case "DELIVERED":
+      return "success";
+    case "CANCELLED":
+      return "danger";
+  }
 };
 
 const labelFor = (status: OrderStatus): string => {
-  if (status === "PENDING") return "Pending";
-  if (status === "CONFIRMED") return "Confirmed";
-  if (status === "SHIPPED") return "Shipped";
-  return "Delivered";
+  switch (status) {
+    case "PENDING":
+      return "Pending";
+    case "CONFIRMED":
+      return "Confirmed";
+    case "SHIPPED":
+      return "Shipped";
+    case "DELIVERED":
+      return "Delivered";
+    case "CANCELLED":
+      return "Cancelled";
+  }
 };
 
 export const OrderStatusBadge = ({ status }: OrderStatusBadgeProps) => (

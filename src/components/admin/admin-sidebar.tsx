@@ -33,15 +33,9 @@ const ADMIN_SIDEBAR_ITEMS: ReadonlyArray<AdminSidebarItem> = [
   },
   {
     kind: "link",
-    label: "Reports",
-    href: "/dashboard/reports",
-    isImplemented: false,
-  },
-  {
-    kind: "link",
     label: "Discounts",
     href: "/dashboard/discounts",
-    isImplemented: false,
+    isImplemented: true,
   },
   { kind: "logout", label: "Log out" },
 ];

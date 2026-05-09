@@ -1,107 +1,72 @@
+import { Suspense } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { DashboardMetricCards } from "@/components/admin/dashboard-metric-cards";
+import { DashboardSalesAnalytics } from "@/components/admin/dashboard-sales-analytics";
+import { DashboardTopProducts } from "@/components/admin/dashboard-top-products";
 import { requireAdmin } from "@/lib/auth-guards";
+import { SITE_PRODUCT_SLIDER } from "@/lib/config/site-config";
+import { getAdminDashboardMetrics } from "@/lib/dashboard/admin-metrics";
+import { parseSalesChartRangeDays } from "@/lib/dashboard/sales-range";
+import { getSalesRevenueByDay } from "@/lib/dashboard/sales-analytics";
+import { getAdminDashboardTopProducts } from "@/lib/dashboard/top-products";
 
-const metricCards = [
-  { label: "Total Revenue", value: "Rs 0.00", trend: "+0.0%" },
-  { label: "Total Orders", value: "0", trend: "+0.0%" },
-  { label: "Total Customers", value: "0", trend: "+0.0%" },
-  { label: "Pending Delivery", value: "0", trend: "+0.0%" },
-] as const;
+const SalesAnalyticsFallback = () => (
+  <div className="flex h-full min-h-0 flex-1 flex-col gap-4" aria-hidden>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="h-7 w-40 rounded-lg bg-neutral-200/80" />
+      <div className="h-10 w-36 rounded-xl bg-neutral-200/80" />
+    </div>
+    <div className="flex min-h-0 flex-1 items-center justify-center rounded-2xl bg-gradient-to-br from-neutral-100 to-neutral-50">
+      <div className="h-56 w-full max-w-full rounded-xl bg-neutral-200/40" />
+    </div>
+  </div>
+);
 
-export default async function DashboardPage() {
+type DashboardPageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: DashboardPageProps) {
   const user = await requireAdmin();
+  const resolvedSearchParams = await searchParams;
+  const salesDays = parseSalesChartRangeDays(resolvedSearchParams);
+
+  const [metrics, topProducts, salesSeries] = await Promise.all([
+    getAdminDashboardMetrics(),
+    getAdminDashboardTopProducts(),
+    getSalesRevenueByDay(salesDays),
+  ]);
 
   return (
     <>
       <AdminPageHeader
         title="Dashboard"
-        description={`Welcome back, ${user.email}. This UI is design-only for now.`}
+        description={`${user.firstName ? `Hi ${user.firstName}, ` : "Hi, "}Plan, prioritize, and accomplish your tasks with ease.`}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metricCards.map((card) => (
-          <article
-            key={card.label}
-            className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
-          >
-            <p className="text-sm text-neutral-500">{card.label}</p>
-            <p className="mt-3 text-3xl font-bold text-neutral-900">
-              {card.value}
-            </p>
-            <p className="mt-2 text-sm font-semibold text-emerald-600">
-              {card.trend}
-            </p>
-          </article>
-        ))}
-      </div>
+      <DashboardMetricCards
+        currencyPrefix={SITE_PRODUCT_SLIDER.pricePrefix}
+        totalRevenue={metrics.totalRevenueAmount}
+        totalOrders={metrics.totalOrdersExcludingCancelled}
+        totalCustomers={metrics.activeCustomerCount}
+        pendingDelivery={metrics.pendingDeliveryCount}
+      />
 
-      <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
-        <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-neutral-900">
-              Sales analytics
-            </h2>
-            <select className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-700">
-              <option>Last 30 days</option>
-            </select>
-          </div>
-          <div className="h-52 rounded-xl border border-dashed border-neutral-300 bg-gradient-to-b from-[rgb(42_75_160_/_0.08)] to-[rgb(254_153_34_/_0.08)]" />
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
+        <section className="flex h-full min-h-[22rem] flex-col rounded-2xl border border-neutral-200 bg-white p-5 text-left shadow-sm">
+          <Suspense fallback={<SalesAnalyticsFallback />}>
+            <DashboardSalesAnalytics
+              points={salesSeries}
+              currencyPrefix={SITE_PRODUCT_SLIDER.pricePrefix}
+              rangeDays={salesDays}
+            />
+          </Suspense>
         </section>
 
-        <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-bold text-neutral-900">Current offer</h2>
-          <div className="mt-4 space-y-4">
-            <div>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="font-semibold text-neutral-800">
-                  Flash discount
-                </span>
-                <span className="text-neutral-500">40%</span>
-              </div>
-              <div className="h-2 rounded-full bg-neutral-200">
-                <div className="h-2 w-2/3 rounded-full bg-[var(--store-brand-accent)]" />
-              </div>
-            </div>
-            <div>
-              <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="font-semibold text-neutral-800">
-                  Stock movement
-                </span>
-                <span className="text-neutral-500">58%</span>
-              </div>
-              <div className="h-2 rounded-full bg-neutral-200">
-                <div className="h-2 w-1/2 rounded-full bg-[var(--store-brand-primary)]" />
-              </div>
-            </div>
-          </div>
-        </section>
+        <DashboardTopProducts items={topProducts} />
       </div>
-
-      <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-neutral-900">Top products</h2>
-          <button
-            type="button"
-            className="rounded-lg border border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-          >
-            View all
-          </button>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <article
-              key={`placeholder-product-${index}`}
-              className="rounded-xl border border-neutral-200 p-3"
-            >
-              <div className="h-28 rounded-lg bg-neutral-100" />
-              <p className="mt-3 text-sm font-semibold text-neutral-900">
-                Product name
-              </p>
-              <p className="text-sm text-neutral-500">Brand / Type</p>
-            </article>
-          ))}
-        </div>
-      </section>
     </>
   );
 }

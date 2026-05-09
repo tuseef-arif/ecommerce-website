@@ -1,9 +1,13 @@
+import Link from "next/link";
 import { ProductRowActions } from "@/components/admin/product-row-actions";
+import { IconPencil } from "@/components/icons";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AdminProductListItem } from "@/lib/products/admin-types";
 
 type ProductTableProps = {
   items: ReadonlyArray<AdminProductListItem>;
+  /** Preserves list filters on the edit URL (same as previous row “Edit” link). */
+  listQueryString: string;
 };
 
 const formatPriceDisplay = (price: string): string => {
@@ -21,7 +25,7 @@ const stockTone = (stock: number): "danger" | "warning" | "success" => {
   return "success";
 };
 
-export const ProductTable = ({ items }: ProductTableProps) => {
+export const ProductTable = ({ items, listQueryString }: ProductTableProps) => {
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-neutral-300 bg-white p-10 text-center">
@@ -38,16 +42,22 @@ export const ProductTable = ({ items }: ProductTableProps) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] table-fixed text-left text-sm">
+        <table className="w-full min-w-[800px] table-fixed text-left text-sm">
+          <colgroup>
+            <col style={{ width: "2.5rem" }} />
+          </colgroup>
           <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
-              <th scope="col" className="w-[34%] px-4 py-3">
+              <th scope="col" className="w-0 p-0 py-3 pl-2 pr-0 text-center">
+                <span className="sr-only">Edit</span>
+              </th>
+              <th scope="col" className="w-[36%] px-4 py-3">
                 Product
               </th>
-              <th scope="col" className="w-[13%] px-4 py-3">
+              <th scope="col" className="w-[12%] px-4 py-3">
                 Brand
               </th>
-              <th scope="col" className="w-[13%] px-4 py-3">
+              <th scope="col" className="w-[12%] px-4 py-3">
                 Category
               </th>
               <th scope="col" className="w-[12%] px-4 py-3 text-right">
@@ -65,59 +75,73 @@ export const ProductTable = ({ items }: ProductTableProps) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
-            {items.map((item) => (
-              <tr key={item.id} className="hover:bg-neutral-50/60">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50">
-                      {item.imagePath ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- admin thumbnails; remote+local mixed src, no perf budget
-                        <img
-                          src={item.imagePath}
-                          alt=""
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <span className="text-[10px] font-semibold uppercase text-neutral-400">
-                          No image
-                        </span>
-                      )}
+            {items.map((item) => {
+              const editHref = listQueryString
+                ? `/dashboard/products/${item.id}/edit?${listQueryString}`
+                : `/dashboard/products/${item.id}/edit`;
+              return (
+                <tr key={item.id} className="hover:bg-neutral-50/60">
+                  <td className="w-0 p-0 py-3 pl-2 pr-0 text-center align-middle">
+                    <Link
+                      href={editHref}
+                      className="inline-flex size-7 items-center justify-center rounded-md text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
+                      aria-label={`Edit product ${item.name}`}
+                    >
+                      <IconPencil width={16} height={16} />
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3 pl-2">
+                    <div className="flex items-center gap-3">
+                      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50">
+                        {item.imagePath ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- admin thumbnails; remote+local mixed src, no perf budget
+                          <img
+                            src={item.imagePath}
+                            alt=""
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <span className="text-[10px] font-semibold uppercase text-neutral-400">
+                            No image
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-neutral-900">
+                          {item.name}
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-neutral-900">
-                        {item.name}
-                      </p>
-                    </div>
-                  </div>
-                </td>
-                <td className="truncate px-4 py-3 text-neutral-700">
-                  {item.brand}
-                </td>
-                <td className="truncate px-4 py-3 text-neutral-700">
-                  {item.category.name}
-                </td>
-                <td className="px-4 py-3 text-right font-mono tabular-nums text-neutral-900">
-                  {formatPriceDisplay(item.finalPrice)}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <StatusBadge tone={stockTone(item.stock)}>
-                    {item.stock}
-                  </StatusBadge>
-                </td>
-                <td className="px-4 py-3">
-                  <StatusBadge tone={item.isActive ? "success" : "neutral"}>
-                    {item.isActive ? "Active" : "Inactive"}
-                  </StatusBadge>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <ProductRowActions
-                    productId={item.id}
-                    productName={item.name}
-                  />
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="truncate px-4 py-3 text-neutral-700">
+                    {item.brand}
+                  </td>
+                  <td className="truncate px-4 py-3 text-neutral-700">
+                    {item.category.name}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-neutral-900">
+                    {formatPriceDisplay(item.finalPrice)}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <StatusBadge tone={stockTone(item.stock)}>
+                      {item.stock}
+                    </StatusBadge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge tone={item.isActive ? "success" : "neutral"}>
+                      {item.isActive ? "Active" : "Inactive"}
+                    </StatusBadge>
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <ProductRowActions
+                      productId={item.id}
+                      productName={item.name}
+                    />
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

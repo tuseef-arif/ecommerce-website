@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { IconX } from "@/components/icons";
 import { ProductImageWithFallback } from "@/components/store/product-image-with-fallback";
+import { useStoreCartVoucher } from "@/components/store/use-store-cart-voucher";
 import { Button } from "@/components/ui/button";
 import { FormInputField } from "@/components/ui/form-input-field";
 import {
@@ -23,7 +24,6 @@ import { formatProductPriceWithPrefix } from "@/lib/products/format-price";
 
 export default function CartPage() {
   const [items, setItems] = useState<StoreCartItem[]>([]);
-  const [discountVoucher, setDiscountVoucher] = useState("");
 
   useEffect(() => {
     const sync = () => setItems(readStoreCart());
@@ -46,6 +46,22 @@ export default function CartPage() {
     [items],
   );
   const discountAmount = Math.max(0, originalSubtotal - subtotal);
+
+  const {
+    discountVoucher,
+    setDiscountVoucher,
+    voucherPreview,
+    voucherMessage,
+    isVoucherPending,
+    handleApplyVoucher,
+    handleRemoveVoucher,
+    voucherSavings,
+  } = useStoreCartVoucher({
+    cartNetSubtotal: subtotal,
+    applySuccessVariant: "cart",
+  });
+
+  const cartGrandTotal = Math.max(0, subtotal - voucherSavings);
 
   const getItemKey = (item: StoreCartItem) =>
     `${item.productId}-${item.selectedColor ?? ""}-${item.selectedStorage ?? ""}`;
@@ -285,34 +301,83 @@ export default function CartPage() {
                   )}
                 </span>
               </div>
+              {voucherPreview ? (
+                <div className="flex items-center justify-between text-neutral-700">
+                  <span>
+                    Voucher{" "}
+                    <span className="font-mono text-xs text-neutral-500">
+                      ({voucherPreview.code})
+                    </span>
+                  </span>
+                  <span className="font-semibold text-emerald-700">
+                    -{" "}
+                    {formatProductPriceWithPrefix(
+                      voucherPreview.amount,
+                      SITE_PRODUCT_SLIDER.pricePrefix,
+                    )}
+                  </span>
+                </div>
+              ) : null}
               <div className="flex items-center justify-between text-neutral-700">
                 <span>Shipping</span>
                 <span className="font-semibold text-neutral-900">
                   {shippingLabel}
                 </span>
               </div>
-              <div className="flex justify-center pt-1">
-                <div className="flex w-full max-w-xs items-center gap-2">
-                  <FormInputField
-                    label="Insert Voucher"
-                    name="discountVoucher"
-                    value={discountVoucher}
-                    onChange={(event) =>
-                      setDiscountVoucher(event.currentTarget.value)
-                    }
-                    wrapperClassName="min-w-0 flex-1"
-                    inputClassName="peer h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 pb-1 pt-3 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors placeholder:text-transparent focus:border-[var(--store-brand-primary)] focus:ring-0"
-                    labelClassName="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 bg-white px-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-neutral-600"
-                  />
+              <div className="flex flex-col gap-2 pt-1">
+                <div className="flex w-full max-w-xs items-center gap-2 self-center">
+                  <div className="relative min-w-0 flex-1">
+                    <FormInputField
+                      label="Insert Voucher"
+                      name="discountVoucher"
+                      value={discountVoucher}
+                      onChange={(event) =>
+                        setDiscountVoucher(event.currentTarget.value)
+                      }
+                      wrapperClassName="min-w-0"
+                      inputClassName="peer h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 pb-1 pr-9 pt-3 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors placeholder:text-transparent focus:border-[var(--store-brand-primary)] focus:ring-0"
+                      labelClassName="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 bg-white px-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-neutral-600"
+                    />
+                    {voucherPreview || discountVoucher.trim().length > 0 ? (
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 z-[2] -translate-y-1/2 rounded p-0.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
+                        aria-label={
+                          voucherPreview
+                            ? "Remove voucher"
+                            : "Clear voucher code"
+                        }
+                        onClick={handleRemoveVoucher}
+                      >
+                        <IconX width={16} height={16} />
+                      </button>
+                    ) : null}
+                  </div>
                   <Button
                     type="button"
                     variant="primary"
                     size="md"
-                    className="h-10 rounded-lg px-4"
+                    className="h-10 shrink-0 rounded-lg px-4"
+                    disabled={isVoucherPending}
+                    isLoading={isVoucherPending}
+                    loadingLabel="Applying…"
+                    onClick={handleApplyVoucher}
                   >
                     Apply
                   </Button>
                 </div>
+                {voucherMessage ? (
+                  <p
+                    className={`text-center text-xs ${
+                      voucherMessage.type === "success"
+                        ? "text-emerald-700"
+                        : "text-red-600"
+                    }`}
+                    role={voucherMessage.type === "error" ? "alert" : "status"}
+                  >
+                    {voucherMessage.text}
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -321,7 +386,7 @@ export default function CartPage() {
                 <p className="text-sm font-medium text-neutral-700">Total</p>
                 <p className="text-xl font-bold text-[var(--store-brand-primary)]">
                   {formatProductPriceWithPrefix(
-                    subtotal,
+                    cartGrandTotal,
                     SITE_PRODUCT_SLIDER.pricePrefix,
                   )}
                 </p>

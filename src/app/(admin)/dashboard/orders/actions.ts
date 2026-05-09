@@ -10,6 +10,7 @@ import {
   parseOrderItemsJsonInput,
   type OrderItemInput,
 } from "@/lib/orders/admin-schemas";
+import { resolveCartVoucher } from "@/lib/discounts/resolve-cart-voucher";
 import { prisma } from "@/lib/prisma";
 import { finalProductPrice } from "@/lib/products/discount";
 import {
@@ -32,6 +33,9 @@ import type {
  * - Stock integrity: order create runs inside `prisma.$transaction` and
  *   re-reads each product row to validate availability and snapshot the
  *   server-computed price/discount; client-supplied prices are ignored.
+ * - Voucher: admin edit voucher codes are re-validated with `resolveCartVoucher`
+ *   against server-built line totals (same rules as storefront); empty code
+ *   clears the voucher on save.
  * - DoS: items are bounded at 100 line items per order; quantities at 1000.
  * - Status side effects: shippedAt/deliveredAt are derived from the chosen
  *   status server-side so the admin cannot back-date them through the URL.
@@ -45,6 +49,7 @@ import type {
  *   row is mutated. Creating an order for an unknown product/user surfaces a
  *   field-level "no longer exists" error and the transaction is rolled back.
  *   Updating to DELIVERED automatically sets shippedAt + deliveredAt.
+ *   CANCELLED clears shippedAt/deliveredAt like PENDING/CONFIRMED.
  * </SECURITY_REVIEW>
  */
 const orderIdSchema = z
@@ -67,6 +72,8 @@ const fieldErrorsFromZod = (
       if (!fieldErrors.paymentMethod) fieldErrors.paymentMethod = issue.message;
     } else if (top === "itemsJson") {
       if (!fieldErrors.items) fieldErrors.items = issue.message;
+    } else if (top === "voucherCode") {
+      if (!fieldErrors.voucherCode) fieldErrors.voucherCode = issue.message;
     }
   }
   return fieldErrors;
@@ -83,6 +90,7 @@ const parseUpdateInput = (formData: FormData) => ({
   status: String(formData.get("status") ?? ""),
   paymentMethod: String(formData.get("paymentMethod") ?? "COD"),
   itemsJson: String(formData.get("itemsJson") ?? ""),
+  voucherCode: String(formData.get("voucherCode") ?? ""),
 });
 
 const round2 = (value: number): string => value.toFixed(2);
@@ -270,6 +278,180 @@ const buildLineItems = async (
   return { ok: true, lines };
 };
 
+type AdminOrderFinancialRecompute =
+  | {
+      ok: true;
+      lines: ComputedLineItem[];
+      subtotal: number;
+      discountAmount: number;
+      cartNetSubtotal: number;
+      voucherCode: string | null;
+      voucherName: string | null;
+      voucherDiscountAmount: number;
+      orderTotal: number;
+    }
+  | { ok: false; kind: "items"; message: string }
+  | { ok: false; kind: "voucher"; message: string };
+
+const recomputeAdminOrderUpdateFinancials = async (
+  tx: TransactionClient,
+  parsedItems: ReadonlyArray<OrderItemInput>,
+  previousQtyByProductId: ReadonlyMap<string, number>,
+  voucherRaw: string,
+): Promise<AdminOrderFinancialRecompute> => {
+  const built = await buildLineItems(tx, parsedItems, previousQtyByProductId);
+  if (!built.ok) {
+    return { ok: false, kind: "items", message: built.message };
+  }
+
+  const subtotal = built.lines.reduce(
+    (sum, line) =>
+      sum +
+      (line.unitPrice + line.colorPriceDelta + line.storagePriceDelta) *
+        line.quantity,
+    0,
+  );
+  const discountAmount = built.lines.reduce(
+    (sum, line) =>
+      sum + (line.unitPrice - line.discountedPrice) * line.quantity,
+    0,
+  );
+  const cartNetSubtotal = Math.round((subtotal - discountAmount) * 100) / 100;
+
+  let voucherCode: string | null = null;
+  let voucherName: string | null = null;
+  let voucherDiscountAmount = 0;
+
+  if (voucherRaw.length > 0) {
+    const voucherResult = await resolveCartVoucher(
+      tx,
+      voucherRaw,
+      cartNetSubtotal,
+    );
+    if (!voucherResult.ok) {
+      return { ok: false, kind: "voucher", message: voucherResult.error };
+    }
+    voucherDiscountAmount = voucherResult.appliedAmount;
+    voucherCode = voucherResult.code;
+    voucherName = voucherResult.name;
+  }
+
+  const orderTotal =
+    Math.round(
+      (cartNetSubtotal - voucherDiscountAmount + Number.EPSILON) * 100,
+    ) / 100;
+  if (orderTotal < 0) {
+    return {
+      ok: false,
+      kind: "voucher",
+      message: "Order total became invalid after applying the voucher.",
+    };
+  }
+
+  return {
+    ok: true,
+    lines: built.lines,
+    subtotal,
+    discountAmount,
+    cartNetSubtotal,
+    voucherCode,
+    voucherName,
+    voucherDiscountAmount,
+    orderTotal,
+  };
+};
+
+const previewAdminEditVoucherInputSchema = z.object({
+  orderId: orderIdSchema,
+  itemsJson: z
+    .string()
+    .max(50_000, "Order items payload is too large.")
+    .min(1, "Add at least one product to the order."),
+  voucherCode: z.string().max(40),
+});
+
+export type PreviewAdminEditVoucherResult =
+  | { ok: true; code: string | null; appliedAmount: number; orderTotal: number }
+  | { ok: false; error: string };
+
+/**
+ * Validates the current line items plus optional voucher without persisting.
+ * Used from the order edit UI so admins can preview totals before save.
+ */
+export const previewAdminEditVoucherAction = async (input: {
+  orderId: string;
+  itemsJson: string;
+  voucherCode: string;
+}): Promise<PreviewAdminEditVoucherResult> => {
+  await requireAdmin();
+
+  const parsed = previewAdminEditVoucherInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid request.",
+    };
+  }
+
+  let parsedItems: OrderItemInput[];
+  try {
+    parsedItems = parseOrderItemsJsonInput(parsed.data.itemsJson);
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Invalid order items.",
+    };
+  }
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findUnique({
+        where: { id: parsed.data.orderId },
+        select: {
+          items: { select: { productId: true, quantity: true } },
+        },
+      });
+      if (!existing) {
+        return { ok: false, error: "Order no longer exists." };
+      }
+
+      const previousQtyByProductId = new Map<string, number>();
+      for (const item of existing.items) {
+        previousQtyByProductId.set(
+          item.productId,
+          (previousQtyByProductId.get(item.productId) ?? 0) + item.quantity,
+        );
+      }
+
+      const financials = await recomputeAdminOrderUpdateFinancials(
+        tx,
+        parsedItems,
+        previousQtyByProductId,
+        parsed.data.voucherCode.trim(),
+      );
+      if (!financials.ok) {
+        return {
+          ok: false,
+          error:
+            financials.kind === "items"
+              ? financials.message
+              : financials.message,
+        };
+      }
+
+      return {
+        ok: true,
+        code: financials.voucherCode,
+        appliedAmount: financials.voucherDiscountAmount,
+        orderTotal: financials.orderTotal,
+      };
+    });
+  } catch (error) {
+    console.error("previewAdminEditVoucherAction failed", { error });
+    return { ok: false, error: "Could not preview voucher. Please try again." };
+  }
+};
+
 export const createOrderAction = async (
   _prevState: OrderFormState,
   formData: FormData,
@@ -322,7 +504,7 @@ export const createOrderAction = async (
 
       // Variant-aware sticker total. Deltas are NOT discounted, so adding
       // them into `subtotal` keeps the invariant
-      // `subtotal − discountAmount === totalAmount` for the order header.
+      // `subtotal − discountAmount − voucherDiscountAmount === totalAmount` for the order header.
       const subtotal = built.lines.reduce(
         (sum, line) =>
           sum +
@@ -481,34 +663,21 @@ export const updateOrderAction = async (
         );
       }
 
-      const built = await buildLineItems(
+      const financials = await recomputeAdminOrderUpdateFinancials(
         tx,
         parsedItems,
         previousQtyByProductId,
+        parsed.data.voucherCode,
       );
-      if (!built.ok) {
+      if (!financials.ok) {
         throw new ActionError({
           message: null,
-          fieldErrors: { items: built.message },
+          fieldErrors:
+            financials.kind === "items"
+              ? { items: financials.message }
+              : { voucherCode: financials.message },
         });
       }
-
-      const subtotal = built.lines.reduce(
-        (sum, line) =>
-          sum +
-          (line.unitPrice + line.colorPriceDelta + line.storagePriceDelta) *
-            line.quantity,
-        0,
-      );
-      const discountAmount = built.lines.reduce(
-        (sum, line) =>
-          sum + (line.unitPrice - line.discountedPrice) * line.quantity,
-        0,
-      );
-      const totalAmount = built.lines.reduce(
-        (sum, line) => sum + line.lineTotal,
-        0,
-      );
 
       const now = new Date();
       const status = parsed.data.status;
@@ -528,6 +697,9 @@ export const updateOrderAction = async (
       } else if (status === "DELIVERED") {
         nextShippedAt = existing.shippedAt ?? now;
         nextDeliveredAt = existing.deliveredAt ?? now;
+      } else if (status === "CANCELLED") {
+        nextShippedAt = null;
+        nextDeliveredAt = null;
       }
 
       await tx.order.update({
@@ -537,12 +709,15 @@ export const updateOrderAction = async (
           paymentMethod: parsed.data.paymentMethod,
           shippedAt: nextShippedAt,
           deliveredAt: nextDeliveredAt,
-          subtotal: round2(subtotal),
-          discountAmount: round2(discountAmount),
-          totalAmount: round2(totalAmount),
+          subtotal: round2(financials.subtotal),
+          discountAmount: round2(financials.discountAmount),
+          voucherCode: financials.voucherCode,
+          voucherName: financials.voucherName,
+          voucherDiscountAmount: round2(financials.voucherDiscountAmount),
+          totalAmount: round2(financials.orderTotal),
           items: {
             deleteMany: {},
-            create: built.lines.map((line) => ({
+            create: financials.lines.map((line) => ({
               productId: line.productId,
               productName: line.productName,
               quantity: line.quantity,
@@ -560,7 +735,7 @@ export const updateOrderAction = async (
       });
 
       const nextQtyByProductId = new Map<string, number>();
-      for (const line of built.lines) {
+      for (const line of financials.lines) {
         nextQtyByProductId.set(
           line.productId,
           (nextQtyByProductId.get(line.productId) ?? 0) + line.quantity,

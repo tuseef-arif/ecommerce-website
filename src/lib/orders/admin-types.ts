@@ -64,6 +64,9 @@ export type AdminOrderDetail = {
   paymentMethod: PaymentMethod;
   subtotal: string;
   discountAmount: string;
+  /** Uppercase cart voucher code when a storefront voucher was applied. */
+  voucherCode: string | null;
+  voucherDiscountAmount: string;
   totalAmount: string;
   customer: {
     id: string;

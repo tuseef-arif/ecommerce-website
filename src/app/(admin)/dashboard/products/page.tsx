@@ -10,6 +10,7 @@ import {
   listAdminProducts,
 } from "@/lib/products/admin-data";
 import {
+  buildAdminProductsListQueryString,
   parseAdminProductsListFilters,
   parseAdminProductsListStatus,
 } from "@/lib/products/filters";
@@ -58,7 +59,10 @@ export default async function DashboardProductsPage({
         categories={categories}
       />
 
-      <ProductTable items={products.items} />
+      <ProductTable
+        items={products.items}
+        listQueryString={buildAdminProductsListQueryString(filters)}
+      />
 
       <ProductPagination
         filters={filters}

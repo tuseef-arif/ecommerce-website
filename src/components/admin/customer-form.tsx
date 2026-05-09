@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { FormInputField } from "@/components/ui/form-input-field";
 import { SelectField } from "@/components/ui/select-field";
 import type { AdminCustomerDetail } from "@/lib/customers/admin-types";
+import { formatInstantForStoreDateTime } from "@/lib/datetime/display-timezone";
 
 type CustomerFormMode = "create" | "edit";
 
@@ -75,7 +76,7 @@ export const CustomerForm = ({
   );
   const modifiedAtDisplay =
     mode === "edit" && initial.updatedAtIso
-      ? new Date(initial.updatedAtIso).toLocaleString()
+      ? formatInstantForStoreDateTime(initial.updatedAtIso)
       : "—";
 
   return (

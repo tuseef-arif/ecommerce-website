@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CustomerRowActions } from "@/components/admin/customer-row-actions";
+import { IconPencil } from "@/components/icons";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { AdminCustomerListItem } from "@/lib/customers/admin-types";
 
@@ -30,13 +31,19 @@ export const CustomerTable = ({ items }: CustomerTableProps) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] table-fixed text-left text-sm">
+        <table className="w-full min-w-[600px] table-fixed text-left text-sm">
+          <colgroup>
+            <col style={{ width: "2.5rem" }} />
+          </colgroup>
           <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
-              <th scope="col" className="w-[32%] px-4 py-3">
+              <th scope="col" className="w-0 p-0 py-3 pl-2 pr-0 text-center">
+                <span className="sr-only">Edit</span>
+              </th>
+              <th scope="col" className="w-[27%] px-4 py-3">
                 Customer
               </th>
-              <th scope="col" className="w-[24%] px-4 py-3">
+              <th scope="col" className="w-[23%] px-4 py-3">
                 Email
               </th>
               <th scope="col" className="w-[14%] px-4 py-3">
@@ -45,10 +52,10 @@ export const CustomerTable = ({ items }: CustomerTableProps) => {
               <th scope="col" className="w-[14%] px-4 py-3">
                 Role
               </th>
-              <th scope="col" className="w-[12%] px-4 py-3 text-right">
+              <th scope="col" className="w-[11%] px-4 py-3 text-right">
                 Orders
               </th>
-              <th scope="col" className="w-[16%] px-4 py-3 text-right">
+              <th scope="col" className="w-[11%] px-4 py-3 text-right">
                 Actions
               </th>
             </tr>
@@ -56,7 +63,16 @@ export const CustomerTable = ({ items }: CustomerTableProps) => {
           <tbody className="divide-y divide-neutral-100">
             {items.map((item) => (
               <tr key={item.id} className="hover:bg-neutral-50/60">
-                <td className="px-4 py-3">
+                <td className="w-0 p-0 py-3 pl-2 pr-0 text-center align-middle">
+                  <Link
+                    href={`/dashboard/customers/${item.id}/edit`}
+                    className="inline-flex size-7 items-center justify-center rounded-md text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
+                    aria-label={`Edit customer ${item.displayName}`}
+                  >
+                    <IconPencil width={16} height={16} />
+                  </Link>
+                </td>
+                <td className="px-4 py-3 pl-2">
                   <div className="flex items-center gap-3">
                     <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-50 text-sm font-semibold text-neutral-500">
                       {item.profileImagePath ? (

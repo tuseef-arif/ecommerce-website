@@ -14,6 +14,7 @@ const STATUS_OPTIONS = [
   { value: "CONFIRMED", label: "Confirmed" },
   { value: "SHIPPED", label: "Shipped" },
   { value: "DELIVERED", label: "Delivered" },
+  { value: "CANCELLED", label: "Cancelled" },
 ] as const;
 
 const PAYMENT_FILTER_OPTIONS = [

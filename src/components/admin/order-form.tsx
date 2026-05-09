@@ -22,6 +22,7 @@ import type {
   AdminOrderProductOption,
 } from "@/lib/orders/admin-types";
 import type { OrderStatus } from "@/generated/prisma/enums";
+import { formatInstantForStoreDateTime } from "@/lib/datetime/display-timezone";
 
 type OrderFormMode = "create" | "edit";
 
@@ -45,19 +46,11 @@ const STATUS_OPTIONS = [
   { value: "CONFIRMED", label: "Confirmed" },
   { value: "SHIPPED", label: "Shipped" },
   { value: "DELIVERED", label: "Delivered" },
+  { value: "CANCELLED", label: "Cancelled" },
 ] as const;
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
-const formatDateTime = (iso: string | null): string => {
-  if (!iso) return "—";
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return dateFormatter.format(parsed);
-};
+const formatDateTime = (iso: string | null): string =>
+  formatInstantForStoreDateTime(iso);
 
 const getStatusDateLine = (order: AdminOrderDetail): string => {
   const statusToLabel: Record<OrderStatus, string> = {
@@ -65,6 +58,7 @@ const getStatusDateLine = (order: AdminOrderDetail): string => {
     CONFIRMED: "Confirmed",
     SHIPPED: "Shipped",
     DELIVERED: "Delivered",
+    CANCELLED: "Cancelled",
   };
 
   const statusToDateIso: Record<OrderStatus, string | null> = {
@@ -72,6 +66,7 @@ const getStatusDateLine = (order: AdminOrderDetail): string => {
     CONFIRMED: order.updatedAtIso,
     SHIPPED: order.shippedAtIso ?? order.updatedAtIso,
     DELIVERED: order.deliveredAtIso ?? order.updatedAtIso,
+    CANCELLED: order.updatedAtIso,
   };
 
   const label = statusToLabel[order.status];
@@ -222,6 +217,12 @@ export const OrderForm = ({
           errorMessage={state.fieldErrors.items ?? null}
           initialItems={editInitialItems}
           stockAllowanceByProductId={editStockAllowanceByProductId}
+          editVoucher={{
+            orderId: initialOrder.id,
+            initialCode: initialOrder.voucherCode,
+            initialDiscountAmount: initialOrder.voucherDiscountAmount,
+          }}
+          voucherFieldError={state.fieldErrors.voucherCode ?? null}
           leadFields={
             <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
               <FormInputField

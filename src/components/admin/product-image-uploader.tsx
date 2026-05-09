@@ -29,7 +29,6 @@ export const ProductImageUploader = ({
   const inputId = useId();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [pickedFileName, setPickedFileName] = useState<string | null>(null);
   const [isMarkedForRemoval, setIsMarkedForRemoval] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
   const acceptedMimeTypes = PRODUCT_IMAGE_ACCEPT_MIME.split(",").map((s) =>
@@ -48,7 +47,6 @@ export const ProductImageUploader = ({
     if (!file) {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
-      setPickedFileName(null);
       setClientError(null);
       return;
     }
@@ -56,7 +54,6 @@ export const ProductImageUploader = ({
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
-      setPickedFileName(null);
       setClientError("Image must be a JPEG, PNG, or WebP file.");
       return;
     }
@@ -64,13 +61,11 @@ export const ProductImageUploader = ({
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
-      setPickedFileName(null);
       setClientError(`Image is too large. Max ${formatMaxSize(maxBytes)}.`);
       return;
     }
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(file));
-    setPickedFileName(file.name);
     setIsMarkedForRemoval(false);
     setClientError(null);
   };
@@ -78,7 +73,6 @@ export const ProductImageUploader = ({
   const handleClearPicked = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
-    setPickedFileName(null);
     setClientError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };

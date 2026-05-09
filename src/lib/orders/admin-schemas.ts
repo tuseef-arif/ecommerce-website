@@ -11,6 +11,7 @@ const orderStatusSchema = z.enum([
   "CONFIRMED",
   "SHIPPED",
   "DELIVERED",
+  "CANCELLED",
 ]);
 
 const paymentMethodSchema = z.enum(["BANK_TRANSFER", "SELF_COLLECTION", "COD"]);
@@ -34,6 +35,10 @@ export const adminOrderUpdateSchema = z.object({
     .string()
     .max(50_000, "Order items payload is too large.")
     .min(1, "Add at least one product to the order."),
+  voucherCode: z
+    .string()
+    .max(40, "Voucher code is too long.")
+    .transform((value) => value.trim()),
 });
 
 export type AdminOrderUpdateValues = z.output<typeof adminOrderUpdateSchema>;

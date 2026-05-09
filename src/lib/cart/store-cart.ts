@@ -1,5 +1,7 @@
 "use client";
 
+import { clearStoreVoucherCode } from "@/lib/cart/store-voucher";
+
 export const STORE_CART_UPDATED_EVENT = "store-cart:updated";
 const STORE_CART_STORAGE_KEY = "storefront-cart-v1";
 
@@ -112,6 +114,7 @@ const writeStoreCart = (items: StoreCartItem[]) => {
 
 export const clearStoreCart = () => {
   writeStoreCart([]);
+  clearStoreVoucherCode();
   return [];
 };
 

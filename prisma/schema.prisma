@@ -27,6 +27,7 @@ enum OrderStatus {
   CONFIRMED
   SHIPPED
   DELIVERED
+  CANCELLED
 }
 
 enum PaymentMethod {
@@ -39,6 +40,31 @@ enum ProductDiscountType {
   NONE
   PERCENT
   FIXED
+}
+
+/** Store-wide cart / checkout discount rules (admin-managed coupon-style rows). */
+enum DiscountType {
+  FIXED
+  PERCENTAGE
+}
+
+model Discount {
+  id                String       @id @default(cuid())
+  name              String
+  /** Normalized uppercase code for uniqueness and lookup. */
+  code              String       @unique
+  discountType      DiscountType
+  discountValue     Decimal      @db.Decimal(10, 2)
+  minOrderAmount    Decimal?     @db.Decimal(10, 2)
+  maxDiscountAmount Decimal?     @db.Decimal(10, 2)
+  startAt           DateTime?
+  endAt             DateTime?
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([isActive])
+  @@index([discountType])
 }
 
 model User {
@@ -165,7 +191,14 @@ model Order {
   /** Payment method chosen at checkout. Defaults to COD so legacy rows stay safe. */
   paymentMethod  PaymentMethod @default(COD)
   subtotal       Decimal       @db.Decimal(10, 2)
+  /** Savings from product-level pricing (catalog vs effective line prices). */
   discountAmount Decimal       @db.Decimal(10, 2)
+  /** Uppercase cart voucher code applied at checkout, if any. */
+  voucherCode          String?
+  /** Snapshot of the discount display name at checkout (for admin history). */
+  voucherName          String?
+  /** Extra reduction from cart voucher (fixed or percentage rule). */
+  voucherDiscountAmount Decimal @default(0) @db.Decimal(10, 2)
   totalAmount    Decimal       @db.Decimal(10, 2)
   user           User          @relation(fields: [userId], references: [id], onDelete: Restrict)
   items          OrderItem[]

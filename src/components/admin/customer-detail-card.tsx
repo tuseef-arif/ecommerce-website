@@ -1,5 +1,6 @@
 import { CustomerDetailActions } from "@/components/admin/customer-detail-actions";
 import type { AdminCustomerDetail } from "@/lib/customers/admin-types";
+import { formatInstantForStoreDateTime } from "@/lib/datetime/display-timezone";
 
 type CustomerDetailCardProps = {
   customer: AdminCustomerDetail;
@@ -10,11 +11,8 @@ const COMPACT_INPUT_CLASS_NAME =
 const COMPACT_LABEL_CLASS_NAME =
   "pointer-events-none absolute left-2.5 top-0 -translate-y-1/2 bg-white px-1 text-[10px] font-semibold uppercase tracking-wide text-neutral-600";
 
-const formatDateTime = (iso: string): string => {
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return "—";
-  return parsed.toLocaleString();
-};
+const formatDateTime = (iso: string): string =>
+  formatInstantForStoreDateTime(iso);
 
 const displayOrDash = (value: string): string => {
   const trimmed = value.trim();

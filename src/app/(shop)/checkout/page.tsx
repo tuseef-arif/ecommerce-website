@@ -10,23 +10,26 @@ import {
   verifyCheckoutAccountOtpAction,
 } from "@/app/(auth)/register/actions";
 import { placeCheckoutOrderAction } from "@/app/(shop)/actions";
-import { Button } from "@/components/ui/button";
-import { CheckboxField } from "@/components/ui/checkbox-field";
-import { FormInputField } from "@/components/ui/form-input-field";
-import { Modal } from "@/components/ui/modal";
-import { PasswordInputField } from "@/components/ui/password-input-field";
+import { IconX } from "@/components/icons";
 import {
   guestAuthDialogHeadingClass,
   guestAuthDialogSubtitleClass,
   guestAuthFormClass,
   submitClass,
 } from "@/components/store/account-popover-styles";
+import { useStoreCartVoucher } from "@/components/store/use-store-cart-voucher";
+import { Button } from "@/components/ui/button";
+import { CheckboxField } from "@/components/ui/checkbox-field";
+import { FormInputField } from "@/components/ui/form-input-field";
+import { Modal } from "@/components/ui/modal";
+import { PasswordInputField } from "@/components/ui/password-input-field";
 import {
   STORE_CART_UPDATED_EVENT,
   clearStoreCart,
   readStoreCart,
   type StoreCartItem,
 } from "@/lib/cart/store-cart";
+import { readStoreVoucherCode } from "@/lib/cart/store-voucher";
 import {
   SITE_PRODUCT_SLIDER,
   SITE_ROUTES,
@@ -55,7 +58,6 @@ export default function CheckoutPage() {
   const [items, setItems] = useState<StoreCartItem[]>([]);
   const [paymentMethod, setPaymentMethod] =
     useState<CheckoutPaymentMethod>("cod");
-  const [discountVoucher, setDiscountVoucher] = useState("");
   const [createAccount, setCreateAccount] = useState(false);
   const [accountPassword, setAccountPassword] = useState("");
   const [accountConfirmPassword, setAccountConfirmPassword] = useState("");
@@ -141,7 +143,22 @@ export default function CheckoutPage() {
   );
   const discountAmount = Math.max(0, originalSubtotal - subtotal);
   const shippingCharges = 0;
-  const orderTotal = subtotal + shippingCharges;
+
+  const {
+    discountVoucher,
+    setDiscountVoucher,
+    voucherPreview,
+    voucherMessage,
+    isVoucherPending,
+    handleApplyVoucher,
+    handleRemoveVoucher,
+    voucherSavings,
+  } = useStoreCartVoucher({
+    cartNetSubtotal: subtotal,
+    applySuccessVariant: "checkout",
+  });
+
+  const orderTotal = Math.max(0, subtotal - voucherSavings) + shippingCharges;
 
   const checkoutRows = [
     {
@@ -230,6 +247,7 @@ export default function CheckoutPage() {
         createAccount: false,
         ...billingForm,
         paymentMethod,
+        voucherCode: readStoreVoucherCode() ?? undefined,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -275,6 +293,7 @@ export default function CheckoutPage() {
         createAccount: true,
         ...billingForm,
         paymentMethod,
+        voucherCode: readStoreVoucherCode() ?? undefined,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -465,32 +484,79 @@ export default function CheckoutPage() {
                 )}
               </span>
             </div>
+            {voucherPreview ? (
+              <div className="flex items-center justify-between text-neutral-700">
+                <span>
+                  Voucher{" "}
+                  <span className="font-mono text-xs text-neutral-500">
+                    ({voucherPreview.code})
+                  </span>
+                </span>
+                <span className="font-semibold text-emerald-700">
+                  -{" "}
+                  {formatProductPriceWithPrefix(
+                    voucherPreview.amount,
+                    SITE_PRODUCT_SLIDER.pricePrefix,
+                  )}
+                </span>
+              </div>
+            ) : null}
             <div className="flex items-center justify-between text-neutral-700">
               <span>Shipping</span>
               <span className="font-semibold text-neutral-900">Free</span>
             </div>
-            <div className="flex justify-center pt-1">
-              <div className="flex w-full max-w-xs items-center gap-2">
-                <FormInputField
-                  label="Insert Voucher"
-                  name="discountVoucher"
-                  value={discountVoucher}
-                  onChange={(event) =>
-                    setDiscountVoucher(event.currentTarget.value)
-                  }
-                  wrapperClassName="min-w-0 flex-1"
-                  inputClassName="peer h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 pb-1 pt-3 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors placeholder:text-transparent focus:border-[var(--store-brand-primary)] focus:ring-0"
-                  labelClassName="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 bg-white px-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-neutral-600"
-                />
+            <div className="flex flex-col gap-2 pt-1">
+              <div className="flex w-full max-w-xs items-center gap-2 self-center">
+                <div className="relative min-w-0 flex-1">
+                  <FormInputField
+                    label="Insert Voucher"
+                    name="discountVoucher"
+                    value={discountVoucher}
+                    onChange={(event) =>
+                      setDiscountVoucher(event.currentTarget.value)
+                    }
+                    wrapperClassName="min-w-0"
+                    inputClassName="peer h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 pb-1 pr-9 pt-3 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors placeholder:text-transparent focus:border-[var(--store-brand-primary)] focus:ring-0"
+                    labelClassName="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 bg-white px-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-neutral-600"
+                  />
+                  {voucherPreview || discountVoucher.trim().length > 0 ? (
+                    <button
+                      type="button"
+                      className="absolute right-2 top-1/2 z-[2] -translate-y-1/2 rounded p-0.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
+                      aria-label={
+                        voucherPreview ? "Remove voucher" : "Clear voucher code"
+                      }
+                      onClick={handleRemoveVoucher}
+                    >
+                      <IconX width={16} height={16} />
+                    </button>
+                  ) : null}
+                </div>
                 <Button
                   type="button"
                   variant="primary"
                   size="md"
-                  className="h-10 rounded-lg px-4"
+                  className="h-10 shrink-0 rounded-lg px-4"
+                  disabled={isVoucherPending}
+                  isLoading={isVoucherPending}
+                  loadingLabel="Applying…"
+                  onClick={handleApplyVoucher}
                 >
                   Apply
                 </Button>
               </div>
+              {voucherMessage ? (
+                <p
+                  className={`text-center text-xs ${
+                    voucherMessage.type === "success"
+                      ? "text-emerald-700"
+                      : "text-red-600"
+                  }`}
+                  role={voucherMessage.type === "error" ? "alert" : "status"}
+                >
+                  {voucherMessage.text}
+                </p>
+              ) : null}
             </div>
           </div>
 

@@ -1,23 +1,15 @@
 import Link from "next/link";
 import { OrderRowActions } from "@/components/admin/order-row-actions";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
+import { IconPencil } from "@/components/icons";
+import { formatInstantForStoreDate } from "@/lib/datetime/display-timezone";
 import type { AdminOrderListItem } from "@/lib/orders/admin-types";
 
 type OrderTableProps = {
   items: ReadonlyArray<AdminOrderListItem>;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-});
-
-const formatDate = (iso: string): string => {
-  const parsed = new Date(iso);
-  if (Number.isNaN(parsed.getTime())) return iso;
-  return dateFormatter.format(parsed);
-};
+const formatDate = (iso: string): string => formatInstantForStoreDate(iso);
 
 const formatMoney = (raw: string): string => {
   const numeric = Number.parseFloat(raw);
@@ -45,28 +37,34 @@ export const OrderTable = ({ items }: OrderTableProps) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] table-fixed text-left text-sm">
+        <table className="w-full min-w-[800px] table-fixed text-left text-sm">
+          <colgroup>
+            <col style={{ width: "2.5rem" }} />
+          </colgroup>
           <thead className="border-b border-neutral-200 bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
             <tr>
-              <th scope="col" className="w-[12%] px-4 py-3">
+              <th scope="col" className="w-0 p-0 py-3 pl-2 pr-0 text-center">
+                <span className="sr-only">Edit</span>
+              </th>
+              <th scope="col" className="w-[11%] px-4 py-3">
                 Order
               </th>
-              <th scope="col" className="w-[26%] px-4 py-3">
+              <th scope="col" className="w-[24%] px-4 py-3">
                 Customer
               </th>
-              <th scope="col" className="w-[16%] px-4 py-3">
+              <th scope="col" className="w-[15%] px-4 py-3">
                 Status
               </th>
-              <th scope="col" className="w-[16%] px-4 py-3">
+              <th scope="col" className="w-[15%] px-4 py-3">
                 Payment Method
               </th>
-              <th scope="col" className="w-[14%] px-4 py-3 text-right">
+              <th scope="col" className="w-[13%] px-4 py-3 text-right">
                 Total
               </th>
-              <th scope="col" className="w-[16%] px-4 py-3">
+              <th scope="col" className="w-[12%] px-4 py-3">
                 Created
               </th>
-              <th scope="col" className="w-[14%] px-4 py-3 text-right">
+              <th scope="col" className="w-[10%] px-4 py-3 text-right">
                 Actions
               </th>
             </tr>
@@ -74,7 +72,16 @@ export const OrderTable = ({ items }: OrderTableProps) => {
           <tbody className="divide-y divide-neutral-100">
             {items.map((item) => (
               <tr key={item.id} className="hover:bg-neutral-50/60">
-                <td className="px-4 py-3">
+                <td className="w-0 p-0 py-3 pl-2 pr-0 text-center align-middle">
+                  <Link
+                    href={`/dashboard/orders/${item.id}/edit`}
+                    className="inline-flex size-7 items-center justify-center rounded-md text-neutral-700 transition-colors hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"
+                    aria-label={`Edit order #${item.shortId}`}
+                  >
+                    <IconPencil width={16} height={16} />
+                  </Link>
+                </td>
+                <td className="px-4 py-3 pl-2">
                   <Link
                     href={`/dashboard/orders/${item.id}`}
                     className="font-mono text-xs font-semibold uppercase text-neutral-900 transition-colors hover:text-[var(--store-brand-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]"

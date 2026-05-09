@@ -2,9 +2,9 @@
 
 This file is our daily execution tracker for building the Mobile Shop E-commerce platform in a controlled sequence.
 
-### Current status snapshot (2026-05-09)
+### Current status snapshot (2026-05-10)
 
-**Storefront:** product listing/detail, persisted cart (drawer + `/cart`), checkout with transactional order creation from the cart payload, and the customer-facing **Order received** summary route are in place. **Admin:** product catalog CRUD, customers CRUD + roles, and the orders module (listing, filtering, detail, edit including line items + stock reconciliation, status lifecycle timestamps) align with Milestone 3 Day 6 and Day 8; see dated progress blocks there. Milestone 3 Day 7 (global/category sales utility UX) remains the open checklist group below.
+**Storefront:** product listing/detail, persisted cart (drawer + `/cart`), checkout with transactional order creation from the cart payload, and the customer-facing **Order received** summary route are in place. Cart and checkout share a single **voucher preview** hook (`use-store-cart-voucher`) so voucher behavior stays consistent and lint-clean. **Admin:** product catalog CRUD, customers CRUD + roles, and the orders module (listing, filtering, detail, edit including line items + stock reconciliation, status lifecycle timestamps) align with Milestone 3 Day 6 and Day 8; see dated progress blocks there. Milestone 3 Day 7 (global/category sales utility UX) remains the open checklist group below.
 
 **Still on the roadmap:** signed-in **order history** index (`/account/orders` is reserved in site config) and session-scoped access control for customer order URLs (tracked under Milestone 5 Day 12).
 
@@ -208,6 +208,18 @@ Day 10 progress (2026-05-09):
 Day 11 progress (2026-05-09):
 
 - Checkout UI in `src/app/(shop)/checkout/page.tsx` with `placeCheckoutOrderAction` in `src/app/(shop)/actions.ts` (Zod boundary, Prisma transaction, server-side pricing, stock decrement, optional guest/auto-user path). Success routes to `order-received/[orderid]`.
+
+### Day 11 extension + engineering cleanup (2026-05-10)
+
+Cross-cutting refactor and lint hardening after the voucher/discount and dashboard work on `fsm-dev`:
+
+- **Shared storefront voucher hook:** Added `src/components/store/use-store-cart-voucher.ts` and switched `src/app/(shop)/cart/page.tsx` and `src/app/(shop)/checkout/page.tsx` to use it (one implementation for `localStorage` sync, `previewCartVoucherAction`, apply/remove, and totals). Preview is derived so we do not call `setState` synchronously inside an effect for “clear when empty,” and we match `fetchedPreview.code` to `savedVoucherCode` to avoid flashing a stale preview while a new code resolves.
+- **Discount math readability:** Moved `roundMoney` above the exported helper in `src/lib/discounts/compute-applied-discount.ts`.
+- **Discount voucher resolver:** Removed unused `DiscountDbRow` type from `src/lib/discounts/resolve-cart-voucher.ts`.
+- **Admin dashboard animations (ESLint `react-hooks/set-state-in-effect`):** `src/components/admin/dashboard-metric-cards.tsx` — initial counter reset runs inside `requestAnimationFrame` with a `cancelled` guard for nested frames. `src/components/admin/dashboard-sales-analytics.tsx` — path stroke reset/`drawLine` updates batched via `requestAnimationFrame`; `xLabelIndices` `useMemo` dependency updated from `points.length` to `points` for correct exhaustive-deps coverage.
+- **Admin order voucher UX:** `src/components/admin/order-items-editor.tsx` — resetting `hideServerVoucherError` when `voucherFieldError` changes is deferred with `requestAnimationFrame` (same lint rule).
+- **Admin product image uploader:** Removed unused `pickedFileName` state from `src/components/admin/product-image-uploader.tsx`.
+- **Verification:** `npm run lint` and `npx tsc --noEmit` pass after the above.
 
 ## Milestone 5 - User and Release Readiness (Days 12-14)
 

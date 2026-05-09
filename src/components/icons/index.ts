@@ -13,6 +13,7 @@ export { IconMail } from "./icon-mail";
 export { IconMapPin } from "./icon-map-pin";
 export { IconMoney } from "./icon-money";
 export { IconPackage } from "./icon-package";
+export { IconPencil } from "./icon-pencil";
 export { IconPhone } from "./icon-phone";
 export { IconRefreshCcw } from "./icon-refresh-ccw";
 export { IconSearch } from "./icon-search";

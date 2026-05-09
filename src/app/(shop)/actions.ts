@@ -16,6 +16,7 @@ import {
   checkoutToDbPaymentMethod,
 } from "@/lib/orders/payment-method";
 import { finalProductPrice } from "@/lib/products/discount";
+import { resolveCartVoucher } from "@/lib/discounts/resolve-cart-voucher";
 import {
   colorOptionsJsonToList,
   storageOptionsJsonToList,
@@ -455,12 +456,51 @@ const checkoutPlaceOrderSchema = z.object({
   country: z.string().trim().min(1).max(80),
   paymentMethod: z.enum(CHECKOUT_PAYMENT_METHODS).default("cod"),
   items: z.array(checkoutOrderItemSchema).min(1).max(100),
+  voucherCode: z
+    .string()
+    .max(40)
+    .optional()
+    .default("")
+    .transform((raw) => {
+      const t = raw.trim().toUpperCase();
+      return t.length === 0 ? undefined : t;
+    }),
 });
 
 export type PlaceCheckoutOrderInput = z.input<typeof checkoutPlaceOrderSchema>;
 export type PlaceCheckoutOrderResult =
   | { ok: true; orderId: string }
   | { ok: false; error: string };
+
+const previewCartVoucherSchema = z.object({
+  code: z.string().trim().min(1, "Enter a voucher code.").max(40),
+  cartNetSubtotal: z.number().finite().min(0).max(50_000_000),
+});
+
+export type PreviewCartVoucherResult =
+  | { ok: true; appliedAmount: number; code: string; name: string }
+  | { ok: false; error: string };
+
+/**
+ * Preview-only: uses client-supplied cart net for display. Checkout always
+ * recomputes the voucher from server line totals + DB rules.
+ */
+export const previewCartVoucherAction = async (
+  input: unknown,
+): Promise<PreviewCartVoucherResult> => {
+  const parsed = previewCartVoucherSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid voucher request.",
+    };
+  }
+  return resolveCartVoucher(
+    prisma,
+    parsed.data.code,
+    parsed.data.cartNetSubtotal,
+  );
+};
 
 const findVariantDelta = (
   value: string | null | undefined,
@@ -501,6 +541,8 @@ const findVariantDelta = (
  * Mitigations applied:
  * - Fail-closed on missing/invalid session or malformed payload.
  * - Ignore client-provided totals and derive all monetary values server-side.
+ * - Cart vouchers: code is echoed from the client but the discount amount is
+ *   recomputed inside the transaction from line totals + `Discount` row rules.
  * - Update user profile address fields in same transaction as order creation.
  *
  * Verification test case:
@@ -530,6 +572,7 @@ export const placeCheckoutOrderAction = async (
     country,
     paymentMethod,
     items,
+    voucherCode,
   } = parsed.data;
   const normalizedEmail = parsed.data.email.toLowerCase().trim();
   const dbPaymentMethod = checkoutToDbPaymentMethod(paymentMethod);
@@ -690,13 +733,46 @@ export const placeCheckoutOrderAction = async (
         });
       }
 
+      const cartNetSubtotal =
+        Math.round((subtotal - discountAmount) * 100) / 100;
+
+      let voucherDiscountAmountNum = 0;
+      let voucherCodeForOrder: string | null = null;
+      let voucherNameForOrder: string | null = null;
+      if (voucherCode) {
+        const voucherResult = await resolveCartVoucher(
+          tx,
+          voucherCode,
+          cartNetSubtotal,
+        );
+        if (!voucherResult.ok) {
+          throw new Error(voucherResult.error);
+        }
+        voucherDiscountAmountNum = voucherResult.appliedAmount;
+        voucherCodeForOrder = voucherResult.code;
+        voucherNameForOrder = voucherResult.name;
+      }
+
+      const orderTotalNum =
+        Math.round(
+          (cartNetSubtotal - voucherDiscountAmountNum + Number.EPSILON) * 100,
+        ) / 100;
+      if (orderTotalNum < 0) {
+        throw new Error(
+          "Order total became invalid after applying the voucher.",
+        );
+      }
+
       const createdOrder = await tx.order.create({
         data: {
           userId: user.id,
           paymentMethod: dbPaymentMethod,
           subtotal: subtotal.toFixed(2),
           discountAmount: discountAmount.toFixed(2),
-          totalAmount: (subtotal - discountAmount).toFixed(2),
+          voucherCode: voucherCodeForOrder,
+          voucherName: voucherNameForOrder,
+          voucherDiscountAmount: voucherDiscountAmountNum.toFixed(2),
+          totalAmount: orderTotalNum.toFixed(2),
           items: {
             create: lines,
           },

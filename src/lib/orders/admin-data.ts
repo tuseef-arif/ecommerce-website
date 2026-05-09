@@ -2,6 +2,10 @@ import "server-only";
 
 import { formatCategoryLabel } from "@/lib/categories/format-category-label";
 import { composeCustomerDisplayName } from "@/lib/customers/display";
+import {
+  storeCivilDayEndInstant,
+  storeCivilDayStartInstant,
+} from "@/lib/datetime/display-timezone";
 import { ADMIN_ORDERS_PER_PAGE } from "@/lib/orders/filters";
 import { prisma } from "@/lib/prisma";
 import { finalProductPrice } from "@/lib/products/discount";
@@ -30,6 +34,8 @@ const buildOrderWhere = (filters: AdminOrdersListFilters) => {
       { user: { firstName: { contains: filters.q, mode: "insensitive" } } },
       { user: { lastName: { contains: filters.q, mode: "insensitive" } } },
       { id: { contains: filters.q, mode: "insensitive" } },
+      { voucherCode: { contains: filters.q, mode: "insensitive" } },
+      { voucherName: { contains: filters.q, mode: "insensitive" } },
     );
   }
   if (orFilters.length > 0) where.OR = orFilters;
@@ -41,11 +47,11 @@ const buildOrderWhere = (filters: AdminOrdersListFilters) => {
 
   const createdAt: Record<string, Date> = {};
   if (filters.from) {
-    const from = new Date(`${filters.from}T00:00:00.000Z`);
+    const from = storeCivilDayStartInstant(filters.from);
     if (!Number.isNaN(from.getTime())) createdAt.gte = from;
   }
   if (filters.to) {
-    const to = new Date(`${filters.to}T23:59:59.999Z`);
+    const to = storeCivilDayEndInstant(filters.to);
     if (!Number.isNaN(to.getTime())) createdAt.lte = to;
   }
   if (Object.keys(createdAt).length > 0) where.createdAt = createdAt;
@@ -140,6 +146,8 @@ export const getAdminOrderById = async (
       paymentMethod: true,
       subtotal: true,
       discountAmount: true,
+      voucherCode: true,
+      voucherDiscountAmount: true,
       totalAmount: true,
       createdAt: true,
       updatedAt: true,
@@ -181,6 +189,8 @@ export const getAdminOrderById = async (
     paymentMethod: row.paymentMethod,
     subtotal: row.subtotal.toFixed(2),
     discountAmount: row.discountAmount.toFixed(2),
+    voucherCode: row.voucherCode,
+    voucherDiscountAmount: row.voucherDiscountAmount.toFixed(2),
     totalAmount: row.totalAmount.toFixed(2),
     customer: {
       id: row.user.id,

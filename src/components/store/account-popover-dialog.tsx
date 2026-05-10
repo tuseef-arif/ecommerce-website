@@ -36,6 +36,7 @@ export const AccountPopover = ({
   isAdmin,
   initialGuestView = "login",
   loginNoticeMessage = null,
+  loginOAuthErrorMessage = null,
   signupUrlError = null,
   resetPasswordToken = null,
   resetPasswordUrlError = null,
@@ -164,10 +165,11 @@ export const AccountPopover = ({
           {guestView === "login" ? (
             <AccountPopoverLoginForm
               titleId={titleId}
-              key={loginEmailHint || "login-default"}
+              key={`${loginEmailHint || "login"}|${loginOAuthErrorMessage ?? ""}`}
               onSignedIn={handleSignedIn}
               defaultEmail={loginEmailHint}
               initialSuccessMessage={loginNoticeMessage}
+              initialOAuthErrorMessage={loginOAuthErrorMessage}
               onForgotPassword={() => {
                 setForgotFormKey((k) => k + 1);
                 setGuestView("forgot");

@@ -40,6 +40,7 @@ import {
   STORE_BUSINESS_NAME,
   STORE_SHELL,
 } from "@/lib/config/site-config";
+import { userFacingMessageForNextAuthError } from "@/lib/auth/next-auth-user-facing-error";
 import {
   STORE_CART_UPDATED_EVENT,
   getStoreCartCount,
@@ -115,6 +116,9 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
   const [loginNoticeMessage, setLoginNoticeMessage] = useState<string | null>(
     null,
   );
+  const [loginOAuthErrorMessage, setLoginOAuthErrorMessage] = useState<
+    string | null
+  >(null);
   const [signupUrlError, setSignupUrlError] = useState<string | null>(null);
   const [initialGuestView, setInitialGuestView] = useState<GuestView>("login");
   const [resetPasswordToken, setResetPasswordToken] = useState<string | null>(
@@ -149,6 +153,7 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
   const closeAccountPopover = useCallback(() => {
     setAccountPopoverOpen(false);
     setLoginNoticeMessage(null);
+    setLoginOAuthErrorMessage(null);
     setSignupUrlError(null);
     setInitialGuestView("login");
     setResetPasswordToken(null);
@@ -205,16 +210,21 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
     const authView = searchParams.get("authView");
     if (authView === "login") {
       const authNotice = searchParams.get("authNotice");
+      const nextAuthError = searchParams.get("error")?.trim() || null;
+      const oauthBanner =
+        user || !nextAuthError
+          ? null
+          : userFacingMessageForNextAuthError(nextAuthError);
+      const resetNotice =
+        user || oauthBanner || authNotice !== "password_reset_success"
+          ? null
+          : "Password updated successfully. You can login.";
+
       startTransition(() => {
         setInitialGuestView("login");
         setSignupUrlError(null);
-        if (!user && authNotice === "password_reset_success") {
-          setLoginNoticeMessage(
-            "Password updated successfully. You can login.",
-          );
-        } else {
-          setLoginNoticeMessage(null);
-        }
+        setLoginOAuthErrorMessage(oauthBanner);
+        setLoginNoticeMessage(resetNotice);
         setResetPasswordToken(null);
         setResetPasswordUrlError(null);
         setAccountPopoverTriggerOrigin("desktop");
@@ -224,6 +234,7 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
       const params = new URLSearchParams(searchParams.toString());
       params.delete("authView");
       params.delete("authNotice");
+      params.delete("error");
       const nextUrl =
         params.size > 0 ? `${pathname}?${params.toString()}` : pathname;
       router.replace(nextUrl, { scroll: false });
@@ -234,6 +245,7 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
       startTransition(() => {
         setInitialGuestView("signup");
         setLoginNoticeMessage(null);
+        setLoginOAuthErrorMessage(null);
         setSignupUrlError(searchParams.get("error")?.trim() || null);
         setResetPasswordToken(null);
         setResetPasswordUrlError(null);
@@ -255,6 +267,7 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
       startTransition(() => {
         setInitialGuestView(tokenFromUrl ? "reset" : "forgot");
         setLoginNoticeMessage(null);
+        setLoginOAuthErrorMessage(null);
         setSignupUrlError(null);
         if (!user) {
           setResetPasswordToken(tokenFromUrl);
@@ -603,6 +616,7 @@ export const StoreHeader = ({ user, cartItemCount = 0 }: StoreHeaderProps) => {
               isAdmin={isAdmin}
               initialGuestView={initialGuestView}
               loginNoticeMessage={loginNoticeMessage}
+              loginOAuthErrorMessage={loginOAuthErrorMessage}
               signupUrlError={signupUrlError}
               resetPasswordToken={resetPasswordToken}
               resetPasswordUrlError={resetPasswordUrlError}

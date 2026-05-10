@@ -23,6 +23,8 @@ export type AccountPopoverLoginFormProps = {
   onSignedIn: (redirectUrl?: string | null) => void;
   defaultEmail?: string;
   initialSuccessMessage?: string | null;
+  /** Red alert after OAuth redirect (e.g. no matching account). */
+  initialOAuthErrorMessage?: string | null;
   onForgotPassword: () => void;
   onGoSignup: () => void;
 };
@@ -32,12 +34,18 @@ export const AccountPopoverLoginForm = ({
   onSignedIn,
   defaultEmail = "",
   initialSuccessMessage = null,
+  initialOAuthErrorMessage = null,
   onForgotPassword,
   onGoSignup,
 }: AccountPopoverLoginFormProps) => {
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(true);
+  const [error, setError] = useState<string | null>(() =>
+    initialOAuthErrorMessage?.trim() ? initialOAuthErrorMessage.trim() : null,
+  );
+  const [isCredentialsPending, setIsCredentialsPending] = useState(false);
+  const [isGooglePending, setIsGooglePending] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(
+    () => !initialOAuthErrorMessage?.trim(),
+  );
 
   const dismissError = () => {
     setError(null);
@@ -46,7 +54,7 @@ export const AccountPopoverLoginForm = ({
 
   const handleSubmit = async (formData: FormData) => {
     setError(null);
-    setIsPending(true);
+    setIsCredentialsPending(true);
     const email = String(formData.get("email") ?? "").toLowerCase();
     const password = String(formData.get("password") ?? "");
 
@@ -65,29 +73,17 @@ export const AccountPopoverLoginForm = ({
 
       onSignedIn(response.url);
     } finally {
-      setIsPending(false);
+      setIsCredentialsPending(false);
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     setError(null);
-    setIsPending(true);
-
-    try {
-      const response = await signIn("google", {
-        redirect: false,
-        callbackUrl: SITE_ROUTES.postLogin,
-      });
-
-      if (!response || response.error) {
-        setError("Google login is not available right now.");
-        return;
-      }
-
-      onSignedIn(response.url);
-    } finally {
-      setIsPending(false);
-    }
+    setIsGooglePending(true);
+    void signIn("google", { callbackUrl: SITE_ROUTES.postLogin }).catch(() => {
+      setIsGooglePending(false);
+      setError("Google sign-in could not start. Please try again.");
+    });
   };
 
   return (
@@ -135,8 +131,12 @@ export const AccountPopoverLoginForm = ({
             </StoreBrandTextLink>
           }
         />
-        <button type="submit" className={submitClass} disabled={isPending}>
-          {isPending ? "Signing in…" : SITE_HEADER.loginCta}
+        <button
+          type="submit"
+          className={submitClass}
+          disabled={isCredentialsPending || isGooglePending}
+        >
+          {isCredentialsPending ? "Signing in…" : SITE_HEADER.loginCta}
         </button>
       </form>
 
@@ -146,6 +146,8 @@ export const AccountPopoverLoginForm = ({
         type="button"
         className={googleLoginBtnClass}
         onClick={handleGoogleLogin}
+        disabled={isCredentialsPending || isGooglePending}
+        aria-busy={isGooglePending}
         aria-label={SITE_HEADER.accountPopoverGoogleLoginCta}
       >
         <Image
@@ -156,7 +158,9 @@ export const AccountPopoverLoginForm = ({
           className="h-5 w-5 shrink-0"
           aria-hidden
         />
-        {SITE_HEADER.accountPopoverGoogleLoginCta}
+        {isGooglePending
+          ? "Signing in…"
+          : SITE_HEADER.accountPopoverGoogleLoginCta}
       </button>
 
       <AuthCrossFooterNeedSignup onSignup={onGoSignup} />

@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { z } from "zod";
 import { UserRole, UserStatus } from "@/generated/prisma/enums";
+import { SITE_ROUTES } from "@/lib/config/site-config";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "./lib/password";
 
@@ -41,7 +42,7 @@ const stripAuthFromToken = (token: JWT): JWT => {
   delete token.sub;
   delete token.role;
   delete token.name;
-  delete (token as JWT & { email?: string }).email;
+  delete token.email;
   token.firstName = undefined;
   token.lastName = undefined;
   token.phone = undefined;
@@ -59,6 +60,10 @@ const credentialsSchema = z.object({
 });
 
 export const authOptions: NextAuthOptions = {
+  pages: {
+    signIn: SITE_ROUTES.login,
+    error: `${SITE_ROUTES.home}?authView=login`,
+  },
   session: {
     strategy: "jwt",
   },
@@ -68,6 +73,17 @@ export const authOptions: NextAuthOptions = {
           GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            profile(profile) {
+              const email =
+                profile.email_verified && profile.email ? profile.email : "";
+              return {
+                id: profile.sub,
+                name: profile.name,
+                role: UserRole.USER,
+                email,
+                image: profile.picture,
+              };
+            },
           }),
         ]
       : []),
@@ -127,14 +143,17 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     signIn: async ({ user, account }) => {
-      const email = user.email?.toLowerCase();
-      if (!email) return true;
       if (account?.provider === "credentials") return true;
+
+      const email = user.email?.trim().toLowerCase();
+      if (!email) return false;
+
       const dbUser = await prisma.user.findUnique({
         where: { email },
         select: { status: true },
       });
-      if (dbUser?.status === UserStatus.INACTIVE) return false;
+      if (!dbUser) return false;
+      if (dbUser.status === UserStatus.INACTIVE) return false;
       return true;
     },
     jwt: async ({ token, user }) => {
@@ -143,6 +162,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: user.email.toLowerCase() },
           select: {
             id: true,
+            email: true,
             firstName: true,
             lastName: true,
             phone: true,
@@ -160,6 +180,7 @@ export const authOptions: NextAuthOptions = {
             return stripAuthFromToken(token);
           }
           token.sub = dbUserByEmail.id;
+          token.email = dbUserByEmail.email;
           applyProfileFieldsToToken(token, dbUserByEmail);
           if (!token.name) {
             token.name = user.name ?? undefined;
@@ -172,6 +193,7 @@ export const authOptions: NextAuthOptions = {
               where: { id: user.id },
               select: {
                 id: true,
+                email: true,
                 firstName: true,
                 lastName: true,
                 phone: true,
@@ -190,6 +212,7 @@ export const authOptions: NextAuthOptions = {
             return stripAuthFromToken(token);
           }
           token.sub = dbUserById.id;
+          token.email = dbUserById.email;
           applyProfileFieldsToToken(token, dbUserById);
           if (!token.name) {
             token.name = user.name ?? undefined;
@@ -198,6 +221,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         token.sub = user.id;
+        token.email =
+          typeof user.email === "string" ? user.email.toLowerCase() : undefined;
         token.role = user.role;
         token.name = user.name ?? undefined;
         token.firstName = user.firstName ?? undefined;
@@ -214,6 +239,7 @@ export const authOptions: NextAuthOptions = {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.sub as string },
           select: {
+            email: true,
             firstName: true,
             lastName: true,
             phone: true,
@@ -231,6 +257,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (dbUser) {
+          token.email = dbUser.email;
           applyProfileFieldsToToken(token, dbUser);
         }
       }

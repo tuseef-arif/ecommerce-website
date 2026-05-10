@@ -19,6 +19,7 @@ export type AccountPopoverProps = {
   isAdmin: boolean;
   initialGuestView?: GuestView;
   loginNoticeMessage?: string | null;
+  loginOAuthErrorMessage?: string | null;
   signupUrlError?: string | null;
   resetPasswordToken?: string | null;
   resetPasswordUrlError?: string | null;

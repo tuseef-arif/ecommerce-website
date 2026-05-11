@@ -602,6 +602,44 @@ export const searchStorefrontProducts = async (
 };
 
 /**
+ * Returns active product cards for the supplied ids, preserving the input
+ * order. Missing/inactive ids are silently dropped so callers can pass a
+ * stale list without erroring (used by the hero banner deep-link page).
+ */
+export const listStorefrontProductsByIds = async (
+  ids: ReadonlyArray<string>,
+): Promise<StorefrontProductCardItem[]> => {
+  if (ids.length === 0) return [];
+
+  const uniqueIds = Array.from(new Set(ids));
+  const rows = await prisma.product.findMany({
+    where: { id: { in: uniqueIds }, isActive: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      brand: true,
+      imagePath: true,
+      stock: true,
+      colorOptions: true,
+      storageOptions: true,
+      price: true,
+      discountType: true,
+      discountValue: true,
+      isDiscountActive: true,
+    },
+  });
+
+  const byId = new Map(rows.map((row) => [row.id, toCardItem(row)]));
+  const items: StorefrontProductCardItem[] = [];
+  for (const id of ids) {
+    const item = byId.get(id);
+    if (item) items.push(item);
+  }
+  return items;
+};
+
+/**
  * Returns distinct storefront brands for filter dropdowns.
  * Optionally scopes brands by category slug.
  */

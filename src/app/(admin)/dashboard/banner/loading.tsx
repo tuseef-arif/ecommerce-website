@@ -1,0 +1,15 @@
+export default function DashboardBannerLoading() {
+  return (
+    <>
+      <div className="h-20 animate-pulse rounded-2xl border border-neutral-200 bg-white" />
+      <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-3">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div
+            key={`hero-skeleton-${index}`}
+            className="h-20 animate-pulse rounded-lg bg-neutral-100"
+          />
+        ))}
+      </div>
+    </>
+  );
+}

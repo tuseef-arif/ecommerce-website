@@ -10,7 +10,6 @@ import type {
   DeleteDiscountResult,
   DiscountFormFieldKey,
   DiscountFormState,
-  SetDiscountActiveResult,
 } from "./form-state";
 
 /* <SECURITY_REVIEW>
@@ -111,37 +110,6 @@ export const deleteDiscountAction = async (
     if (code === "P2025") return { ok: false, error: "not_found" };
     console.error("deleteDiscountAction failed", {
       discountId: parsed.data,
-      error,
-    });
-    return { ok: false, error: "unknown" };
-  }
-
-  revalidatePath("/dashboard/discounts");
-  return { ok: true };
-};
-
-export const setDiscountActiveAction = async (
-  discountId: unknown,
-  isActive: unknown,
-): Promise<SetDiscountActiveResult> => {
-  await requireAdmin();
-
-  const idParsed = discountIdSchema.safeParse(discountId);
-  if (!idParsed.success) return { ok: false, error: "invalid_id" };
-
-  const activeParsed = z.boolean().safeParse(isActive);
-  if (!activeParsed.success) return { ok: false, error: "invalid_id" };
-
-  try {
-    await prisma.discount.update({
-      where: { id: idParsed.data },
-      data: { isActive: activeParsed.data },
-    });
-  } catch (error) {
-    const code = (error as { code?: string } | undefined)?.code;
-    if (code === "P2025") return { ok: false, error: "not_found" };
-    console.error("setDiscountActiveAction failed", {
-      discountId: idParsed.data,
       error,
     });
     return { ok: false, error: "unknown" };

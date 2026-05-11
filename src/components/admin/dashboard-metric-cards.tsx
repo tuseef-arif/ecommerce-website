@@ -114,7 +114,7 @@ export const DashboardMetricCards = ({
           key={card.label}
           className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
         >
-          <p className="text-sm text-neutral-500">{card.label}</p>
+          <p className="text-center text-sm text-neutral-500">{card.label}</p>
           <p className="mt-3 flex min-h-[3.25rem] items-center justify-center text-center text-3xl font-bold text-neutral-900">
             <AnimatedMetricValue
               target={card.target}

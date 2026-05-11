@@ -112,7 +112,6 @@ export const DiscountTable = ({
                     <DiscountRowActions
                       discountId={item.id}
                       discountName={item.name}
-                      isActive={item.isActive}
                     />
                   </td>
                 </tr>

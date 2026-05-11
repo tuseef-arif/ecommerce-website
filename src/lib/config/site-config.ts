@@ -1,17 +1,26 @@
 /**
  * Single source for store branding, contact, routes, nav, and UI copy.
- * Edit `SITE_DEFAULTS` only — nothing here reads from `.env`.
- *
- * **White-label:** change `SITE_DEFAULTS` (including `publicPages`, `routes`,
- * `header`, `footer`, etc.) for a new client; avoid one-off marketing strings in
- * route components — import from this module instead.
+ * Edit `SITE_DEFAULTS` for white-label defaults. `NEXT_PUBLIC_SITE_URL` overrides
+ * the canonical site origin in deployed environments (metadata, emails, absolute links).
  */
 
 import { SITE_DEFAULTS } from "./site-config.data";
 
+const resolveSiteUrlFromEnv = (): string | undefined => {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return undefined;
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return undefined;
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return undefined;
+  }
+};
+
 // --- Identity & contact ---
 
-export const SITE_URL = SITE_DEFAULTS.siteUrl;
+export const SITE_URL = resolveSiteUrlFromEnv() ?? SITE_DEFAULTS.siteUrl;
 
 export const STORE_BUSINESS_NAME = SITE_DEFAULTS.businessName;
 
@@ -55,6 +64,9 @@ export const SITE_PATH_PAYMENT_METHODS_SVG =
 export const SITE_PATH_FAVICON = SITE_DEFAULTS.paths.favicon;
 
 export const SITE_ROUTES = SITE_DEFAULTS.routes;
+
+/** In-page anchor on `StoreFooter` for “scroll to contact” links (replaces removed `/contact` route). */
+export const STORE_SITE_FOOTER_DOM_ID = "store-site-footer";
 
 export const SITE_LOGIN_PAGE = SITE_DEFAULTS.publicPages.login;
 

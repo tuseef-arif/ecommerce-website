@@ -8,6 +8,9 @@ export type AccountPopoverUser = {
   firstName?: string | null;
   lastName?: string | null;
   phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
   /** Public path under `public/`, e.g. `/uploads/profile-images/…` */
   profileImagePath?: string | null;
 };

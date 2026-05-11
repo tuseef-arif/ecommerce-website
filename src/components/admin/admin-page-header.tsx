@@ -1,9 +1,4 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
-import { SITE_URL } from "@/lib/config/site-config";
-
-const visitWebsiteButtonClass =
-  "inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[var(--store-brand-primary)] px-4 text-sm font-semibold text-white shadow-sm transition-[filter] hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)]";
 
 type AdminPageHeaderProps = {
   title: ReactNode;
@@ -23,17 +18,10 @@ export const AdminPageHeader = ({
         <p className="text-sm text-neutral-600">{description}</p>
       ) : null}
     </div>
-    <div className="flex flex-wrap items-center justify-end gap-2 sm:justify-end">
-      {actions}
-      <Link
-        href={SITE_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        prefetch={false}
-        className={visitWebsiteButtonClass}
-      >
-        Visit Website
-      </Link>
-    </div>
+    {actions ? (
+      <div className="flex flex-wrap items-center justify-end gap-2 sm:justify-end">
+        {actions}
+      </div>
+    ) : null}
   </header>
 );

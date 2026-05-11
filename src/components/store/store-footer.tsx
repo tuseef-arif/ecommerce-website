@@ -20,6 +20,7 @@ import {
   SITE_PATH_PAYMENT_METHODS_SVG,
   SITE_ROUTES,
   SITE_SOCIAL_LABELS,
+  STORE_SITE_FOOTER_DOM_ID,
   STORE_ADDRESS,
   STORE_BUSINESS_NAME,
   STORE_EMAIL,
@@ -81,7 +82,10 @@ export const StoreFooter = () => {
   ].filter((s) => s.href.length > 0);
 
   return (
-    <footer className="store-footer mt-auto min-w-0 w-full max-w-full">
+    <footer
+      id={STORE_SITE_FOOTER_DOM_ID}
+      className="store-footer mt-auto min-w-0 w-full max-w-full scroll-mt-24 md:scroll-mt-28"
+    >
       <div className={`py-10 md:py-12 lg:py-14 ${STORE_SHELL}`}>
         <div className="grid min-w-0 gap-10 lg:grid-cols-2 lg:gap-14 lg:items-start">
           <div className="min-w-0">
@@ -144,7 +148,7 @@ export const StoreFooter = () => {
               ) : (
                 <ContactRow icon={<IconPhone />}>
                   <CustomLink
-                    href={SITE_ROUTES.contact}
+                    href={`#${STORE_SITE_FOOTER_DOM_ID}`}
                     variant="on-brand"
                     className="store-footer__focus-ring rounded-md"
                   >
@@ -161,7 +165,7 @@ export const StoreFooter = () => {
               ) : (
                 <ContactRow icon={<IconMail />}>
                   <CustomLink
-                    href={SITE_ROUTES.contact}
+                    href={`#${STORE_SITE_FOOTER_DOM_ID}`}
                     variant="on-brand"
                     className="store-footer__focus-ring rounded-md"
                   >

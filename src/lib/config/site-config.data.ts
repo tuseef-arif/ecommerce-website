@@ -37,7 +37,6 @@ export const SITE_DEFAULTS = {
     resetPassword: "/reset-password",
     cart: "/cart",
     checkout: "/checkout",
-    contact: "/contact",
     /** Staff dashboard (route implemented separately) */
     dashboard: "/dashboard",
     /** Internal landing after sign-in; redirects to dashboard or home by role. */
@@ -213,6 +212,10 @@ export const SITE_DEFAULTS = {
     accountPopoverLastNameLabel: "Last name",
     accountPopoverManageSettingsLine: "Manage your account settings.",
     accountPopoverPhoneLabel: "Phone number",
+    accountPopoverAddressLabel: "Address",
+    accountPopoverCityLabel: "City",
+    accountPopoverCountryLabel: "Country",
+    accountPopoverLocationEmpty: "No address on file",
     accountPopoverProfileUpdateError: "Could not save your profile. Try again.",
     accountPopoverForgotPasswordCta: "Forgot password?",
     accountPopoverForgotHeading: "Reset Password",
@@ -246,8 +249,8 @@ export const SITE_DEFAULTS = {
     paymentsHeading: "Secure Payments Methods",
     paymentMethodsImageAlt:
       "Visa, Mastercard, and other accepted payment methods",
-    phoneFallbackLink: "Phone & directions — Contact",
-    emailFallbackLink: "Email us via Contact",
+    phoneFallbackLink: "Phone & directions — see footer",
+    emailFallbackLink: "Email — see footer",
   },
   socialLabels: {
     whatsapp: "WhatsApp",

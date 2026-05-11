@@ -32,10 +32,3 @@ export type DeleteDiscountResult =
       ok: false;
       error: "invalid_id" | "not_found" | "unknown";
     };
-
-export type SetDiscountActiveResult =
-  | { ok: true }
-  | {
-      ok: false;
-      error: "invalid_id" | "not_found" | "unknown";
-    };

@@ -160,6 +160,7 @@ model Product {
   category    Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   cartItems   CartItem[]
   orderItems  OrderItem[]
+  heroSlides  HeroSlideProduct[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -239,6 +240,47 @@ model OrderItem {
   createdAt         DateTime @default(now())
 
   @@index([orderId])
+  @@index([productId])
+}
+
+/** Storefront hero banner slide; admin-managed via `/dashboard/banner`. */
+model HeroSlide {
+  id        String             @id @default(cuid())
+  /** Display heading on the slide (e.g. product line name). */
+  name      String
+  /** Public URL/path of the hero image (local `/uploads/hero/...` or full Vercel Blob URL). */
+  imagePath String?
+  /** Descriptive alt text used by `next/image`. */
+  imageAlt  String
+  /** Bullet lines shown next to the image; stored as a JSON array of strings. */
+  specs     Json
+  /** Lower values render first in the rotator. Ties broken by `createdAt` ASC. */
+  sortOrder Int                @default(0)
+  /** Hidden from the storefront when false (still editable in admin). */
+  isActive  Boolean            @default(true)
+  /** Products surfaced when the banner is clicked. Ordered by `position`. */
+  products  HeroSlideProduct[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+/**
+ * Join row linking a `HeroSlide` to a `Product`. `position` drives display
+ * order on the curated `/banner/[slideId]` page. Cascading deletes mean
+ * removing either side automatically prunes the link.
+ */
+model HeroSlideProduct {
+  slideId   String
+  productId String
+  position  Int       @default(0)
+  slide     HeroSlide @relation(fields: [slideId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@id([slideId, productId])
+  @@index([slideId, position])
   @@index([productId])
 }
 

@@ -1,30 +1,29 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { deleteDiscountAction } from "@/app/(admin)/dashboard/discounts/actions";
-import type { DeleteDiscountResult } from "@/app/(admin)/dashboard/discounts/form-state";
+import { deleteHeroSlideAction } from "@/app/(admin)/dashboard/banner/actions";
+import type { DeleteHeroSlideResult } from "@/app/(admin)/dashboard/banner/form-state";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-type DiscountRowActionsProps = {
-  discountId: string;
-  discountName: string;
+type HeroSlideRowActionsProps = {
+  slideId: string;
+  slideName: string;
 };
 
-const deleteErrorMessageFor = (result: DeleteDiscountResult): string => {
+const deleteErrorMessageFor = (result: DeleteHeroSlideResult): string => {
   if (result.ok) return "";
-  if (result.error === "not_found") return "Discount no longer exists.";
-  if (result.error === "invalid_id") return "Invalid discount id.";
-  return "Could not delete discount. Try again.";
+  if (result.error === "not_found") return "Slide no longer exists.";
+  if (result.error === "invalid_id") return "Invalid slide id.";
+  return "Could not delete slide. Try again.";
 };
 
-export const DiscountRowActions = ({
-  discountId,
-  discountName,
-}: DiscountRowActionsProps) => {
+export const HeroSlideRowActions = ({
+  slideId,
+  slideName,
+}: HeroSlideRowActionsProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -32,20 +31,13 @@ export const DiscountRowActions = ({
   const handleConfirmDelete = () => {
     setErrorMessage(null);
     startTransition(async () => {
-      const result = await deleteDiscountAction(discountId);
+      const result = await deleteHeroSlideAction(slideId);
       if (!result.ok) {
         setErrorMessage(deleteErrorMessageFor(result));
         return;
       }
       setIsOpen(false);
-      const nextParams = new URLSearchParams(searchParams.toString());
-      nextParams.set("status", "deleted");
-      const nextQuery = nextParams.toString();
-      router.replace(
-        nextQuery
-          ? `/dashboard/discounts?${nextQuery}`
-          : "/dashboard/discounts",
-      );
+      router.replace("/dashboard/banner?status=deleted");
       router.refresh();
     });
   };
@@ -68,17 +60,15 @@ export const DiscountRowActions = ({
 
       <ConfirmDialog
         isOpen={isOpen}
-        title="Delete this discount?"
+        title="Delete this hero slide?"
         description={
           <>
             This will permanently remove{" "}
-            <span className="font-semibold text-neutral-800">
-              {discountName}
-            </span>
-            . This action cannot be undone.
+            <span className="font-semibold text-neutral-800">{slideName}</span>{" "}
+            and its uploaded image. This action cannot be undone.
           </>
         }
-        confirmLabel="Delete discount"
+        confirmLabel="Delete slide"
         confirmVariant="danger"
         isPending={isPending}
         errorMessage={errorMessage}

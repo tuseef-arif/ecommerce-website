@@ -1,14 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from "react";
-import { HERO_PHONES } from "@/lib/config/hero-page";
+import type { HeroPhone } from "@/lib/config/hero-page";
 import { SITE_HERO_BANNER, STORE_SHELL } from "@/lib/config/site-config";
 import { HERO_BANNER_AUTO_ADVANCE_MS } from "@/lib/constants/ui-timeouts";
 const SWIPE_MIN_PX = 48;
@@ -32,8 +34,11 @@ const getReducedMotionSnapshot = () =>
 
 const getReducedMotionServerSnapshot = () => false;
 
-export const HeroBanner = () => {
-  const phones = HERO_PHONES;
+type HeroBannerProps = {
+  phones: ReadonlyArray<HeroPhone>;
+};
+
+export const HeroBanner = ({ phones }: HeroBannerProps) => {
   const count = phones.length;
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -115,18 +120,13 @@ export const HeroBanner = () => {
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          {phones.map((phone, i) => (
-            <div
-              key={phone.id}
-              className={`absolute inset-0 flex h-full w-full items-stretch justify-center ${fadeClass} ${
-                i === index
-                  ? "z-[1] opacity-100"
-                  : "pointer-events-none z-0 opacity-0"
-              }`}
-              aria-hidden={i !== index}
-            >
+          {phones.map((phone, i) => {
+            const isActive = i === index;
+            const cardContent: ReactNode = (
               <div
-                className={`flex h-full min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 md:flex-row md:rounded-2xl ${heroCardBg}`}
+                className={`flex h-full min-h-0 w-full max-w-full min-w-0 flex-col overflow-hidden rounded-2xl shadow-sm ring-1 ring-black/5 transition-shadow md:flex-row md:rounded-2xl ${heroCardBg} ${
+                  phone.href ? "group-hover:shadow-md" : ""
+                }`}
               >
                 <div className="flex w-full min-w-0 shrink-0 flex-col justify-center px-5 py-5 sm:px-6 sm:py-6 md:w-[35%] md:border-r md:border-neutral-300/50 md:py-8 md:pl-7 md:pr-5 lg:pl-8 lg:pr-6">
                   <h2 className="text-2xl font-bold leading-tight tracking-tight text-neutral-900 sm:text-[1.65rem] md:text-2xl lg:text-[1.75rem]">
@@ -150,8 +150,33 @@ export const HeroBanner = () => {
                   />
                 </div>
               </div>
-            </div>
-          ))}
+            );
+
+            return (
+              <div
+                key={phone.id}
+                className={`absolute inset-0 flex h-full w-full items-stretch justify-center ${fadeClass} ${
+                  isActive
+                    ? "z-[1] opacity-100"
+                    : "pointer-events-none z-0 opacity-0"
+                }`}
+                aria-hidden={!isActive}
+              >
+                {phone.href ? (
+                  <Link
+                    href={phone.href}
+                    aria-label={`Shop ${phone.name}`}
+                    tabIndex={isActive ? 0 : -1}
+                    className="group block h-full w-full rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[var(--store-brand-primary)] focus-visible:ring-offset-2"
+                  >
+                    {cardContent}
+                  </Link>
+                ) : (
+                  cardContent
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {count > 1 ? (

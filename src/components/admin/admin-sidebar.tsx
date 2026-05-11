@@ -15,20 +15,26 @@ const ADMIN_SIDEBAR_ITEMS: ReadonlyArray<AdminSidebarItem> = [
   { kind: "link", label: "Dashboard", href: "/dashboard", isImplemented: true },
   {
     kind: "link",
+    label: "Customers",
+    href: "/dashboard/customers",
+    isImplemented: true,
+  },
+  {
+    kind: "link",
     label: "Orders",
     href: "/dashboard/orders",
     isImplemented: true,
   },
   {
     kind: "link",
-    label: "Products",
-    href: "/dashboard/products",
+    label: "Banners",
+    href: "/dashboard/banner",
     isImplemented: true,
   },
   {
     kind: "link",
-    label: "Customers",
-    href: "/dashboard/customers",
+    label: "Products",
+    href: "/dashboard/products",
     isImplemented: true,
   },
   {

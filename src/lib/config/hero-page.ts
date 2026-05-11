@@ -13,6 +13,11 @@ export type HeroPhone = {
   imageSrc: string;
   /** Descriptive alt for the hero image */
   imageAlt: string;
+  /**
+   * Where clicking the banner navigates. `null`/`undefined` means the slide
+   * has no linked products and should render as a non-interactive card.
+   */
+  href?: string | null;
 };
 
 export const HERO_PHONES: HeroPhone[] = [

@@ -15,6 +15,7 @@ import {
   CHECKOUT_PAYMENT_METHODS,
   checkoutToDbPaymentMethod,
 } from "@/lib/orders/payment-method";
+import { sendOrderConfirmationEmail } from "@/lib/orders/order-confirmation-email";
 import { finalProductPrice } from "@/lib/products/discount";
 import { resolveCartVoucher } from "@/lib/discounts/resolve-cart-voucher";
 import {
@@ -525,11 +526,14 @@ const findVariantDelta = (
  * - Cart vouchers: code is echoed from the client but the discount amount is
  *   recomputed inside the transaction from line totals + `Discount` row rules.
  * - Update user profile name/phone in same transaction as order creation.
+ * - Order confirmation email is sent after the transaction commits; all dynamic
+ *   email fields are HTML-escaped in the email helper.
  *
  * Verification test case:
  * - Authenticated user places order with valid cart => Order + OrderItems created,
  *   stock decremented, and customer name/phone updated; shipping snapshot on
- *   the `Order` row (`shippingAddress`, `shippingCity`, `shippingCountry`, `shippingPhone`).
+ *   the `Order` row (`shippingAddress`, `shippingCity`, `shippingCountry`,
+ *   `shippingPhone`), and a confirmation email is attempted for the order email.
  * - Tampered payload with mismatched variant values => action returns `{ ok:false }`.
  * </SECURITY_REVIEW>
  */
@@ -794,8 +798,61 @@ export const placeCheckoutOrderAction = async (
         });
       }
 
-      return createdOrder;
+      const orderForEmail = await tx.order.findUnique({
+        where: { id: createdOrder.id },
+        select: {
+          id: true,
+          createdAt: true,
+          paymentMethod: true,
+          subtotal: true,
+          discountAmount: true,
+          voucherCode: true,
+          voucherDiscountAmount: true,
+          totalAmount: true,
+          shippingAddress: true,
+          shippingCity: true,
+          shippingCountry: true,
+          shippingPhone: true,
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+            },
+          },
+          items: {
+            orderBy: { createdAt: "asc" },
+            select: {
+              productName: true,
+              quantity: true,
+              lineTotal: true,
+            },
+          },
+        },
+      });
+
+      if (!orderForEmail) {
+        throw new Error("Could not load order confirmation details.");
+      }
+
+      return orderForEmail;
     });
+
+    try {
+      const emailResult = await sendOrderConfirmationEmail(order);
+      if (!emailResult.ok) {
+        console.error("sendOrderConfirmationEmail failed", {
+          orderId: order.id,
+          kind: emailResult.kind,
+        });
+      }
+    } catch (emailError) {
+      console.error("sendOrderConfirmationEmail threw", {
+        orderId: order.id,
+        error: emailError,
+      });
+    }
 
     return { ok: true, orderId: order.id };
   } catch (error) {

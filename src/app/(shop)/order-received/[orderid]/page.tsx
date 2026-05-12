@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { SITE_PRODUCT_SLIDER, STORE_SHELL } from "@/lib/config/site-config";
 import {
   paymentMethodDescription,
+  paymentMethodDescriptionSegments,
   paymentMethodLabel,
 } from "@/lib/orders/payment-method";
 import { formatProductPriceWithPrefix } from "@/lib/products/format-price";
@@ -70,6 +71,9 @@ export default async function OrderReceivedPage({
     `${order.user.firstName ?? ""} ${order.user.lastName ?? ""}`.trim() || "—";
   const paymentLabel = paymentMethodLabel(order.paymentMethod);
   const paymentBlurb = paymentMethodDescription(order.paymentMethod);
+  const paymentBlurbSegments = paymentMethodDescriptionSegments(
+    order.paymentMethod,
+  );
 
   return (
     <main className={`flex-1 py-8 sm:py-10 ${STORE_SHELL}`}>
@@ -98,7 +102,17 @@ export default async function OrderReceivedPage({
           </div>
         </div>
 
-        <p className="mt-5 text-sm text-neutral-700">{paymentBlurb}</p>
+        <p className="mt-5 text-sm text-neutral-700">
+          {paymentBlurbSegments.kind === "bank_transfer" ? (
+            <>
+              {paymentBlurbSegments.leadingText}
+              <strong>{paymentBlurbSegments.emphasizedText}</strong>
+              {paymentBlurbSegments.trailingText}
+            </>
+          ) : (
+            paymentBlurb
+          )}
+        </p>
 
         <h2 className="mt-8 text-2xl font-bold tracking-tight text-neutral-900">
           Order Details

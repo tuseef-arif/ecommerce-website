@@ -7,7 +7,8 @@
  *
  * **Resend (.env.local)**
  * `RESEND_API_KEY` — API key
- * From header: set per feature (`SIGNUP_OTP_EMAIL_FROM`, `PASSWORD_RESET_EMAIL_FROM`) or `SMTP_FROM`
+ * From header: set per feature (`SIGNUP_OTP_EMAIL_FROM`, `PASSWORD_RESET_EMAIL_FROM`,
+ * `ORDER_PLACED_EMAIL_FROM`) or `SMTP_FROM`
  *
  * **SMTP / Gmail (.env.local)**
  * `EMAIL_PROVIDER=smtp`
@@ -16,7 +17,7 @@
  * `SMTP_SECURE=true` for port 465; omit or `false` for 587
  * `SMTP_USER=you@gmail.com`
  * `SMTP_PASS=` Google App Password (16 chars, not your normal password)
- * `SMTP_FROM="My App <you@gmail.com>"` or use `SIGNUP_OTP_EMAIL_FROM` / `PASSWORD_RESET_EMAIL_FROM` for sign-up and reset respectively
+ * `SMTP_FROM="My App <you@gmail.com>"` or use per-feature `*_EMAIL_FROM` values
  *
  * Restart `npm run dev` after changing env.
  */

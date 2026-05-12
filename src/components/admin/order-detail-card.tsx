@@ -10,9 +10,6 @@ type OrderDetailCardProps = {
   order: AdminOrderDetail;
 };
 
-const formatDateTime = (iso: string | null): string =>
-  formatInstantForStoreDateTime(iso);
-
 const getStatusDateLine = (order: AdminOrderDetail): string => {
   const statusToLabel: Record<OrderStatus, string> = {
     PENDING: "Placed",
@@ -31,8 +28,25 @@ const getStatusDateLine = (order: AdminOrderDetail): string => {
   };
 
   const label = statusToLabel[order.status];
-  const formattedDate = formatDateTime(statusToDateIso[order.status]);
+  const formattedDate = formatInstantForStoreDateTime(
+    statusToDateIso[order.status],
+  );
   return `${label} ${formattedDate}`;
+};
+
+/** Non-empty lines for the shipping block (street, city/country, phone). */
+const getShippingAddressLines = (order: AdminOrderDetail): string[] => {
+  const lines: string[] = [];
+  const street = order.shippingAddress?.trim();
+  if (street) lines.push(street);
+  const cityCountry = [order.shippingCity, order.shippingCountry]
+    .map((s) => s?.trim())
+    .filter((s): s is string => Boolean(s && s.length > 0))
+    .join(", ");
+  if (cityCountry) lines.push(cityCountry);
+  const phone = order.shippingPhone?.trim();
+  if (phone) lines.push(phone);
+  return lines;
 };
 
 const formatMoney = (raw: string): string => {
@@ -46,6 +60,7 @@ const formatMoney = (raw: string): string => {
 
 export const OrderDetailCard = ({ order }: OrderDetailCardProps) => {
   const currencyPrefix = SITE_PRODUCT_SLIDER.pricePrefix;
+  const shippingAddressLines = getShippingAddressLines(order);
   return (
     <section className="space-y-5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
       <div className="min-w-0 flex-1 space-y-1">
@@ -64,6 +79,19 @@ export const OrderDetailCard = ({ order }: OrderDetailCardProps) => {
         </p>
         <p className="text-xs text-neutral-500">{getStatusDateLine(order)}</p>
       </div>
+
+      {shippingAddressLines.length > 0 ? (
+        <div className="rounded-xl border border-neutral-100 bg-neutral-50 p-4 text-sm text-neutral-700">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-600">
+            Shipping Address
+          </h3>
+          <div className="mt-2 space-y-1">
+            {shippingAddressLines.map((line, index) => (
+              <p key={index}>{line}</p>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-2xl border border-neutral-200 bg-white p-4">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-600">

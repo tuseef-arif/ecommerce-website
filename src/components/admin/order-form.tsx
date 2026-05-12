@@ -52,6 +52,11 @@ const STATUS_OPTIONS = [
 const formatDateTime = (iso: string | null): string =>
   formatInstantForStoreDateTime(iso);
 
+const ORDER_LEAD_INPUT_CLASS =
+  "peer h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 pb-1 pt-3 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors placeholder:text-transparent focus:border-[var(--store-brand-primary)] focus:ring-0";
+const ORDER_LEAD_LABEL_CLASS =
+  "pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 bg-white px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-neutral-600";
+
 const getStatusDateLine = (order: AdminOrderDetail): string => {
   const statusToLabel: Record<OrderStatus, string> = {
     PENDING: "Placed",
@@ -171,40 +176,80 @@ export const OrderForm = ({
           currencyPrefix={currencyPrefix}
           errorMessage={state.fieldErrors.items ?? null}
           leadFields={
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-              <SelectField
-                label="Customer"
-                name="userId"
-                variant="floating"
-                size="sm"
-                options={customerOptions}
-                placeholder={
-                  customerOptions.length === 0
-                    ? "No customers available"
-                    : "Select a customer"
-                }
-                required
-                error={state.fieldErrors.userId ?? null}
-              />
-              <SelectField
-                label="Status"
-                name="status"
-                variant="floating"
-                size="sm"
-                options={STATUS_OPTIONS}
-                defaultValue="PENDING"
-                error={state.fieldErrors.status ?? null}
-              />
-              <SelectField
-                label="Payment"
-                name="paymentMethod"
-                variant="floating"
-                size="sm"
-                options={PAYMENT_METHOD_OPTIONS}
-                defaultValue="COD"
-                error={state.fieldErrors.paymentMethod ?? null}
-              />
-              <div className="hidden min-h-[2.5rem] lg:block" aria-hidden />
+            <div className="space-y-3">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                <SelectField
+                  label="Customer"
+                  name="userId"
+                  variant="floating"
+                  size="sm"
+                  options={customerOptions}
+                  placeholder={
+                    customerOptions.length === 0
+                      ? "No customers available"
+                      : "Select a customer"
+                  }
+                  required
+                  error={state.fieldErrors.userId ?? null}
+                />
+                <SelectField
+                  label="Status"
+                  name="status"
+                  variant="floating"
+                  size="sm"
+                  options={STATUS_OPTIONS}
+                  defaultValue="PENDING"
+                  error={state.fieldErrors.status ?? null}
+                />
+                <SelectField
+                  label="Payment"
+                  name="paymentMethod"
+                  variant="floating"
+                  size="sm"
+                  options={PAYMENT_METHOD_OPTIONS}
+                  defaultValue="COD"
+                  error={state.fieldErrors.paymentMethod ?? null}
+                />
+                <div className="hidden min-h-[2.5rem] lg:block" aria-hidden />
+              </div>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                <FormInputField
+                  label="Address"
+                  name="shippingAddress"
+                  maxLength={200}
+                  autoComplete="street-address"
+                  errorText={state.fieldErrors.shippingAddress ?? null}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+                <FormInputField
+                  label="City"
+                  name="shippingCity"
+                  maxLength={80}
+                  autoComplete="address-level2"
+                  errorText={state.fieldErrors.shippingCity ?? null}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+                <FormInputField
+                  label="Country"
+                  name="shippingCountry"
+                  maxLength={80}
+                  autoComplete="country-name"
+                  errorText={state.fieldErrors.shippingCountry ?? null}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+                <FormInputField
+                  label="Phone"
+                  name="shippingPhone"
+                  maxLength={40}
+                  autoComplete="tel"
+                  errorText={state.fieldErrors.shippingPhone ?? null}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+              </div>
             </div>
           }
         />
@@ -224,34 +269,78 @@ export const OrderForm = ({
           }}
           voucherFieldError={state.fieldErrors.voucherCode ?? null}
           leadFields={
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-              <FormInputField
-                label="Customer"
-                name="customerDisplay"
-                readOnly
-                value={`${initialOrder.customer.displayName} · ${initialOrder.customer.email}`}
-                inputClassName="peer h-10 w-full rounded-lg border border-neutral-300 bg-white px-3 pb-1 pt-3 text-sm leading-5 text-neutral-900 outline-none ring-0 transition-colors placeholder:text-transparent focus:border-[var(--store-brand-primary)] focus:ring-0"
-                labelClassName="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 bg-white px-1 text-xs font-semibold uppercase tracking-wide text-neutral-500 transition-all duration-150 peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-[10px] peer-focus:text-[var(--store-brand-primary)] peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-[10px] peer-[:not(:placeholder-shown)]:text-neutral-600"
-              />
-              <SelectField
-                label="Status"
-                name="status"
-                variant="floating"
-                size="sm"
-                options={STATUS_OPTIONS}
-                defaultValue={initialOrder.status}
-                error={state.fieldErrors.status ?? null}
-              />
-              <SelectField
-                label="Payment"
-                name="paymentMethod"
-                variant="floating"
-                size="sm"
-                options={PAYMENT_METHOD_OPTIONS}
-                defaultValue={initialOrder.paymentMethod}
-                error={state.fieldErrors.paymentMethod ?? null}
-              />
-              <div className="hidden min-h-[2.5rem] lg:block" aria-hidden />
+            <div className="space-y-3">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                <FormInputField
+                  label="Customer"
+                  name="customerDisplay"
+                  readOnly
+                  value={`${initialOrder.customer.displayName} · ${initialOrder.customer.email}`}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+                <SelectField
+                  label="Status"
+                  name="status"
+                  variant="floating"
+                  size="sm"
+                  options={STATUS_OPTIONS}
+                  defaultValue={initialOrder.status}
+                  error={state.fieldErrors.status ?? null}
+                />
+                <SelectField
+                  label="Payment"
+                  name="paymentMethod"
+                  variant="floating"
+                  size="sm"
+                  options={PAYMENT_METHOD_OPTIONS}
+                  defaultValue={initialOrder.paymentMethod}
+                  error={state.fieldErrors.paymentMethod ?? null}
+                />
+                <div className="hidden min-h-[2.5rem] lg:block" aria-hidden />
+              </div>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                <FormInputField
+                  label="Address"
+                  name="shippingAddress"
+                  maxLength={200}
+                  defaultValue={initialOrder.shippingAddress ?? ""}
+                  autoComplete="street-address"
+                  errorText={state.fieldErrors.shippingAddress ?? null}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+                <FormInputField
+                  label="City"
+                  name="shippingCity"
+                  maxLength={80}
+                  defaultValue={initialOrder.shippingCity ?? ""}
+                  autoComplete="address-level2"
+                  errorText={state.fieldErrors.shippingCity ?? null}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+                <FormInputField
+                  label="Country"
+                  name="shippingCountry"
+                  maxLength={80}
+                  defaultValue={initialOrder.shippingCountry ?? ""}
+                  autoComplete="country-name"
+                  errorText={state.fieldErrors.shippingCountry ?? null}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+                <FormInputField
+                  label="Phone"
+                  name="shippingPhone"
+                  maxLength={40}
+                  defaultValue={initialOrder.shippingPhone ?? ""}
+                  autoComplete="tel"
+                  errorText={state.fieldErrors.shippingPhone ?? null}
+                  inputClassName={ORDER_LEAD_INPUT_CLASS}
+                  labelClassName={ORDER_LEAD_LABEL_CLASS}
+                />
+              </div>
             </div>
           }
         />

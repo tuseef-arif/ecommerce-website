@@ -8,6 +8,10 @@ export type OrderFormFieldKey =
   | "userId"
   | "status"
   | "paymentMethod"
+  | "shippingAddress"
+  | "shippingCity"
+  | "shippingCountry"
+  | "shippingPhone"
   | "items"
   | "voucherCode";
 

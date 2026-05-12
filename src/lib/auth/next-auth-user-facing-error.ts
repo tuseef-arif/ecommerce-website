@@ -7,7 +7,7 @@ export const userFacingMessageForNextAuthError = (
 ): string => {
   switch (code?.trim()) {
     case "AccessDenied":
-      return "No account is registered for that Google email. Create an account first.";
+      return "Google sign-in is not available for this email. The account may be inactive, or something went wrong. Try again or use email and password.";
     case "Configuration":
       return "Sign-in is not configured correctly on the server. Try again later or contact support.";
     case "Verification":

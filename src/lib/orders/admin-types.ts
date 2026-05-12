@@ -68,6 +68,10 @@ export type AdminOrderDetail = {
   voucherCode: string | null;
   voucherDiscountAmount: string;
   totalAmount: string;
+  shippingAddress: string | null;
+  shippingCity: string | null;
+  shippingCountry: string | null;
+  shippingPhone: string | null;
   customer: {
     id: string;
     email: string;

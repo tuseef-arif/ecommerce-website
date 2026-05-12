@@ -127,18 +127,6 @@ export const AdminSidebar = () => {
                 </Link>
               );
             })}
-          </nav>
-
-          <div className="mt-auto shrink-0 space-y-1 border-t border-neutral-200 pt-3">
-            <Link
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              prefetch={false}
-              className={visitWebsiteButtonClass}
-            >
-              Visit Website
-            </Link>
             <button
               type="button"
               onClick={() => setIsLogoutDialogOpen(true)}
@@ -146,7 +134,17 @@ export const AdminSidebar = () => {
             >
               Log out
             </button>
-          </div>
+          </nav>
+
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            prefetch={false}
+            className={`${visitWebsiteButtonClass} mt-auto shrink-0 border-t border-neutral-200 pt-3`}
+          >
+            Visit Website
+          </Link>
         </div>
       </aside>
 

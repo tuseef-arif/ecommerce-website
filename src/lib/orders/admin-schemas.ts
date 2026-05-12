@@ -16,10 +16,22 @@ const orderStatusSchema = z.enum([
 
 const paymentMethodSchema = z.enum(["BANK_TRANSFER", "SELF_COLLECTION", "COD"]);
 
+/** Optional shipping snapshot; empty string → null for Prisma. */
+const orderShippingLine = (max: number, label: string) =>
+  z
+    .union([z.string(), z.undefined(), z.null()])
+    .transform((v) => String(v ?? "").trim())
+    .pipe(z.string().max(max, `${label} is too long.`))
+    .transform((s) => (s.length === 0 ? null : s));
+
 export const adminOrderCreateSchema = z.object({
   userId: trimmed(40).pipe(z.string().min(1, "Customer is required.")),
   status: orderStatusSchema.default("PENDING"),
   paymentMethod: paymentMethodSchema.default("COD"),
+  shippingAddress: orderShippingLine(200, "Address"),
+  shippingCity: orderShippingLine(80, "City"),
+  shippingCountry: orderShippingLine(80, "Country"),
+  shippingPhone: orderShippingLine(40, "Phone"),
   itemsJson: z
     .string()
     .max(50_000, "Order items payload is too large.")
@@ -31,6 +43,10 @@ export type AdminOrderCreateValues = z.output<typeof adminOrderCreateSchema>;
 export const adminOrderUpdateSchema = z.object({
   status: orderStatusSchema,
   paymentMethod: paymentMethodSchema,
+  shippingAddress: orderShippingLine(200, "Address"),
+  shippingCity: orderShippingLine(80, "City"),
+  shippingCountry: orderShippingLine(80, "Country"),
+  shippingPhone: orderShippingLine(40, "Phone"),
   itemsJson: z
     .string()
     .max(50_000, "Order items payload is too large.")

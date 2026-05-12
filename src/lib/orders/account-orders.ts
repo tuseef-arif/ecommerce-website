@@ -83,14 +83,15 @@ export type AccountOrderDetail = {
   voucherCode: string | null;
   voucherDiscountAmount: { toString(): string };
   totalAmount: { toString(): string };
+  shippingAddress: string | null;
+  shippingCity: string | null;
+  shippingCountry: string | null;
+  shippingPhone: string | null;
   user: {
     firstName: string | null;
     lastName: string | null;
     email: string;
     phone: string | null;
-    address: string | null;
-    city: string | null;
-    country: string | null;
   };
   items: AccountOrderDetailItem[];
 };
@@ -119,15 +120,16 @@ export const getAccountOrderForUser = async (
       voucherCode: true,
       voucherDiscountAmount: true,
       totalAmount: true,
+      shippingAddress: true,
+      shippingCity: true,
+      shippingCountry: true,
+      shippingPhone: true,
       user: {
         select: {
           firstName: true,
           lastName: true,
           email: true,
           phone: true,
-          address: true,
-          city: true,
-          country: true,
         },
       },
       items: {

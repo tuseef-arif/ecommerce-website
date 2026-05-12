@@ -20,9 +20,6 @@ export type AdminCustomerListItem = {
   /** First + last name composed for display, with email fallback. */
   displayName: string;
   phone: string | null;
-  address: string | null;
-  city: string | null;
-  country: string | null;
   /** Public URL path under `/uploads/` or null when not set. */
   profileImagePath: string | null;
   role: UserRole;
@@ -39,9 +36,6 @@ export type AdminCustomerDetail = {
   firstName: string;
   lastName: string;
   phone: string;
-  address: string;
-  city: string;
-  country: string;
   profileImagePath: string | null;
   role: UserRole;
   status: UserStatus;

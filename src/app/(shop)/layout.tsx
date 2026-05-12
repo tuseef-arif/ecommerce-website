@@ -22,9 +22,6 @@ export default async function ShopLayout({
                 firstName: user.firstName ?? undefined,
                 lastName: user.lastName ?? undefined,
                 phone: user.phone ?? undefined,
-                address: user.address ?? undefined,
-                city: user.city ?? undefined,
-                country: user.country ?? undefined,
                 profileImagePath: user.profileImagePath ?? undefined,
               }
             : null

@@ -7,6 +7,8 @@ type FormInputFieldProps = {
   labelClassName?: string;
   inputClassName?: string;
   inputRef?: RefObject<HTMLInputElement | null>;
+  /** Shown under the input; sets `aria-invalid` when present. */
+  errorText?: string | null;
 } & InputHTMLAttributes<HTMLInputElement>;
 
 const defaultInputClassName =
@@ -22,18 +24,43 @@ export const FormInputField = ({
   inputRef,
   className,
   id,
+  errorText,
   ...inputProps
-}: FormInputFieldProps) => (
-  <label className={`relative block ${wrapperClassName}`.trim()}>
-    <input
-      {...inputProps}
-      ref={inputRef}
-      id={id ?? name}
-      name={name}
-      type={type}
-      placeholder=" "
-      className={`${inputClassName} ${className ?? ""}`.trim()}
-    />
-    <span className={labelClassName}>{label}</span>
-  </label>
-);
+}: FormInputFieldProps) => {
+  const hasError = Boolean(errorText?.trim());
+  const mergedInputClass = [
+    inputClassName,
+    className ?? "",
+    hasError ? "border-red-600 focus:border-red-600" : "",
+  ]
+    .join(" ")
+    .trim();
+
+  return (
+    <div className={wrapperClassName.trim()}>
+      <label className="relative block">
+        <input
+          {...inputProps}
+          ref={inputRef}
+          id={id ?? name}
+          name={name}
+          type={type}
+          placeholder=" "
+          aria-invalid={hasError}
+          aria-describedby={hasError ? `${name}-error` : undefined}
+          className={mergedInputClass}
+        />
+        <span className={labelClassName}>{label}</span>
+      </label>
+      {hasError ? (
+        <p
+          id={`${name}-error`}
+          role="alert"
+          className="mt-1.5 text-sm text-red-600"
+        >
+          {errorText}
+        </p>
+      ) : null}
+    </div>
+  );
+};

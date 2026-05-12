@@ -31,7 +31,7 @@ import { FormInputField } from "@/components/ui/form-input-field";
 import { PasswordInputField } from "@/components/ui/password-input-field";
 import { SITE_HEADER, SITE_ROUTES } from "@/lib/config/site-config";
 import { PROFILE_IMAGE_MAX_BYTES } from "@/lib/validate-profile-image";
-import { IconMail, IconMapPin, IconPhone } from "@/components/icons";
+import { IconMail, IconPhone } from "@/components/icons";
 import {
   SIGNUP_PASSWORD_FIELD_TITLE,
   SIGNUP_PASSWORD_PATTERN,
@@ -62,9 +62,6 @@ export const AccountPopoverSignedInMenu = ({
   const [firstName, setFirstName] = useState(user.firstName?.trim() ?? "");
   const [lastName, setLastName] = useState(user.lastName?.trim() ?? "");
   const [phone, setPhone] = useState(user.phone?.trim() ?? "");
-  const [address, setAddress] = useState(user.address?.trim() ?? "");
-  const [city, setCity] = useState(user.city?.trim() ?? "");
-  const [country, setCountry] = useState(user.country?.trim() ?? "");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
@@ -88,16 +85,6 @@ export const AccountPopoverSignedInMenu = ({
       ? user.phone.trim()
       : SITE_HEADER.accountPopoverPhoneEmpty;
 
-  const locationLines = [
-    user.address?.trim(),
-    user.city?.trim(),
-    user.country?.trim(),
-  ].filter((line): line is string => Boolean(line && line.length > 0));
-  const locationDisplay =
-    locationLines.length > 0
-      ? locationLines.join(", ")
-      : SITE_HEADER.accountPopoverLocationEmpty;
-
   const actionButtonClass =
     "flex min-h-10 w-full items-center justify-center rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm font-semibold text-[var(--store-brand-primary)] transition-colors hover:bg-neutral-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--store-brand-primary)] disabled:cursor-not-allowed disabled:opacity-60";
   const actionButtonNavyClass =
@@ -108,17 +95,11 @@ export const AccountPopoverSignedInMenu = ({
   const baselineFirst = user.firstName?.trim() ?? "";
   const baselineLast = user.lastName?.trim() ?? "";
   const baselinePhone = user.phone?.trim() ?? "";
-  const baselineAddress = user.address?.trim() ?? "";
-  const baselineCity = user.city?.trim() ?? "";
-  const baselineCountry = user.country?.trim() ?? "";
 
   const hasProfileChanges =
     firstName.trim() !== baselineFirst ||
     lastName.trim() !== baselineLast ||
-    phone.trim() !== baselinePhone ||
-    address.trim() !== baselineAddress ||
-    city.trim() !== baselineCity ||
-    country.trim() !== baselineCountry;
+    phone.trim() !== baselinePhone;
 
   const canSubmitPassword =
     oldPassword.trim().length > 0 &&
@@ -129,9 +110,6 @@ export const AccountPopoverSignedInMenu = ({
     setFirstName(user.firstName?.trim() ?? "");
     setLastName(user.lastName?.trim() ?? "");
     setPhone(user.phone?.trim() ?? "");
-    setAddress(user.address?.trim() ?? "");
-    setCity(user.city?.trim() ?? "");
-    setCountry(user.country?.trim() ?? "");
     setSaveError(null);
     setImageUploadError(null);
     setIsPasswordEditing(false);
@@ -142,9 +120,6 @@ export const AccountPopoverSignedInMenu = ({
     setFirstName(user.firstName?.trim() ?? "");
     setLastName(user.lastName?.trim() ?? "");
     setPhone(user.phone?.trim() ?? "");
-    setAddress(user.address?.trim() ?? "");
-    setCity(user.city?.trim() ?? "");
-    setCountry(user.country?.trim() ?? "");
     setSaveError(null);
     setImageUploadError(null);
     setIsEditing(false);
@@ -317,36 +292,6 @@ export const AccountPopoverSignedInMenu = ({
               value={phone}
               onChange={(ev) => {
                 setPhone(ev.target.value);
-                setSaveError(null);
-              }}
-            />
-            <FormInputField
-              label={SITE_HEADER.accountPopoverAddressLabel}
-              name="address"
-              autoComplete="street-address"
-              value={address}
-              onChange={(ev) => {
-                setAddress(ev.target.value);
-                setSaveError(null);
-              }}
-            />
-            <FormInputField
-              label={SITE_HEADER.accountPopoverCityLabel}
-              name="city"
-              autoComplete="address-level2"
-              value={city}
-              onChange={(ev) => {
-                setCity(ev.target.value);
-                setSaveError(null);
-              }}
-            />
-            <FormInputField
-              label={SITE_HEADER.accountPopoverCountryLabel}
-              name="country"
-              autoComplete="country-name"
-              value={country}
-              onChange={(ev) => {
-                setCountry(ev.target.value);
                 setSaveError(null);
               }}
             />
@@ -545,10 +490,6 @@ export const AccountPopoverSignedInMenu = ({
               <div className="flex items-center gap-2.5 text-sm text-neutral-700">
                 <IconPhone className="h-4 w-4 shrink-0 text-neutral-500" />
                 <span className="truncate">{phoneDisplay}</span>
-              </div>
-              <div className="flex items-start gap-2.5 text-sm text-neutral-700">
-                <IconMapPin className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500" />
-                <span className="min-w-0 break-words">{locationDisplay}</span>
               </div>
             </div>
 

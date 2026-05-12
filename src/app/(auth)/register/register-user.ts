@@ -33,9 +33,6 @@ export const createRegisteredUser = async (
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
-        address: data.address,
-        city: data.city,
-        country: data.country,
       },
     });
 

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { SITE_PRODUCT_SLIDER, STORE_SHELL } from "@/lib/config/site-config";
 import {
   paymentMethodDescription,
+  paymentMethodDescriptionSegments,
   paymentMethodLabel,
 } from "@/lib/orders/payment-method";
 import { formatProductPriceWithPrefix } from "@/lib/products/format-price";
@@ -37,15 +38,16 @@ export default async function OrderReceivedPage({
       voucherCode: true,
       voucherDiscountAmount: true,
       totalAmount: true,
+      shippingAddress: true,
+      shippingCity: true,
+      shippingCountry: true,
+      shippingPhone: true,
       user: {
         select: {
           firstName: true,
           lastName: true,
           email: true,
           phone: true,
-          address: true,
-          city: true,
-          country: true,
         },
       },
       items: {
@@ -69,6 +71,9 @@ export default async function OrderReceivedPage({
     `${order.user.firstName ?? ""} ${order.user.lastName ?? ""}`.trim() || "—";
   const paymentLabel = paymentMethodLabel(order.paymentMethod);
   const paymentBlurb = paymentMethodDescription(order.paymentMethod);
+  const paymentBlurbSegments = paymentMethodDescriptionSegments(
+    order.paymentMethod,
+  );
 
   return (
     <main className={`flex-1 py-8 sm:py-10 ${STORE_SHELL}`}>
@@ -97,7 +102,17 @@ export default async function OrderReceivedPage({
           </div>
         </div>
 
-        <p className="mt-5 text-sm text-neutral-700">{paymentBlurb}</p>
+        <p className="mt-5 text-sm text-neutral-700">
+          {paymentBlurbSegments.kind === "bank_transfer" ? (
+            <>
+              {paymentBlurbSegments.leadingText}
+              <strong>{paymentBlurbSegments.emphasizedText}</strong>
+              {paymentBlurbSegments.trailingText}
+            </>
+          ) : (
+            paymentBlurb
+          )}
+        </p>
 
         <h2 className="mt-8 text-2xl font-bold tracking-tight text-neutral-900">
           Order Details
@@ -210,12 +225,16 @@ export default async function OrderReceivedPage({
             </h3>
             <div className="mt-3 space-y-1 text-sm text-neutral-700">
               <p>{fullName}</p>
-              <p>{displayOrDash(order.user.address)}</p>
+              <p>{displayOrDash(order.shippingAddress)}</p>
               <p>
-                {displayOrDash(order.user.city)},{" "}
-                {displayOrDash(order.user.country)}
+                {displayOrDash(order.shippingCity)},{" "}
+                {displayOrDash(order.shippingCountry)}
               </p>
-              <p>{displayOrDash(order.user.phone)}</p>
+              <p>
+                {displayOrDash(
+                  order.shippingPhone?.trim() || order.user.phone?.trim(),
+                )}
+              </p>
               <p>{displayOrDash(order.user.email)}</p>
             </div>
           </div>

@@ -215,12 +215,16 @@ export const AccountOrderDetailView = ({
           </h3>
           <div className="mt-3 space-y-1 text-sm text-neutral-700">
             <p>{fullName}</p>
-            <p>{displayOrDash(order.user.address)}</p>
+            <p>{displayOrDash(order.shippingAddress)}</p>
             <p>
-              {displayOrDash(order.user.city)},{" "}
-              {displayOrDash(order.user.country)}
+              {displayOrDash(order.shippingCity)},{" "}
+              {displayOrDash(order.shippingCountry)}
             </p>
-            <p>{displayOrDash(order.user.phone)}</p>
+            <p>
+              {displayOrDash(
+                order.shippingPhone?.trim() || order.user.phone?.trim(),
+              )}
+            </p>
             <p>{displayOrDash(order.user.email)}</p>
           </div>
         </section>

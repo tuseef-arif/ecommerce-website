@@ -70,6 +70,16 @@ const fieldErrorsFromZod = (
       if (!fieldErrors.status) fieldErrors.status = issue.message;
     } else if (top === "paymentMethod") {
       if (!fieldErrors.paymentMethod) fieldErrors.paymentMethod = issue.message;
+    } else if (top === "shippingAddress") {
+      if (!fieldErrors.shippingAddress)
+        fieldErrors.shippingAddress = issue.message;
+    } else if (top === "shippingCity") {
+      if (!fieldErrors.shippingCity) fieldErrors.shippingCity = issue.message;
+    } else if (top === "shippingCountry") {
+      if (!fieldErrors.shippingCountry)
+        fieldErrors.shippingCountry = issue.message;
+    } else if (top === "shippingPhone") {
+      if (!fieldErrors.shippingPhone) fieldErrors.shippingPhone = issue.message;
     } else if (top === "itemsJson") {
       if (!fieldErrors.items) fieldErrors.items = issue.message;
     } else if (top === "voucherCode") {
@@ -83,12 +93,20 @@ const parseCreateInput = (formData: FormData) => ({
   userId: String(formData.get("userId") ?? ""),
   status: String(formData.get("status") ?? "PENDING"),
   paymentMethod: String(formData.get("paymentMethod") ?? "COD"),
+  shippingAddress: String(formData.get("shippingAddress") ?? ""),
+  shippingCity: String(formData.get("shippingCity") ?? ""),
+  shippingCountry: String(formData.get("shippingCountry") ?? ""),
+  shippingPhone: String(formData.get("shippingPhone") ?? ""),
   itemsJson: String(formData.get("itemsJson") ?? ""),
 });
 
 const parseUpdateInput = (formData: FormData) => ({
   status: String(formData.get("status") ?? ""),
   paymentMethod: String(formData.get("paymentMethod") ?? "COD"),
+  shippingAddress: String(formData.get("shippingAddress") ?? ""),
+  shippingCity: String(formData.get("shippingCity") ?? ""),
+  shippingCountry: String(formData.get("shippingCountry") ?? ""),
+  shippingPhone: String(formData.get("shippingPhone") ?? ""),
   itemsJson: String(formData.get("itemsJson") ?? ""),
   voucherCode: String(formData.get("voucherCode") ?? ""),
 });
@@ -533,6 +551,10 @@ export const createOrderAction = async (
           userId: customer.id,
           status,
           paymentMethod: parsed.data.paymentMethod,
+          shippingAddress: parsed.data.shippingAddress,
+          shippingCity: parsed.data.shippingCity,
+          shippingCountry: parsed.data.shippingCountry,
+          shippingPhone: parsed.data.shippingPhone,
           subtotal: round2(subtotal),
           discountAmount: round2(discountAmount),
           totalAmount: round2(totalAmount),
@@ -707,6 +729,10 @@ export const updateOrderAction = async (
         data: {
           status,
           paymentMethod: parsed.data.paymentMethod,
+          shippingAddress: parsed.data.shippingAddress,
+          shippingCity: parsed.data.shippingCity,
+          shippingCountry: parsed.data.shippingCountry,
+          shippingPhone: parsed.data.shippingPhone,
           shippedAt: nextShippedAt,
           deliveredAt: nextDeliveredAt,
           subtotal: round2(financials.subtotal),

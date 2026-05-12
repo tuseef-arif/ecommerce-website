@@ -11,6 +11,13 @@ const COUNTRY_MAX_LENGTH = 80;
 
 const digitsOnlyPhone = (raw: string) => raw.trim().replace(/\D/g, "");
 
+/** Optional on sign-up forms; checkout still sends billing address fields. */
+const registerLocationField = (max: number, label: string) =>
+  z
+    .union([z.string(), z.undefined(), z.null()])
+    .transform((v) => String(v ?? "").trim())
+    .pipe(z.string().max(max, `${label} is too long.`));
+
 export const registerAccountSchema = z
   .object({
     firstName: z
@@ -40,21 +47,9 @@ export const registerAccountSchema = z
           .min(10, "Enter a valid phone number (at least 10 digits).")
           .max(15, "Phone number is too long."),
       ),
-    address: z
-      .string()
-      .trim()
-      .min(1, "Address is required.")
-      .max(ADDRESS_MAX_LENGTH, "Address is too long."),
-    city: z
-      .string()
-      .trim()
-      .min(1, "City is required.")
-      .max(CITY_MAX_LENGTH, "City is too long."),
-    country: z
-      .string()
-      .trim()
-      .min(1, "Country is required.")
-      .max(COUNTRY_MAX_LENGTH, "Country is too long."),
+    address: registerLocationField(ADDRESS_MAX_LENGTH, "Address"),
+    city: registerLocationField(CITY_MAX_LENGTH, "City"),
+    country: registerLocationField(COUNTRY_MAX_LENGTH, "Country"),
     password: signupPasswordSchema,
     confirmPassword: z.string(),
   })

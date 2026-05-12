@@ -42,6 +42,7 @@ import {
   paymentMethodDescription,
 } from "@/lib/orders/payment-method";
 import { formatProductPriceWithPrefix } from "@/lib/products/format-price";
+import { checkoutBillingFieldsSchema } from "@/lib/validation/checkout-billing-schema";
 
 type BillingFormState = {
   firstName: string;
@@ -51,6 +52,52 @@ type BillingFormState = {
   address: string;
   city: string;
   country: string;
+};
+
+type BillingFieldErrors = Partial<Record<keyof BillingFormState, string>>;
+
+const BILLING_FIELD_ORDER: (keyof BillingFormState)[] = [
+  "firstName",
+  "lastName",
+  "phone",
+  "email",
+  "address",
+  "city",
+  "country",
+];
+
+const buildBillingFieldErrors = (
+  billing: BillingFormState,
+): BillingFieldErrors => {
+  const parsed = checkoutBillingFieldsSchema.safeParse(billing);
+  if (parsed.success) return {};
+  const out: BillingFieldErrors = {};
+  for (const issue of parsed.error.issues) {
+    const key = issue.path[0];
+    if (
+      key === "firstName" ||
+      key === "lastName" ||
+      key === "phone" ||
+      key === "email" ||
+      key === "address" ||
+      key === "city" ||
+      key === "country"
+    ) {
+      if (!out[key]) out[key] = issue.message;
+    }
+  }
+  return out;
+};
+
+const scrollToFirstBillingError = (errs: BillingFieldErrors) => {
+  const firstKey = BILLING_FIELD_ORDER.find((k) => errs[k]);
+  if (!firstKey) return;
+  requestAnimationFrame(() => {
+    document.getElementById(firstKey)?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  });
 };
 
 export default function CheckoutPage() {
@@ -77,6 +124,8 @@ export default function CheckoutPage() {
   } | null>(null);
   const [isAuthResolved, setIsAuthResolved] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [billingFieldErrors, setBillingFieldErrors] =
+    useState<BillingFieldErrors>({});
   const [billingForm, setBillingForm] = useState<BillingFormState>({
     firstName: "",
     lastName: "",
@@ -113,10 +162,7 @@ export default function CheckoutPage() {
           lastName: prev.lastName || lastName,
           email: prev.email || email,
           phone: prev.phone || phone,
-          address: prev.address || (session?.user?.address?.trim() ?? ""),
-          city: prev.city || (session?.user?.city?.trim() ?? ""),
-          country:
-            prev.country || (session?.user?.country?.trim() ?? "Pakistan"),
+          country: prev.country || "Pakistan",
         }));
       }
       setIsAuthResolved(true);
@@ -205,12 +251,30 @@ export default function CheckoutPage() {
     value: string,
   ) => {
     setOrderMessage(null);
+    setBillingFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
     setBillingForm((prev) => ({ ...prev, [field]: value }));
   };
   const paymentRadioInputClass =
     "sr-only focus-visible:outline-none enabled:focus-visible:ring-2 enabled:focus-visible:ring-[var(--store-brand-accent)] enabled:focus-visible:ring-offset-2";
 
   const handlePlaceOrder = () => {
+    const billingErrors = buildBillingFieldErrors(billingForm);
+    if (Object.keys(billingErrors).length > 0) {
+      setBillingFieldErrors(billingErrors);
+      setOrderMessage({
+        type: "error",
+        text: "Please complete all required billing fields.",
+      });
+      scrollToFirstBillingError(billingErrors);
+      return;
+    }
+    setBillingFieldErrors({});
+
     if (createAccount && !isLoggedIn) {
       startPlacingOrder(async () => {
         const startResult = await startCheckoutAccountVerificationAction({
@@ -263,6 +327,7 @@ export default function CheckoutPage() {
 
       clearStoreCart();
       setItems([]);
+      router.refresh();
       router.push(`/order-received/${result.orderId}`);
     };
 
@@ -281,6 +346,20 @@ export default function CheckoutPage() {
         setOtpMessage({ type: "error", text: verify.error });
         return;
       }
+
+      const otpBillingErrors = buildBillingFieldErrors(billingForm);
+      if (Object.keys(otpBillingErrors).length > 0) {
+        setIsOtpModalOpen(false);
+        setBillingFieldErrors(otpBillingErrors);
+        setOtpMessage(null);
+        setOrderMessage({
+          type: "error",
+          text: "Please complete all required billing fields before we place your order.",
+        });
+        scrollToFirstBillingError(otpBillingErrors);
+        return;
+      }
+      setBillingFieldErrors({});
 
       setIsOtpModalOpen(false);
       setOtpMessage(null);
@@ -312,6 +391,7 @@ export default function CheckoutPage() {
       setCreateAccount(false);
       setAccountPassword("");
       setAccountConfirmPassword("");
+      router.refresh();
       router.push(`/order-received/${result.orderId}`);
     });
   };
@@ -357,10 +437,13 @@ export default function CheckoutPage() {
               {checkoutRows.slice(0, 2).map((field) => (
                 <FormInputField
                   key={field.name}
+                  id={field.name}
                   label={`${field.label}${field.required ? " *" : ""}`}
                   name={field.name}
+                  required={field.required}
                   autoComplete={field.autoComplete}
                   value={billingForm[field.name]}
+                  errorText={billingFieldErrors[field.name]}
                   onChange={(event) =>
                     handleBillingFieldChange(
                       field.name,
@@ -374,10 +457,13 @@ export default function CheckoutPage() {
             {checkoutRows.slice(2).map((field) => (
               <FormInputField
                 key={field.name}
+                id={field.name}
                 label={`${field.label}${field.required ? " *" : ""}`}
                 name={field.name}
+                required={field.required}
                 autoComplete={field.autoComplete}
                 value={billingForm[field.name]}
+                errorText={billingFieldErrors[field.name]}
                 onChange={(event) =>
                   handleBillingFieldChange(
                     field.name,

@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { z } from "zod";
 import { UserRole, UserStatus } from "@/generated/prisma/enums";
+import { ensureUserForGoogleOAuth } from "@/lib/auth/google-oauth-user";
 import { SITE_ROUTES } from "@/lib/config/site-config";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "./lib/password";
@@ -14,9 +15,6 @@ const applyProfileFieldsToToken = (
     firstName: string | null;
     lastName: string | null;
     phone: string | null;
-    address: string | null;
-    city: string | null;
-    country: string | null;
     role: UserRole;
     profileImagePath: string | null;
     status: UserStatus;
@@ -26,9 +24,6 @@ const applyProfileFieldsToToken = (
   token.firstName = row.firstName;
   token.lastName = row.lastName;
   token.phone = row.phone;
-  token.address = row.address;
-  token.city = row.city;
-  token.country = row.country;
   token.profileImagePath = row.profileImagePath;
   token.isActive = row.status !== UserStatus.INACTIVE;
   const full = [row.firstName, row.lastName]
@@ -46,10 +41,10 @@ const stripAuthFromToken = (token: JWT): JWT => {
   token.firstName = undefined;
   token.lastName = undefined;
   token.phone = undefined;
-  token.address = undefined;
-  token.city = undefined;
-  token.country = undefined;
   token.profileImagePath = undefined;
+  delete token.address;
+  delete token.city;
+  delete token.country;
   token.isActive = false;
   return token;
 };
@@ -76,12 +71,24 @@ export const authOptions: NextAuthOptions = {
             profile(profile) {
               const email =
                 profile.email_verified && profile.email ? profile.email : "";
+              const given = profile.given_name?.trim() ?? "";
+              const family = profile.family_name?.trim() ?? "";
+              let firstName: string | null = given || null;
+              let lastName: string | null = family || null;
+              if (!firstName && !lastName && profile.name?.trim()) {
+                const parts = profile.name.trim().split(/\s+/);
+                firstName = parts[0] ?? null;
+                lastName =
+                  parts.length > 1 ? parts.slice(1).join(" ") || null : null;
+              }
               return {
                 id: profile.sub,
                 name: profile.name,
                 role: UserRole.USER,
                 email,
                 image: profile.picture,
+                firstName,
+                lastName,
               };
             },
           }),
@@ -133,9 +140,6 @@ export const authOptions: NextAuthOptions = {
           firstName: user.firstName,
           lastName: user.lastName,
           phone: user.phone,
-          address: user.address,
-          city: user.city,
-          country: user.country,
           profileImagePath: user.profileImagePath,
         };
       },
@@ -147,6 +151,15 @@ export const authOptions: NextAuthOptions = {
 
       const email = user.email?.trim().toLowerCase();
       if (!email) return false;
+
+      if (account?.provider === "google") {
+        const ensured = await ensureUserForGoogleOAuth({
+          email,
+          firstName: user.firstName ?? null,
+          lastName: user.lastName ?? null,
+        });
+        return ensured.ok;
+      }
 
       const dbUser = await prisma.user.findUnique({
         where: { email },
@@ -166,9 +179,6 @@ export const authOptions: NextAuthOptions = {
             firstName: true,
             lastName: true,
             phone: true,
-            address: true,
-            city: true,
-            country: true,
             role: true,
             profileImagePath: true,
             status: true,
@@ -197,9 +207,6 @@ export const authOptions: NextAuthOptions = {
                 firstName: true,
                 lastName: true,
                 phone: true,
-                address: true,
-                city: true,
-                country: true,
                 role: true,
                 profileImagePath: true,
                 status: true,
@@ -228,9 +235,9 @@ export const authOptions: NextAuthOptions = {
         token.firstName = user.firstName ?? undefined;
         token.lastName = user.lastName ?? undefined;
         token.phone = user.phone ?? undefined;
-        token.address = user.address ?? undefined;
-        token.city = user.city ?? undefined;
-        token.country = user.country ?? undefined;
+        delete token.address;
+        delete token.city;
+        delete token.country;
         token.isActive = true;
         return token;
       }
@@ -243,9 +250,6 @@ export const authOptions: NextAuthOptions = {
             firstName: true,
             lastName: true,
             phone: true,
-            address: true,
-            city: true,
-            country: true,
             role: true,
             profileImagePath: true,
             status: true,
@@ -280,9 +284,6 @@ export const authOptions: NextAuthOptions = {
         session.user.firstName = undefined;
         session.user.lastName = undefined;
         session.user.phone = undefined;
-        session.user.address = undefined;
-        session.user.city = undefined;
-        session.user.country = undefined;
         session.user.profileImagePath = undefined;
         return session;
       }
@@ -307,9 +308,6 @@ export const authOptions: NextAuthOptions = {
       session.user.firstName = token.firstName ?? null;
       session.user.lastName = token.lastName ?? null;
       session.user.phone = token.phone ?? null;
-      session.user.address = token.address ?? null;
-      session.user.city = token.city ?? null;
-      session.user.country = token.country ?? null;
       session.user.profileImagePath = token.profileImagePath ?? null;
 
       return session;

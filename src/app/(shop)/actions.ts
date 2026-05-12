@@ -21,6 +21,7 @@ import {
   colorOptionsJsonToList,
   storageOptionsJsonToList,
 } from "@/lib/products/specs";
+import { checkoutBillingFieldsSchema } from "@/lib/validation/checkout-billing-schema";
 import { signupPasswordSchema } from "@/lib/validation/signup-password-schema";
 import {
   PROFILE_IMAGE_MAX_BYTES,
@@ -160,18 +161,6 @@ const profileUpdateSchema = z.object({
     .string()
     .max(30)
     .transform((s) => (s.trim().length === 0 ? null : s.trim())),
-  address: z
-    .string()
-    .max(200)
-    .transform((s) => (s.trim().length === 0 ? null : s.trim())),
-  city: z
-    .string()
-    .max(80)
-    .transform((s) => (s.trim().length === 0 ? null : s.trim())),
-  country: z
-    .string()
-    .max(80)
-    .transform((s) => (s.trim().length === 0 ? null : s.trim())),
 });
 
 export type UpdateAccountProfileResult =
@@ -190,9 +179,6 @@ export const updateAccountProfileAction = async (
     firstName: String(formData.get("firstName") ?? ""),
     lastName: String(formData.get("lastName") ?? ""),
     phone: String(formData.get("phone") ?? ""),
-    address: String(formData.get("address") ?? ""),
-    city: String(formData.get("city") ?? ""),
-    country: String(formData.get("country") ?? ""),
   });
 
   if (!parsed.success) {
@@ -205,9 +191,6 @@ export const updateAccountProfileAction = async (
       firstName: parsed.data.firstName,
       lastName: parsed.data.lastName,
       phone: parsed.data.phone,
-      address: parsed.data.address,
-      city: parsed.data.city,
-      country: parsed.data.country,
     },
   });
 
@@ -445,27 +428,22 @@ const checkoutOrderItemSchema = z.object({
   selectedStorage: z.string().max(120).nullable().optional(),
 });
 
-const checkoutPlaceOrderSchema = z.object({
-  createAccount: z.boolean().optional().default(false),
-  email: z.string().trim().email().max(254),
-  firstName: z.string().trim().min(1).max(80),
-  lastName: z.string().trim().min(1).max(80),
-  phone: z.string().trim().min(1).max(40),
-  address: z.string().trim().min(1).max(200),
-  city: z.string().trim().min(1).max(80),
-  country: z.string().trim().min(1).max(80),
-  paymentMethod: z.enum(CHECKOUT_PAYMENT_METHODS).default("cod"),
-  items: z.array(checkoutOrderItemSchema).min(1).max(100),
-  voucherCode: z
-    .string()
-    .max(40)
-    .optional()
-    .default("")
-    .transform((raw) => {
-      const t = raw.trim().toUpperCase();
-      return t.length === 0 ? undefined : t;
-    }),
-});
+const checkoutPlaceOrderSchema = checkoutBillingFieldsSchema.merge(
+  z.object({
+    createAccount: z.boolean().optional().default(false),
+    paymentMethod: z.enum(CHECKOUT_PAYMENT_METHODS).default("cod"),
+    items: z.array(checkoutOrderItemSchema).min(1).max(100),
+    voucherCode: z
+      .string()
+      .max(40)
+      .optional()
+      .default("")
+      .transform((raw) => {
+        const t = raw.trim().toUpperCase();
+        return t.length === 0 ? undefined : t;
+      }),
+  }),
+);
 
 export type PlaceCheckoutOrderInput = z.input<typeof checkoutPlaceOrderSchema>;
 export type PlaceCheckoutOrderResult =
@@ -531,8 +509,11 @@ const findVariantDelta = (
 /**
  * <SECURITY_REVIEW>
  * Vulnerability audit:
- * - Auth bypass: guest checkout intentionally allowed; order is linked by email
- *   to an existing user or an auto-created user account.
+ * - Guest checkout intentionally allowed; order is linked by email
+ *   to an existing user or an auto-created user account. When the caller is
+ *   signed in and the billing email matches the session email, the customer
+ *   row is resolved by `session.user.id` first so profile fields always sync to
+ *   the signed-in account.
  * - SQL injection: Prisma query builder only; no raw SQL.
  * - Client price tampering: server recomputes item prices/discounts from Product rows.
  * - Stock race/oversell: stock checked and decremented inside one transaction.
@@ -543,11 +524,12 @@ const findVariantDelta = (
  * - Ignore client-provided totals and derive all monetary values server-side.
  * - Cart vouchers: code is echoed from the client but the discount amount is
  *   recomputed inside the transaction from line totals + `Discount` row rules.
- * - Update user profile address fields in same transaction as order creation.
+ * - Update user profile name/phone in same transaction as order creation.
  *
  * Verification test case:
  * - Authenticated user places order with valid cart => Order + OrderItems created,
- *   stock decremented, and `User.address/city/country` updated.
+ *   stock decremented, and customer name/phone updated; shipping snapshot on
+ *   the `Order` row (`shippingAddress`, `shippingCity`, `shippingCountry`, `shippingPhone`).
  * - Tampered payload with mismatched variant values => action returns `{ ok:false }`.
  * </SECURITY_REVIEW>
  */
@@ -577,12 +559,39 @@ export const placeCheckoutOrderAction = async (
   const normalizedEmail = parsed.data.email.toLowerCase().trim();
   const dbPaymentMethod = checkoutToDbPaymentMethod(paymentMethod);
 
+  const session = await auth();
+  const sessionUserId = session?.user?.id?.trim();
+  const sessionEmail = session?.user?.email?.trim().toLowerCase();
+  const useSessionCustomer = Boolean(
+    sessionUserId && sessionEmail && sessionEmail === normalizedEmail,
+  );
+
   try {
     const order = await prisma.$transaction(async (tx) => {
-      let user = await tx.user.findUnique({
-        where: { email: normalizedEmail },
-        select: { id: true, autoCreated: true },
-      });
+      let user: { id: string; autoCreated: boolean } | null = null;
+
+      if (useSessionCustomer && sessionUserId) {
+        const sessionRow = await tx.user.findUnique({
+          where: { id: sessionUserId },
+          select: { id: true, autoCreated: true, email: true },
+        });
+        if (
+          sessionRow &&
+          sessionRow.email.trim().toLowerCase() === normalizedEmail
+        ) {
+          user = {
+            id: sessionRow.id,
+            autoCreated: sessionRow.autoCreated,
+          };
+        }
+      }
+
+      if (!user) {
+        user = await tx.user.findUnique({
+          where: { email: normalizedEmail },
+          select: { id: true, autoCreated: true },
+        });
+      }
 
       if (!user) {
         const generatedPasswordHash = await hashPassword(randomUUID());
@@ -593,9 +602,6 @@ export const placeCheckoutOrderAction = async (
             firstName,
             lastName,
             phone,
-            address,
-            city,
-            country,
             role: "USER",
             status: createAccount ? "ACTIVE" : "INACTIVE",
             autoCreated: !createAccount,
@@ -609,9 +615,6 @@ export const placeCheckoutOrderAction = async (
             firstName,
             lastName,
             phone,
-            address,
-            city,
-            country,
             ...(createAccount
               ? { autoCreated: false, status: "ACTIVE" as const }
               : {}),
@@ -767,6 +770,10 @@ export const placeCheckoutOrderAction = async (
         data: {
           userId: user.id,
           paymentMethod: dbPaymentMethod,
+          shippingAddress: address,
+          shippingCity: city,
+          shippingCountry: country,
+          shippingPhone: phone,
           subtotal: subtotal.toFixed(2),
           discountAmount: discountAmount.toFixed(2),
           voucherCode: voucherCodeForOrder,

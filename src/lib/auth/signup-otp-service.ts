@@ -280,9 +280,6 @@ export const completeSignupWithOtp = async (
             firstName: row.firstName,
             lastName: row.lastName,
             phone: row.phone,
-            address: row.address,
-            city: row.city,
-            country: row.country,
             status: UserStatus.ACTIVE,
             autoCreated: false,
           },
@@ -295,9 +292,6 @@ export const completeSignupWithOtp = async (
             firstName: row.firstName,
             lastName: row.lastName,
             phone: row.phone,
-            address: row.address,
-            city: row.city,
-            country: row.country,
           },
         });
       }

@@ -74,9 +74,6 @@ model User {
   firstName            String?
   lastName             String?
   phone                String?
-  address              String?
-  city                 String?
-  country              String?
   /** Public URL path, e.g. `/uploads/profile-images/<id>.jpg` — stored under `public/`. */
   profileImagePath     String?
   role                 UserRole             @default(USER)
@@ -191,6 +188,12 @@ model Order {
   status         OrderStatus   @default(PENDING)
   /** Payment method chosen at checkout. Defaults to COD so legacy rows stay safe. */
   paymentMethod  PaymentMethod @default(COD)
+  /** Shipping / billing snapshot for this order (moved from User profile). */
+  shippingAddress  String?
+  shippingCity     String?
+  shippingCountry  String?
+  /** Phone from checkout / admin billing snapshot (not only the linked User row). */
+  shippingPhone    String?
   subtotal       Decimal       @db.Decimal(10, 2)
   /** Savings from product-level pricing (catalog vs effective line prices). */
   discountAmount Decimal       @db.Decimal(10, 2)

@@ -1,13 +1,13 @@
 /**
  * Uses generated output under `src/generated/prisma`. After editing
- * `prisma/schema.prisma`, run `npx prisma generate` and **restart** `npm run dev`
- * so Next.js drops its cached Prisma bundle (otherwise `select` on new fields can
- * throw “Unknown field” at runtime).
- *
- * In development, `globalThis.prisma` can survive Turbopack HMR across a
- * `prisma generate` that adds new models — the old client instance then lacks new
- * delegates (e.g. `prisma.discount`). We detect that and replace the singleton.
+ * `prisma/schema.prisma`, run `npx prisma generate`. In dev we invalidate the
+ * global Prisma singleton when `schema.prisma` or generated `Order` model output
+ * changes so Turbopack HMR does not keep a client whose runtime rejects new
+ * `select` fields (e.g. `shippingAddress`).
  */
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
@@ -21,7 +21,34 @@ const adapter = new PrismaPg({ connectionString: databaseUrl });
 
 declare global {
   var prisma: PrismaClient | undefined;
+  /** Fingerprint of schema + generated Order model; dev singleton invalidation. */
+  var prismaDevClientFingerprint: string | undefined;
 }
+
+/** Bumps when dev should drop `globalThis.prisma` (schema or generated client drift). */
+const getDevPrismaClientFingerprint = (): string => {
+  try {
+    const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma");
+    const orderModelPath = path.join(
+      process.cwd(),
+      "src",
+      "generated",
+      "prisma",
+      "models",
+      "Order.ts",
+    );
+    const h = createHash("sha256");
+    h.update(readFileSync(schemaPath));
+    try {
+      h.update(readFileSync(orderModelPath));
+    } catch {
+      // generated path missing before first generate — still hash schema only
+    }
+    return h.digest("hex").slice(0, 32);
+  } catch {
+    return "";
+  }
+};
 
 /** True when this client was generated with the Discount admin model. */
 const prismaHasDiscountDelegate = (
@@ -46,8 +73,14 @@ const getOrCreatePrisma = (): PrismaClient => {
     return productionClient;
   }
 
+  const fingerprint = getDevPrismaClientFingerprint();
   const existing = globalThis.prisma;
-  if (existing && prismaHasDiscountDelegate(existing)) {
+  if (
+    existing &&
+    prismaHasDiscountDelegate(existing) &&
+    fingerprint.length > 0 &&
+    globalThis.prismaDevClientFingerprint === fingerprint
+  ) {
     return existing;
   }
 
@@ -59,6 +92,9 @@ const getOrCreatePrisma = (): PrismaClient => {
 
   const created = createPrismaClient();
   globalThis.prisma = created;
+  if (fingerprint.length > 0) {
+    globalThis.prismaDevClientFingerprint = fingerprint;
+  }
   return created;
 };
 

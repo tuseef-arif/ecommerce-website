@@ -37,15 +37,16 @@ export default async function OrderReceivedPage({
       voucherCode: true,
       voucherDiscountAmount: true,
       totalAmount: true,
+      shippingAddress: true,
+      shippingCity: true,
+      shippingCountry: true,
+      shippingPhone: true,
       user: {
         select: {
           firstName: true,
           lastName: true,
           email: true,
           phone: true,
-          address: true,
-          city: true,
-          country: true,
         },
       },
       items: {
@@ -210,12 +211,16 @@ export default async function OrderReceivedPage({
             </h3>
             <div className="mt-3 space-y-1 text-sm text-neutral-700">
               <p>{fullName}</p>
-              <p>{displayOrDash(order.user.address)}</p>
+              <p>{displayOrDash(order.shippingAddress)}</p>
               <p>
-                {displayOrDash(order.user.city)},{" "}
-                {displayOrDash(order.user.country)}
+                {displayOrDash(order.shippingCity)},{" "}
+                {displayOrDash(order.shippingCountry)}
               </p>
-              <p>{displayOrDash(order.user.phone)}</p>
+              <p>
+                {displayOrDash(
+                  order.shippingPhone?.trim() || order.user.phone?.trim(),
+                )}
+              </p>
               <p>{displayOrDash(order.user.email)}</p>
             </div>
           </div>

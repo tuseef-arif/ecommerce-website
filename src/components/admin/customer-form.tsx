@@ -31,9 +31,6 @@ const fallbackInitial = {
   firstName: "",
   lastName: "",
   phone: "",
-  address: "",
-  city: "",
-  country: "",
   role: "USER" as const,
   status: "ACTIVE" as const,
   ordersCount: 0,
@@ -171,44 +168,6 @@ export const CustomerForm = ({
         rightMessage={state.fieldErrors.phone}
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <FormInputField
-          label="Address"
-          name="address"
-          maxLength={200}
-          defaultValue={initial.address}
-          aria-invalid={state.fieldErrors.address ? true : undefined}
-          inputClassName={COMPACT_INPUT_CLASS_NAME}
-          labelClassName={COMPACT_LABEL_CLASS_NAME}
-          autoComplete="off"
-        />
-        <FormInputField
-          label="City"
-          name="city"
-          maxLength={80}
-          defaultValue={initial.city}
-          aria-invalid={state.fieldErrors.city ? true : undefined}
-          inputClassName={COMPACT_INPUT_CLASS_NAME}
-          labelClassName={COMPACT_LABEL_CLASS_NAME}
-          autoComplete="off"
-        />
-        <FormInputField
-          label="Country"
-          name="country"
-          maxLength={80}
-          defaultValue={initial.country}
-          aria-invalid={state.fieldErrors.country ? true : undefined}
-          inputClassName={COMPACT_INPUT_CLASS_NAME}
-          labelClassName={COMPACT_LABEL_CLASS_NAME}
-          autoComplete="off"
-        />
-      </div>
-      <FieldErrorTriple
-        leftMessage={state.fieldErrors.address}
-        middleMessage={state.fieldErrors.city}
-        rightMessage={state.fieldErrors.country}
-      />
-
       <div className="grid gap-4 md:grid-cols-2">
         <SelectField
           label="Role"
@@ -323,25 +282,6 @@ const FieldErrorPair = ({
   return (
     <div className="-mt-2 grid gap-2 md:grid-cols-2">
       <FieldError message={leftMessage} />
-      <FieldError message={rightMessage} />
-    </div>
-  );
-};
-
-const FieldErrorTriple = ({
-  leftMessage,
-  middleMessage,
-  rightMessage,
-}: {
-  leftMessage?: string;
-  middleMessage?: string;
-  rightMessage?: string;
-}) => {
-  if (!leftMessage && !middleMessage && !rightMessage) return null;
-  return (
-    <div className="-mt-2 grid gap-2 md:grid-cols-3">
-      <FieldError message={leftMessage} />
-      <FieldError message={middleMessage} />
       <FieldError message={rightMessage} />
     </div>
   );

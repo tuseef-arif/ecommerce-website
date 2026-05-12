@@ -6,7 +6,7 @@ import { z } from "zod";
 import { sendPasswordResetEmail } from "@/lib/auth/password-reset-email";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import { SITE_URL } from "@/lib/config/site-config";
+import { SITE_URL_ORIGIN } from "@/lib/config/site-config";
 import type { RequestPasswordResetPopoverState } from "./password-reset-popover-state";
 
 const requestEmailSchema = z.string().email("Please enter a valid email.");
@@ -46,15 +46,6 @@ const completeResetSchema = z
     message: "Passwords do not match.",
     path: ["confirmPassword"],
   });
-
-const getPasswordResetOrigin = (): string => {
-  const raw =
-    process.env.NEXTAUTH_URL?.trim() ||
-    process.env.AUTH_URL?.trim() ||
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    SITE_URL;
-  return raw.replace(/\/+$/, "");
-};
 
 const hashResetToken = (raw: string): string =>
   createHash("sha256").update(raw, "utf8").digest("hex");
@@ -101,8 +92,7 @@ export const requestPasswordResetInlineAction = async (
     });
   });
 
-  const origin = getPasswordResetOrigin();
-  const resetUrl = `${origin}/?authView=reset-password&token=${encodeURIComponent(rawToken)}`;
+  const resetUrl = `${SITE_URL_ORIGIN}/?authView=reset-password&token=${encodeURIComponent(rawToken)}`;
 
   const sendResult = await sendPasswordResetEmail({
     to: user.email,

@@ -5,7 +5,7 @@ import {
 } from "@/lib/auth/mail-transport";
 import {
   SITE_PRODUCT_SLIDER,
-  SITE_URL,
+  SITE_URL_ORIGIN,
   STORE_PHONE_DISPLAY,
   STORE_SOCIAL_WHATSAPP,
 } from "@/lib/config/site-config";
@@ -61,7 +61,7 @@ const formatMoney = (value: unknown): string =>
   formatProductPriceWithPrefix(Number(value), SITE_PRODUCT_SLIDER.pricePrefix);
 
 const buildOrderReceivedUrl = (orderId: string): string =>
-  `${SITE_URL.replace(/\/$/, "")}/order-received/${encodeURIComponent(orderId)}`;
+  `${SITE_URL_ORIGIN}/order-received/${encodeURIComponent(orderId)}`;
 
 /**
  * Sends the customer a receipt-style confirmation when checkout creates an order.

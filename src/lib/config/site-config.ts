@@ -1,16 +1,21 @@
 /**
  * Single source for store branding, contact, routes, nav, and UI copy.
- * Edit `SITE_DEFAULTS` for white-label defaults. `NEXT_PUBLIC_SITE_URL` overrides
- * the canonical site origin in deployed environments (metadata, emails, absolute links).
+ * Edit `SITE_DEFAULTS` for white-label defaults.
+ *
+ * `SITE_URL` (metadata, emails, absolute links): set `NEXT_PUBLIC_SITE_URL` in each
+ * environment (e.g. Vercel Production / Preview). If unset, falls back to
+ * `SITE_DEFAULTS.siteUrl` (`http://localhost:3000` for local dev).
  */
 
 import { SITE_DEFAULTS } from "./site-config.data";
 
-const resolveSiteUrlFromEnv = (): string | undefined => {
+/** Returns `protocol//host` with no trailing slash, or `undefined` if missing/invalid. */
+const siteUrlFromNextPublic = (): string | undefined => {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (!raw) return undefined;
   try {
-    const u = new URL(raw);
+    const withProtocol = raw.includes("://") ? raw : `https://${raw}`;
+    const u = new URL(withProtocol);
     if (u.protocol !== "http:" && u.protocol !== "https:") return undefined;
     return `${u.protocol}//${u.host}`;
   } catch {
@@ -20,7 +25,14 @@ const resolveSiteUrlFromEnv = (): string | undefined => {
 
 // --- Identity & contact ---
 
-export const SITE_URL = resolveSiteUrlFromEnv() ?? SITE_DEFAULTS.siteUrl;
+export const SITE_URL = siteUrlFromNextPublic() ?? SITE_DEFAULTS.siteUrl;
+
+/**
+ * Same canonical origin as `SITE_URL`, with trailing slash(es) removed.
+ * Use for absolute links in emails (order confirmation, password reset) and anywhere
+ * you append a path starting with `/`.
+ */
+export const SITE_URL_ORIGIN = SITE_URL.replace(/\/+$/, "");
 
 export const STORE_BUSINESS_NAME = SITE_DEFAULTS.businessName;
 
